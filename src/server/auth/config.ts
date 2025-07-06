@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
 import type { Adapter } from "next-auth/adapters";
@@ -8,16 +8,19 @@ import { z } from "zod";
 
 import { db } from "@/server/db";
 import type { Role } from "@prisma/client";
+import { routes } from "@/lib/routes";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
+      username: string;
       role: Role;
     } & DefaultSession["user"];
   }
 
   interface User {
+    username: string;
     role: Role;
   }
 }
@@ -29,7 +32,6 @@ const loginSchema = z.object({
 
 const registerSchema = z.object({
   username: z.string().min(3),
-  email: z.string().email(),
   password: z.string().min(6),
 });
 
@@ -47,18 +49,24 @@ export const authConfig = {
           const { username, password } = loginSchema.parse(credentials);
 
           const user = await db.user.findFirst({
-            where: { name: username },
+            where: { username: username },
+            include: {
+              accounts: {
+                where: { provider: "credentials" },
+              },
+            },
           });
 
-          if (!user?.password) return null;
+          const account = user?.accounts?.[0];
+          if (!user || !account?.password) return null;
 
-          const isValid = await compare(password, user.password as string);
+          const isValid = await compare(password, account.password as string);
           if (!isValid) return null;
 
           return {
             id: user.id,
             name: user.name ?? "",
-            email: user.email ?? "",
+            username: user.username ?? "",
             role: user.role as Role,
           };
         } catch {
@@ -76,12 +84,10 @@ export const authConfig = {
       },
       async authorize(credentials) {
         try {
-          const { username, email, password } = registerSchema.parse(credentials);
+          const { username, password } = registerSchema.parse(credentials);
 
           const existing = await db.user.findFirst({
-            where: {
-              OR: [{ name: username }, { email: email }],
-            },
+            where: { username: username },
           });
 
           if (existing) return null;
@@ -91,16 +97,23 @@ export const authConfig = {
           const user = await db.user.create({
             data: {
               name: username,
-              email: email,
-              password: hashedPassword,
+              username: username,
               role: "USER",
+              accounts: {
+                create: {
+                  type: "credentials",
+                  provider: "credentials",
+                  providerAccountId: username,
+                  password: hashedPassword,
+                },
+              },
             },
           });
 
           return {
             id: user.id,
             name: user.name ?? "",
-            email: user.email ?? "",
+            username: user.username ?? "",
             role: user.role as Role,
           };
         } catch {
@@ -113,10 +126,15 @@ export const authConfig = {
   session: {
     strategy: "jwt",
   },
+  pages: {
+    signIn: routes.login,
+    error: routes.login,
+  },
   callbacks: {
     jwt: ({ token, user }) => {
       if (user) {
         token.id = user.id;
+        token.username = user.username;
         token.role = user.role;
       }
       return token;
@@ -126,6 +144,7 @@ export const authConfig = {
       user: {
         ...session.user,
         id: token.id as string,
+        username: token.username as string,
         role: token.role as Role,
       },
     }),

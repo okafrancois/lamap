@@ -7,35 +7,25 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
-
-    @@index([name])
-}
-
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String?
-    access_token             String?
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String?
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
+    id                String  @id @default(cuid())
+    userId            String
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String? @db.Text
+    access_token      String? @db.Text
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String? @db.Text
+    session_state     String?
+    password          String?
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@unique([provider, providerAccountId])
+    @@map("account")
 }
 
 model Session {
@@ -44,24 +34,43 @@ model Session {
     userId       String
     expires      DateTime
     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
-model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    password      String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
-    role          Role      @default(USER)
+    @@map("session")
 }
 
 enum Role {
-    ADMIN
     USER
+    ADMIN
+    MODERATOR
+}
+
+model User {
+    id                  String          @id @default(cuid())
+    name                String
+    username            String          @unique
+    role                Role            @default(USER)
+    email               String?         @unique
+    emailVerified       DateTime?
+    phoneNumber         String?         @unique
+    phoneNumberVerified Boolean         @default(false)
+    image               String?
+    koras               Int             @default(0) // Jetons de jeu
+    totalWins           Int             @default(0)
+    totalGames          Int             @default(0)
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+    accounts            Account[]
+    sessions            Session[]
+    transactions        Transaction[]
+    GameRoom            GameRoom[]
+    RoomPlayer          RoomPlayer[]
+    wallet              Wallet?
+    gameStats           UserGameStats[]
+
+    @@index([email])
+    @@index([phoneNumber])
+    @@index([username])
+    @@map("user")
 }
 
 model VerificationToken {
@@ -70,4 +79,199 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+    @@map("verification")
+}
+
+// --- NOUVEAUX MODELES POUR LE SYSTEME DE JEU MULTI-JOUEURS ---
+
+enum GameRoomStatus {
+    WAITING
+    STARTING
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+enum AIDifficulty {
+    EASY
+    MEDIUM
+    HARD
+}
+
+enum GameType {
+    garame
+}
+
+model GameRoom {
+    id          String         @id @default(cuid())
+    code        String?        @unique
+    gameType    GameType
+    stake       Int
+    creatorId   String
+    creatorName String
+    status      GameRoomStatus @default(WAITING)
+    maxPlayers  Int
+    minPlayers  Int
+    totalPot    Int
+    gameStateId String?        @unique
+    settings    Json?
+    createdAt   DateTime       @default(now())
+    updatedAt   DateTime       @updatedAt
+
+    creator   User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+    players   RoomPlayer[]
+    gameState GameState?
+
+    @@index([gameType])
+    @@index([status])
+    @@index([creatorId])
+}
+
+model RoomPlayer {
+    id           String        @id @default(cuid())
+    name         String
+    position     Int
+    isReady      Boolean       @default(false)
+    isAI         Boolean       @default(false)
+    aiDifficulty AIDifficulty?
+    joinedAt     DateTime      @default(now())
+
+    gameRoomId String
+    gameRoom   GameRoom @relation(fields: [gameRoomId], references: [id], onDelete: Cascade)
+
+    // Relation optionnelle à un vrai utilisateur si ce n'est pas un AI
+    userId String?
+    user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+    @@index([gameRoomId])
+    @@index([userId])
+}
+
+enum GameStateStatus {
+    PLAYING
+    PAUSED
+    FINISHED
+    ABANDONED
+}
+
+model GameState {
+    id              String          @id @default(cuid())
+    gameType        GameType
+    currentPlayerId String
+    players         Json // Map<string, BasePlayerState>
+    pot             Int
+    status          GameStateStatus @default(PLAYING)
+    winnerId        String?
+    winners         String[]
+    turn            Int
+    startedAt       DateTime        @default(now())
+    endedAt         DateTime?
+    metadata        Json?
+
+    roomId String   @unique
+    room   GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+// Modèles spécifiques à LaMap241
+
+model Transaction {
+    id          String            @id @default(cuid())
+    userId      String
+    type        TransactionType
+    amount      Float? // Montant en FCFA (pour dépôts/retraits)
+    koras       Int? // Nombre de koras (pour achats/gains)
+    korasBefore Int? // Solde koras avant transaction
+    korasAfter  Int? // Solde koras après transaction
+    description String?
+    reference   String? // Référence Mobile Money
+    gameId      String?
+    status      TransactionStatus @default(PENDING)
+    createdAt   DateTime          @default(now())
+    updatedAt   DateTime          @updatedAt
+
+    user User @relation(fields: [userId], references: [id])
+
+    @@index([userId])
+    @@index([type])
+    @@index([status])
+}
+
+enum TransactionType {
+    DEPOSIT // Dépôt d'argent
+    WITHDRAWAL // Retrait d'argent
+    BUY_KORAS // Achat de koras
+    GAME_STAKE // Mise sur une partie
+    GAME_WIN // Gain d'une partie
+    BONUS // Bonus (ex: bienvenue, parrainage)
+    COMMISSION // Commission prélevée
+}
+
+enum TransactionStatus {
+    PENDING
+    COMPLETED
+    FAILED
+    CANCELLED
+}
+
+// Modèle pour enregistrer les mouvements de jeu (pour replay et audit)
+model GameMove {
+    id         String   @id @default(cuid())
+    gameId     String // Référence au GameState
+    playerId   String // ID du joueur qui fait le mouvement
+    playerName String // Nom du joueur (pour éviter les jointures)
+    moveNumber Int // Numéro séquentiel du mouvement
+    moveType   MoveType
+    moveData   Json // Données spécifiques au mouvement (carte jouée, etc.)
+    timestamp  DateTime @default(now())
+
+    @@index([gameId])
+    @@index([playerId])
+    @@index([gameId, moveNumber])
+}
+
+enum MoveType {
+    PLAY_CARD
+    FOLD
+    BET
+    SPECIAL_MOVE
+    TIMEOUT
+}
+
+// Modèle pour le système de Wallet séparé (optionnel, pour plus de flexibilité)
+model Wallet {
+    id             String   @id @default(cuid())
+    userId         String   @unique
+    koraBalance    Int      @default(0)
+    lockedKoras    Int      @default(0) // Koras bloqués dans des parties en cours
+    totalDeposits  Float    @default(0) // Total des dépôts en FCFA
+    totalWithdraws Float    @default(0) // Total des retraits en FCFA
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+}
+
+// Statistiques de jeu par utilisateur
+model UserGameStats {
+    id              String    @id @default(cuid())
+    userId          String
+    gameType        GameType
+    gamesPlayed     Int       @default(0)
+    gamesWon        Int       @default(0)
+    totalKorasWon   Int       @default(0)
+    totalKorasLost  Int       @default(0)
+    bestWinStreak   Int       @default(0)
+    currentStreak   Int       @default(0)
+    avgGameDuration Int? // Durée moyenne en secondes
+    lastPlayedAt    DateTime?
+    createdAt       DateTime  @default(now())
+    updatedAt       DateTime  @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, gameType])
+    @@index([userId])
+    @@index([gameType])
 }
