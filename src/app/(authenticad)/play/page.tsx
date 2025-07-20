@@ -1,17 +1,273 @@
-import { ChartAreaInteractive } from "@/components/layout/chart-area-interactive";
-import { SectionCards } from "@/components/layout/section-cards";
+"use client";
+
 import { PageContainer } from "@/components/layout/page-container";
-import FullDeck from "@/components/common/deck";
+import { LibButton } from "@/components/library/button";
+import { LibTitle } from "@/components/library/title";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { GameCard } from "@/components/common/deck";
+import {
+  IconCards,
+  IconRobot,
+  IconUsers,
+  IconWorld,
+  IconPlayerPlay,
+  IconCrown,
+  IconTrophy,
+  IconStar,
+} from "@tabler/icons-react";
+import { useState } from "react";
 
 export default function Page() {
+  const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
+
+  // Cartes d'exemple pour le plateau de jeu
+  const gameCards = [
+    { suit: "hearts", rank: "A" },
+    { suit: "diamonds", rank: "K" },
+    { suit: "clubs", rank: "Q" },
+    { suit: "spades", rank: "J" },
+    { suit: "hearts", rank: "10" },
+  ] as const;
+
+  const gameOptions = [
+    {
+      id: "online",
+      title: "Jouer en ligne",
+      description: "Affrontez des joueurs du monde entier",
+      icon: IconWorld,
+      color: "from-blue-500 to-blue-600",
+      difficulty: "Dynamique",
+      players: "2-6 joueurs",
+    },
+    {
+      id: "ai",
+      title: "Jouer contre l'IA",
+      description: "Entraînez-vous contre notre intelligence artificielle",
+      icon: IconRobot,
+      color: "from-purple-500 to-purple-600",
+      difficulty: "Configurable",
+      players: "1 vs IA",
+    },
+    {
+      id: "friend",
+      title: "Jouer avec un ami",
+      description: "Invitez un ami pour une partie privée",
+      icon: IconUsers,
+      color: "from-green-500 to-green-600",
+      difficulty: "Variable",
+      players: "2 joueurs",
+    },
+  ];
+
+  const handleGameStart = (gameMode: string) => {
+    setSelectedGameMode(gameMode);
+    // Ici vous pouvez ajouter la logique pour démarrer le jeu
+    console.log(`Démarrage du mode: ${gameMode}`);
+  };
+
   return (
     <PageContainer>
-      <SectionCards />
-      <div className="px-4 lg:px-6">
-        <ChartAreaInteractive />
-      </div>
-      <div className="flex justify-center">
-        <FullDeck />
+      <div className="grid min-h-full gap-6 lg:grid-cols-6">
+        {/* Plateau de jeu - Colonne de gauche */}
+        <Card className="overflow-hidde @container/card col-span-4 pt-0">
+          <CardHeader className="from-primary/10 to-secondary/10 border-b bg-gradient-to-r !py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary/20 rounded-lg p-2">
+                  <IconCards className="text-primary size-6" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Plateau de Jeu</CardTitle>
+                  <CardDescription>
+                    {selectedGameMode
+                      ? `Mode: ${gameOptions.find((opt) => opt.id === selectedGameMode)?.title}`
+                      : "Sélectionnez un mode de jeu"}
+                  </CardDescription>
+                </div>
+              </div>
+              <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                <IconTrophy className="size-4" />
+                <span>Niveau: Débutant</span>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-8">
+            <div className="flex flex-col items-center justify-center space-y-8">
+              {/* Zone de cartes centrale */}
+              <div className="relative">
+                <div className="from-primary/5 to-secondary/5 absolute inset-0 rounded-2xl bg-gradient-to-r blur-xl"></div>
+                <div className="bg-card/50 border-primary/20 relative flex min-h-[200px] min-w-[300px] items-center justify-center rounded-2xl border-2 border-dashed p-8 backdrop-blur-sm">
+                  {selectedGameMode ? (
+                    <div className="flex flex-wrap justify-center gap-3">
+                      {gameCards.map((card, index) => (
+                        <div
+                          key={index}
+                          className="animate-float-slow transform transition-transform duration-200 hover:scale-105"
+                          style={{ animationDelay: `${index * 0.1}s` }}
+                        >
+                          <GameCard
+                            suit={card.suit}
+                            rank={card.rank}
+                            size="large"
+                            className="drop-shadow-lg transition-all hover:drop-shadow-xl"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4 text-center">
+                      <div className="bg-primary/10 mx-auto w-fit rounded-full p-4">
+                        <IconPlayerPlay className="text-primary size-12" />
+                      </div>
+                      <div>
+                        <h3 className="text-foreground text-lg font-semibold">
+                          Prêt à jouer ?
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Choisissez un mode de jeu pour commencer
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Statistiques rapides */}
+              <div className="grid w-full max-w-md grid-cols-3 gap-4">
+                <div className="bg-primary/5 rounded-lg p-3 text-center">
+                  <div className="text-primary text-2xl font-bold">12</div>
+                  <div className="text-muted-foreground text-xs">Victoires</div>
+                </div>
+                <div className="bg-secondary/5 rounded-lg p-3 text-center">
+                  <div className="text-secondary text-2xl font-bold">8</div>
+                  <div className="text-muted-foreground text-xs">Défaites</div>
+                </div>
+                <div className="bg-accent/5 rounded-lg p-3 text-center">
+                  <div className="text-accent-foreground text-2xl font-bold">
+                    75%
+                  </div>
+                  <div className="text-muted-foreground text-xs">Ratio</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Options de jeu - Colonne de droite */}
+        <Card className="@container/card col-span-2 pt-0">
+          <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
+            <LibTitle as="h3" className="flex w-full items-center gap-3">
+              <div className="bg-secondary/20 rounded-lg p-2">
+                <IconCards className="text-secondary size-6" />
+              </div>
+              <div>
+                <span className="text-lg font-semibold">Modes de Jeu</span>
+                <CardDescription>
+                  Choisissez votre façon de jouer
+                </CardDescription>
+              </div>
+            </LibTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-4 overflow-y-auto">
+            {gameOptions.map((option) => {
+              const IconComponent = option.icon;
+              const isSelected = selectedGameMode === option.id;
+
+              return (
+                <Card
+                  key={option.id}
+                  className={`relative cursor-pointer gap-2 overflow-hidden border-2 p-6 transition-all duration-300 hover:shadow-lg ${
+                    isSelected
+                      ? "border-primary shadow-primary/20 scale-[1.02] shadow-lg"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setSelectedGameMode(option.id)}
+                >
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${option.color} opacity-5`}
+                  ></div>
+
+                  <CardHeader className="p-0">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`rounded-lg bg-gradient-to-br p-1 ${option.color} text-white`}
+                      >
+                        <IconComponent className="size-6" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          {option.title}
+                          {isSelected && (
+                            <IconStar className="text-primary fill-primary size-4" />
+                          )}
+                        </CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-1 p-0">
+                    <p className="text-muted-foreground text-sm">
+                      {option.description}
+                    </p>
+
+                    <div className="text-muted-foreground flex justify-between text-xs">
+                      <span>{option.difficulty}</span>
+                      <span>{option.players}</span>
+                    </div>
+
+                    <LibButton
+                      className={`mt-3 w-full ${
+                        isSelected
+                          ? "bg-primary hover:bg-primary/90"
+                          : "variant-outline"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGameStart(option.id);
+                      }}
+                      icon={<IconPlayerPlay className="size-4" />}
+                    >
+                      {isSelected ? "Commencer" : "Sélectionner"}
+                    </LibButton>
+                  </CardContent>
+                </Card>
+              );
+            })}
+
+            {/* Bouton de défi spécial */}
+            <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10">
+              <CardContent className="space-y-3 p-4 text-center">
+                <div className="mx-auto w-fit rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 p-2">
+                  <IconCrown className="size-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-amber-700 dark:text-amber-300">
+                    Défi du Champion
+                  </h3>
+                  <p className="text-muted-foreground text-xs">
+                    Mode hardcore pour les experts
+                  </p>
+                </div>
+                <LibButton
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-amber-500/50 text-amber-700 hover:bg-amber-500/10"
+                  icon={<IconTrophy className="size-4" />}
+                >
+                  Bientôt disponible
+                </LibButton>
+              </CardContent>
+            </Card>
+          </CardContent>
+        </Card>
       </div>
     </PageContainer>
   );

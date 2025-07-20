@@ -7,6 +7,7 @@ type ButtonProps = React.ComponentProps<typeof ShadButton> & {
   icon?: React.ReactNode;
   loading?: boolean;
   href?: string;
+  position?: "left" | "right" | "center";
 };
 
 export function LibButton({
@@ -15,12 +16,19 @@ export function LibButton({
   href,
   loading,
   className,
+  position = "center",
   ...props
 }: ButtonProps) {
   if (href) {
     return (
       <ShadButton
-        className={cn(className, "flex items-center gap-2")}
+        className={cn(
+          className,
+          "items-center gap-2",
+          position === "left" && "justify-start",
+          position === "right" && "justify-end",
+          position === "center" && "justify-center",
+        )}
         asChild
         {...props}
       >
@@ -34,7 +42,16 @@ export function LibButton({
   }
 
   return (
-    <ShadButton className={cn(className, "flex items-center gap-2")} {...props}>
+    <ShadButton
+      className={cn(
+        className,
+        "items-center gap-2",
+        position === "left" && "justify-start",
+        position === "right" && "justify-end",
+        position === "center" && "justify-center",
+      )}
+      {...props}
+    >
       {loading && <Loader2 className="size-icon animate-spin" />}
       {!loading && icon}
       {children}

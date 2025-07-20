@@ -18,8 +18,7 @@ export default function AuthenticatedLayout({
     >
       <AppSidebar variant="inset" />
       <SidebarInset>
-        <SiteHeader />
-        <main className="pb-safe @container/main absolute inset-0 container overflow-x-hidden overflow-y-scroll pt-14 md:pb-6!">
+        <main className="@container/main absolute inset-0 container overflow-x-hidden overflow-y-scroll">
           {children}
         </main>
       </SidebarInset>
