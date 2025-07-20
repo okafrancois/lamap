@@ -3,19 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { PlayingCard, CardBack } from "@/components/common/deck";
 import {
-  ChevronRight,
-  Coins,
-  Menu,
-  Phone,
-  ShieldCheck,
-  Sparkles,
-  SwatchBook,
-  Trophy,
-  Users,
-} from "lucide-react";
+  IconCards,
+  IconCoin,
+  IconSparkles,
+  IconChevronRight,
+  IconMenu2,
+  IconDeviceMobile,
+  IconShieldCheck,
+  IconTrophy,
+  IconUsersGroup,
+} from "@tabler/icons-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { CardBack, PlayingCard } from "@/components/common/deck";
+import { LibButton } from "@/components/library/button";
 
 export default async function HomePage() {
   return (
@@ -25,7 +26,7 @@ export default async function HomePage() {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="bg-primary flex size-10 items-center justify-center rounded-lg">
-              <SwatchBook className="text-primary-foreground size-6" />
+              <IconCards className="text-primary-foreground size-6" />
             </div>
             <span className="text-xl font-bold">LaMap241</span>
           </div>
@@ -34,28 +35,20 @@ export default async function HomePage() {
           <Sheet>
             <SheetTrigger asChild className="sm:hidden">
               <Button variant="ghost" size="icon">
-                <Menu className="size-icon" />
+                <IconMenu2 className="size-5" />
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-[80%] sm:w-[350px]">
-              <nav className="mt-8 flex flex-col gap-4">
-                <Link href="/login">
-                  <Button variant="outline" className="w-full">
-                    Se connecter
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button className="w-full">Commencer à jouer</Button>
-                </Link>
+              <nav className="mt-10 flex flex-col gap-4 px-4">
+                <LibButton href="/login">Se connecter</LibButton>
+                <LibButton href="/play">Commencer à jouer</LibButton>
               </nav>
             </SheetContent>
           </Sheet>
 
           {/* Desktop menu */}
           <nav className="hidden items-center gap-4 sm:flex">
-            <Link href="/play">
-              <Button>Commencer à jouer</Button>
-            </Link>
+            <LibButton href="/play">Commencer à jouer</LibButton>
           </nav>
         </div>
       </header>
@@ -67,7 +60,7 @@ export default async function HomePage() {
           <div className="space-y-6 text-center lg:text-left">
             {/* Badge */}
             <Badge variant="outline" className="mx-auto px-4 py-1.5 lg:mx-0">
-              <Sparkles className="size-icon" />
+              <IconSparkles className="mr-1 size-3" />
               Jeu de cartes en ligne
             </Badge>
 
@@ -80,28 +73,27 @@ export default async function HomePage() {
             {/* Description */}
             <p className="text-muted-foreground mx-auto max-w-xl text-lg sm:text-xl lg:mx-0 lg:text-2xl">
               Devenez maître du Garame ! Affrontez des joueurs, misez de
-              l'argent réel et remportez des gains instantanés dans ce jeu de
-              cartes stratégique.
+              l&apos;argent réel et remportez des gains instantanés dans ce jeu
+              de cartes stratégique.
             </p>
 
             {/* CTA Buttons */}
             <div className="flex flex-col justify-center gap-4 sm:flex-row lg:justify-start">
-              <Link href="/signup">
-                <Button
-                  size="lg"
-                  className="btn-chip w-full gap-2 sm:w-auto lg:px-8 lg:py-6 lg:text-lg"
-                >
-                  Jouer maintenant
-                  <ChevronRight className="size-icon" />
-                </Button>
-              </Link>
-              <Button
+              <LibButton
+                href="/play"
+                size="lg"
+                icon={<IconChevronRight className="size-icon" />}
+                className="btn-chip w-full gap-2 sm:w-auto lg:px-8 lg:py-6 lg:text-lg"
+              >
+                Jouer maintenant
+              </LibButton>
+              <LibButton
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto lg:px-8 lg:py-6 lg:text-lg"
               >
                 Voir les règles
-              </Button>
+              </LibButton>
             </div>
 
             {/* Stats rapides */}
@@ -507,7 +499,7 @@ export default async function HomePage() {
                     />
                   </div>
 
-                  <Coins className="text-primary relative z-10 mx-auto size-16 lg:size-20" />
+                  <IconCoin className="text-primary relative z-10 mx-auto size-16 lg:size-20" />
                   <h3 className="relative z-10 text-2xl font-bold lg:text-3xl">
                     Bonus de bienvenue
                   </h3>
@@ -558,16 +550,16 @@ export default async function HomePage() {
         <Card className="card-game-effect overflow-hidden">
           <CardContent className="space-y-6 p-8 text-center sm:p-12">
             <h2 className="text-3xl font-bold">
-              Prêt à commencer l'aventure ?
+              Prêt à commencer l&apos;aventure ?
             </h2>
             <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
               Rejoignez des milliers de joueurs et montrez vos talents de
-              stratège. L'arène vous attend !
+              stratège. L&apos;arène vous attend !
             </p>
             <Link href="/signup">
               <Button size="lg" className="btn-chip gap-2">
                 Créer mon compte gratuitement
-                <ChevronRight className="size-icon" />
+                <IconChevronRight className="size-4" />
               </Button>
             </Link>
           </CardContent>
@@ -580,7 +572,7 @@ export default async function HomePage() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <div className="flex items-center gap-2">
               <div className="bg-primary flex size-8 items-center justify-center rounded-lg">
-                <SwatchBook className="text-primary-foreground size-icon" />
+                <IconCards className="text-primary-foreground size-4" />
               </div>
               <span className="font-semibold">LaMap241</span>
             </div>
@@ -619,26 +611,26 @@ export default async function HomePage() {
 // Data
 const features = [
   {
-    icon: Trophy,
+    icon: IconTrophy,
     title: "Gains instantanés",
     description: "Remportez vos gains immédiatement après chaque victoire",
   },
   {
-    icon: Phone,
+    icon: IconDeviceMobile,
     title: "Mobile Money",
     description: "Dépôts et retraits faciles via Airtel Money et Moov Money",
   },
   {
-    icon: ShieldCheck,
+    icon: IconShieldCheck,
     title: "100% Sécurisé",
     description: "Plateforme sécurisée avec anti-triche intégré",
   },
   {
-    icon: Users,
+    icon: IconUsersGroup,
     title: "Multijoueur",
     description: "Affrontez des joueurs du monde entier en temps réel",
   },
-];
+] as const;
 
 const stats = [
   { value: "10K+", label: "Joueurs actifs" },
