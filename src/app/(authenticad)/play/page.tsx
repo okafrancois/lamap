@@ -76,29 +76,7 @@ export default function Page() {
       <div className="grid min-h-full gap-6 lg:grid-cols-6">
         {/* Plateau de jeu - Colonne de gauche */}
         <Card className="overflow-hidde @container/card col-span-4 pt-0">
-          <CardHeader className="from-primary/10 to-secondary/10 border-b bg-gradient-to-r !py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-primary/20 rounded-lg p-2">
-                  <IconCards className="text-primary size-6" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Plateau de Jeu</CardTitle>
-                  <CardDescription>
-                    {selectedGameMode
-                      ? `Mode: ${gameOptions.find((opt) => opt.id === selectedGameMode)?.title}`
-                      : "Sélectionnez un mode de jeu"}
-                  </CardDescription>
-                </div>
-              </div>
-              <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                <IconTrophy className="size-4" />
-                <span>Niveau: Débutant</span>
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-8">
+          <CardContent className="p-4">
             <div className="flex flex-col items-center justify-center space-y-8">
               {/* Zone de cartes centrale */}
               <div className="relative">
