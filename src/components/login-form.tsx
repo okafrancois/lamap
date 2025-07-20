@@ -1,18 +1,55 @@
+"use client";
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    const formData = new FormData(e.currentTarget);
+    const username = formData.get("username") as string;
+    const password = formData.get("password") as string;
+
+    try {
+      const result = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Nom d'utilisateur ou mot de passe incorrect");
+      } else if (result?.ok) {
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setError("Une erreur est survenue lors de la connexion");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form className="p-6 md:p-8">
+          <form className="p-6 md:p-8" onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
                 <h1 className="text-2xl font-bold">Bienvenue</h1>
@@ -20,13 +57,22 @@ export function LoginForm({
                   Se connecter à votre compte LaMap241
                 </p>
               </div>
+
+              {error && (
+                <div className="bg-destructive/10 text-destructive border-destructive/20 rounded-md border p-3 text-sm">
+                  {error}
+                </div>
+              )}
+
               <div className="grid gap-3">
                 <Label htmlFor="username">Identifiant</Label>
                 <Input
                   id="username"
+                  name="username"
                   type="text"
                   placeholder="Nom d'utilisateur"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-3">
@@ -39,10 +85,16 @@ export function LoginForm({
                     Mot de passe oublié ?
                   </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  disabled={isLoading}
+                />
               </div>
-              <Button type="submit" className="w-full">
-                Se connecter
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Connexion..." : "Se connecter"}
               </Button>
               <div className="after:border-border relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t">
                 <span className="bg-card text-muted-foreground relative z-10 px-2">
@@ -80,7 +132,7 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 Vous n&apos;avez pas de compte ?{" "}
-                <a href="#" className="underline underline-offset-4">
+                <a href="/register" className="underline underline-offset-4">
                   Créer un compte
                 </a>
               </div>

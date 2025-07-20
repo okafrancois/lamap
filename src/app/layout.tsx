@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
 import { TRPCReactProvider } from "@/trpc/react";
+import { NextAuthSessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
@@ -23,10 +24,12 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${geist.variable}`}>
       <body>
-        <TRPCReactProvider>
-          {children}
-          <Toaster position="bottom-right" richColors />
-        </TRPCReactProvider>
+        <NextAuthSessionProvider>
+          <TRPCReactProvider>
+            {children}
+            <Toaster position="bottom-right" richColors />
+          </TRPCReactProvider>
+        </NextAuthSessionProvider>
       </body>
     </html>
   );

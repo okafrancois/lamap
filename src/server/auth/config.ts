@@ -1,9 +1,13 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { type DefaultSession, type NextAuthConfig } from "next-auth";
-import DiscordProvider from "next-auth/providers/discord";
 
 import { db } from "@/server/db";
 import Credentials from "next-auth/providers/credentials";
+import { verifyPassword } from "@/lib/auth";
+import { z } from "zod";
+import type { Role } from "@prisma/client";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import type { JWT } from "next-auth/jwt";
 
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
@@ -15,15 +19,28 @@ declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
       id: string;
-      // ...other properties
-      // role: UserRole;
+      role: Role;
+      username: string;
+      email?: string | null;
     } & DefaultSession["user"];
   }
 
-  // interface User {
-  //   // ...other properties
-  //   // role: UserRole;
-  // }
+  interface User {
+    role: Role;
+    username: string;
+    email?: string | null;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: Role;
+    email: string | null;
+    username: string;
+    name?: string;
+    image?: string;
+  }
 }
 
 /**
@@ -31,21 +48,58 @@ declare module "next-auth" {
  *
  * @see https://next-auth.js.org/configuration/options
  */
+const loginSchema = z.object({
+  username: z.string().min(1, "Nom d'utilisateur requis"),
+  password: z.string().min(1, "Mot de passe requis"),
+});
+
 export const authConfig = {
   providers: [
     Credentials({
       name: "Credentials",
       credentials: {
-        username: { label: "Username", type: "text", placeholder: "jsmith" },
-        password: { label: "Password", type: "password" },
+        username: {
+          label: "Nom d'utilisateur",
+          type: "text",
+          placeholder: "votre_nom_utilisateur",
+        },
+        password: { label: "Mot de passe", type: "password" },
       },
       async authorize(credentials) {
-        const user = {
-          id: "1",
-          name: "J Smith",
-          email: "jsmith@example.com",
-        };
-        return user;
+        try {
+          const { username, password } = loginSchema.parse(credentials);
+
+          const user = await db.user.findUnique({
+            where: { username },
+          });
+
+          if (!user?.password) {
+            return null;
+          }
+
+          const isValidPassword = await verifyPassword(
+            password,
+            user.password as string,
+          );
+
+          if (!isValidPassword) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            name: user.name ?? user.username,
+            email: user.email,
+            username: user.username as string,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error(
+            "Erreur lors de l'authentification:",
+            error instanceof Error ? error.message : String(error),
+          );
+          return null;
+        }
       },
     }),
     /**
@@ -58,14 +112,36 @@ export const authConfig = {
      * @see https://next-auth.js.org/providers/github
      */
   ],
-  adapter: PrismaAdapter(db),
+  pages: {
+    signIn: "/login",
+    newUser: "/register",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
+  },
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: user.id,
+        id: token.id,
+        role: token.role,
+        username: token.username,
+        email: token.email,
       },
     }),
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id!;
+        token.role = user.role!;
+        token.email = user.email!;
+        token.username = user.username!;
+        token.name = user.name!;
+        token.image = user.image!;
+      }
+
+      return token;
+    },
   },
 } satisfies NextAuthConfig;
