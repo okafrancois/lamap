@@ -67,7 +67,10 @@ const PlayingCard: React.FC<CardProps> = ({
       >
         <SuitIcon
           size={size}
-          className={cn("", isRed ? "text-primary" : "text-accent")}
+          className={cn(
+            "text-primary",
+            isRed ? "text-primary" : "text-foreground",
+          )}
         />
       </foreignObject>
     );
@@ -86,7 +89,7 @@ const PlayingCard: React.FC<CardProps> = ({
             height="100"
             className={cn(
               "fill-current opacity-10",
-              isRed ? "text-primary" : "text-accent",
+              isRed ? "text-primary" : "text-foreground",
             )}
             rx="5"
           />
@@ -100,7 +103,7 @@ const PlayingCard: React.FC<CardProps> = ({
             fill="none"
             className={cn(
               "stroke-current opacity-20",
-              isRed ? "text-primary" : "text-accent",
+              isRed ? "text-primary" : "text-foreground",
             )}
             strokeWidth="1.5"
             rx="3"
@@ -113,7 +116,7 @@ const PlayingCard: React.FC<CardProps> = ({
               d="M-30,-45 L30,-45 M-30,-40 L30,-40 M-30,40 L30,40 M-30,45 L30,45"
               className={cn(
                 "stroke-current",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
               strokeWidth="1"
               fill="none"
@@ -127,7 +130,7 @@ const PlayingCard: React.FC<CardProps> = ({
               fill="none"
               className={cn(
                 "stroke-current",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
               strokeWidth="1"
             />
@@ -138,7 +141,7 @@ const PlayingCard: React.FC<CardProps> = ({
               fill="none"
               className={cn(
                 "stroke-current",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
               strokeWidth="1"
             />
@@ -149,7 +152,7 @@ const PlayingCard: React.FC<CardProps> = ({
               fill="none"
               className={cn(
                 "stroke-current",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
               strokeWidth="0.5"
             />
@@ -163,7 +166,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 d="M-15,-25 L-10,-20 L-5,-25 L0,-20 L5,-25 L10,-20 L15,-25 L15,-15 L-15,-15 Z"
                 className={cn(
                   "fill-current opacity-30",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
               <circle
@@ -172,7 +175,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="2"
                 className={cn(
                   "fill-current",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
               <circle
@@ -181,7 +184,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="2"
                 className={cn(
                   "fill-current",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
               <circle
@@ -190,7 +193,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="2"
                 className={cn(
                   "fill-current",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -201,7 +204,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="8"
                 className={cn(
                   "fill-current opacity-15",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -211,7 +214,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fill="none"
                 className={cn(
                   "stroke-current opacity-40",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
                 strokeWidth="1.5"
               />
@@ -224,7 +227,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fill="none"
                 className={cn(
                   "stroke-current opacity-30",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
                 strokeWidth="1"
               />
@@ -237,7 +240,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fontSize="24"
                 className={cn(
                   "fill-current font-bold",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               >
                 K
@@ -252,7 +255,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 d="M-12,-22 Q0,-28 12,-22 L12,-15 Q0,-20 -12,-15 Z"
                 className={cn(
                   "fill-current opacity-30",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
               <circle
@@ -261,7 +264,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="3"
                 className={cn(
                   "fill-current opacity-50",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -272,7 +275,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="8"
                 className={cn(
                   "fill-current opacity-15",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -282,7 +285,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fill="none"
                 className={cn(
                   "stroke-current opacity-40",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
                 strokeWidth="1.5"
               />
@@ -296,7 +299,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fill="none"
                 className={cn(
                   "stroke-current opacity-30",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
                 strokeWidth="1"
               />
@@ -309,7 +312,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   r="2"
                   className={cn(
                     "fill-current opacity-20",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
                 <circle
@@ -318,7 +321,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   r="2"
                   className={cn(
                     "fill-current opacity-15",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
                 <circle
@@ -327,7 +330,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   r="2"
                   className={cn(
                     "fill-current opacity-15",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
                 <circle
@@ -336,7 +339,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   r="2"
                   className={cn(
                     "fill-current opacity-15",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
                 <circle
@@ -345,7 +348,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   r="2"
                   className={cn(
                     "fill-current opacity-15",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
               </g>
@@ -357,7 +360,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fontSize="24"
                 className={cn(
                   "fill-current font-bold",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               >
                 Q
@@ -372,7 +375,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 d="M-10,-20 L-8,-25 Q0,-28 8,-25 L10,-20 L5,-15 L-5,-15 Z"
                 className={cn(
                   "fill-current opacity-30",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
               <circle
@@ -381,7 +384,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="2"
                 className={cn(
                   "fill-current opacity-40",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -392,7 +395,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 r="8"
                 className={cn(
                   "fill-current opacity-15",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -402,7 +405,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fill="none"
                 className={cn(
                   "stroke-current opacity-40",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
                 strokeWidth="1.5"
               />
@@ -415,7 +418,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 height="3"
                 className={cn(
                   "fill-current opacity-20",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               />
 
@@ -428,7 +431,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   height="15"
                   className={cn(
                     "fill-current opacity-30",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
                 <rect
@@ -438,7 +441,7 @@ const PlayingCard: React.FC<CardProps> = ({
                   height="3"
                   className={cn(
                     "fill-current opacity-40",
-                    isRed ? "text-primary" : "text-accent",
+                    isRed ? "text-primary" : "text-foreground",
                   )}
                 />
               </g>
@@ -450,7 +453,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 fontSize="24"
                 className={cn(
                   "fill-current font-bold",
-                  isRed ? "text-primary" : "text-accent",
+                  isRed ? "text-primary" : "text-foreground",
                 )}
               >
                 J
@@ -609,7 +612,7 @@ const PlayingCard: React.FC<CardProps> = ({
               r="1"
               className={cn(
                 "fill-current opacity-20",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
             />
             <circle
@@ -618,7 +621,7 @@ const PlayingCard: React.FC<CardProps> = ({
               r="1"
               className={cn(
                 "fill-current opacity-20",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
             />
           </pattern>
@@ -669,7 +672,7 @@ const PlayingCard: React.FC<CardProps> = ({
           fill="none"
           className={cn(
             "stroke-current opacity-40",
-            isRed ? "text-primary" : "text-accent",
+            isRed ? "text-primary" : "text-foreground",
           )}
           strokeWidth="0.5"
           strokeDasharray="2 2"
@@ -685,7 +688,7 @@ const PlayingCard: React.FC<CardProps> = ({
           fill={`url(#borderPattern-${suit}-${rank})`}
           className={cn(
             "stroke-current opacity-30",
-            isRed ? "text-primary" : "text-accent",
+            isRed ? "text-primary" : "text-foreground",
           )}
           strokeWidth="0.5"
         />
@@ -696,28 +699,28 @@ const PlayingCard: React.FC<CardProps> = ({
             d="M10,10 L25,10 L25,8 L10,8 Z M10,10 L10,25 L8,25 L8,10 Z"
             className={cn(
               "fill-current",
-              isRed ? "text-primary" : "text-accent",
+              isRed ? "text-primary" : "text-foreground",
             )}
           />
           <path
             d="M75,10 L90,10 L90,8 L75,8 Z M90,10 L90,25 L92,25 L92,10 Z"
             className={cn(
               "fill-current",
-              isRed ? "text-primary" : "text-accent",
+              isRed ? "text-primary" : "text-foreground",
             )}
           />
           <path
             d="M10,130 L25,130 L25,132 L10,132 Z M10,130 L10,115 L8,115 L8,130 Z"
             className={cn(
               "fill-current",
-              isRed ? "text-primary" : "text-accent",
+              isRed ? "text-primary" : "text-foreground",
             )}
           />
           <path
             d="M75,130 L90,130 L90,132 L75,132 Z M90,130 L90,115 L92,115 L92,130 Z"
             className={cn(
               "fill-current",
-              isRed ? "text-primary" : "text-accent",
+              isRed ? "text-primary" : "text-foreground",
             )}
           />
         </g>
@@ -734,7 +737,7 @@ const PlayingCard: React.FC<CardProps> = ({
               rx="3"
               className={cn(
                 "fill-current opacity-5",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
             />
             <text
@@ -743,7 +746,7 @@ const PlayingCard: React.FC<CardProps> = ({
               fontSize="16"
               className={cn(
                 "fill-current font-bold",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
             >
               {rank}
@@ -761,7 +764,7 @@ const PlayingCard: React.FC<CardProps> = ({
               rx="3"
               className={cn(
                 "fill-current opacity-5",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
             />
             <text
@@ -770,7 +773,7 @@ const PlayingCard: React.FC<CardProps> = ({
               fontSize="16"
               className={cn(
                 "fill-current font-bold",
-                isRed ? "text-primary" : "text-accent",
+                isRed ? "text-primary" : "text-foreground",
               )}
             >
               {rank}
@@ -1022,7 +1025,7 @@ const FullDeck: React.FC = () => {
               "mb-4 text-xl font-semibold capitalize",
               suit === "hearts" || suit === "diamonds"
                 ? "text-primary"
-                : "text-accent",
+                : "text-foreground",
             )}
           >
             {suit === "hearts"
@@ -1036,10 +1039,7 @@ const FullDeck: React.FC = () => {
 
           <div className="game-grid">
             {ranks.map((rank) => (
-              <div
-                key={`${suit}-${rank}`}
-                className="card-shadow flex justify-center"
-              >
+              <div key={`${suit}-${rank}`} className="flex justify-center">
                 <PlayingCard suit={suit} rank={rank} />
               </div>
             ))}
