@@ -10,7 +10,9 @@ export default function Page() {
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive />
       </div>
-      <FullDeck />
+      <div className="flex justify-center">
+        <FullDeck />
+      </div>
     </PageContainer>
   );
 }
