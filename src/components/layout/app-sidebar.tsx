@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   IconCamera,
+  IconCards,
   IconChartBar,
   IconDashboard,
   IconDatabase,
@@ -11,7 +12,6 @@ import {
   IconFileWord,
   IconFolder,
   IconHelp,
-  IconInnerShadowTop,
   IconListDetails,
   IconReport,
   IconSearch,
@@ -35,8 +35,8 @@ import {
 
 const data = {
   user: {
-    name: "shadcn",
-    email: "m@example.com",
+    name: "John Doe",
+    email: "john.doe@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
@@ -131,28 +131,11 @@ const data = {
       icon: IconSearch,
     },
   ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
@@ -160,17 +143,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+              <span>
+                <IconCards className="!size-icon" />
+                <span className="text-base font-semibold">LaMap241</span>
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

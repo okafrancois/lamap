@@ -1,5 +1,11 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import {
+  IconClubsFilled,
+  IconDiamondsFilled,
+  IconHeartFilled,
+  IconSpadeFilled,
+} from "@tabler/icons-react";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -42,11 +48,29 @@ const PlayingCard: React.FC<CardProps> = ({
   const isRed = suit === "hearts" || suit === "diamonds";
 
   // Symboles des suites
-  const suitSymbols = {
-    hearts: "♥",
-    diamonds: "♦",
-    clubs: "♣",
-    spades: "♠",
+  const suitSymbols: Record<Suit, React.ElementType> = {
+    hearts: IconHeartFilled,
+    diamonds: IconDiamondsFilled,
+    clubs: IconClubsFilled,
+    spades: IconSpadeFilled,
+  };
+
+  // Fonction pour rendre une icône de suite comme élément SVG
+  const renderSuitIcon = (suit: Suit, x: number, y: number, size = 12) => {
+    const SuitIcon = suitSymbols[suit];
+    return (
+      <foreignObject
+        x={x - size / 2}
+        y={y - size / 2}
+        width={size}
+        height={size}
+      >
+        <SuitIcon
+          size={size}
+          className={cn("", isRed ? "text-primary" : "text-accent")}
+        />
+      </foreignObject>
+    );
   };
 
   // Dessins complexes pour les figures
@@ -204,18 +228,7 @@ const PlayingCard: React.FC<CardProps> = ({
                 )}
                 strokeWidth="1"
               />
-              <text
-                x="0"
-                y="23"
-                textAnchor="middle"
-                fontSize="8"
-                className={cn(
-                  "fill-current opacity-50",
-                  isRed ? "text-primary" : "text-accent",
-                )}
-              >
-                {suitSymbols[suit]}
-              </text>
+              {renderSuitIcon(suit, 0, 20, 8)}
 
               <text
                 x="0"
@@ -531,17 +544,9 @@ const PlayingCard: React.FC<CardProps> = ({
     const pips = positions[rank] ?? [];
 
     return pips.map((pos, index) => (
-      <text
-        key={index}
-        x={pos.x}
-        y={pos.y}
-        fontSize={rank === "A" ? 40 : 20}
-        className={cn("fill-current", isRed ? "text-primary" : "text-accent")}
-        textAnchor="middle"
-        dominantBaseline="middle"
-      >
-        {suitSymbols[suit]}
-      </text>
+      <g key={index}>
+        {renderSuitIcon(suit, pos.x, pos.y, rank === "A" ? 24 : 12)}
+      </g>
     ));
   };
 
@@ -743,17 +748,7 @@ const PlayingCard: React.FC<CardProps> = ({
             >
               {rank}
             </text>
-            <text
-              x="10"
-              y="32"
-              fontSize="14"
-              className={cn(
-                "fill-current",
-                isRed ? "text-primary" : "text-accent",
-              )}
-            >
-              {suitSymbols[suit]}
-            </text>
+            {renderSuitIcon(suit, 10, 29, 10)}
           </g>
 
           {/* Coin inférieur droit (inversé) avec fond décoratif */}
@@ -780,17 +775,7 @@ const PlayingCard: React.FC<CardProps> = ({
             >
               {rank}
             </text>
-            <text
-              x="10"
-              y="32"
-              fontSize="14"
-              className={cn(
-                "fill-current",
-                isRed ? "text-primary" : "text-accent",
-              )}
-            >
-              {suitSymbols[suit]}
-            </text>
+            {renderSuitIcon(suit, 10, 29, 10)}
           </g>
         </g>
 
