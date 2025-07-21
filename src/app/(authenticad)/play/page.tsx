@@ -99,19 +99,115 @@ export default function Page() {
     <PageContainer className="flex flex-col gap-6 lg:flex-row">
       {/* Plateau de jeu - Colonne de gauche */}
       <Card className="h-full overflow-hidden p-0 lg:w-4/6">
-        <CardContent className="flex h-full flex-col gap-4">
+        <CardContent className="relative flex h-full flex-col gap-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          {/* Éléments décoratifs d'arrière-plan */}
+          <div className="pointer-events-none absolute inset-0">
+            {/* Motifs de bordure élégants */}
+            <div className="absolute top-0 left-0 h-32 w-32 opacity-20">
+              <svg viewBox="0 0 100 100" className="h-full w-full">
+                <path
+                  d="M20,20 Q50,5 80,20 Q95,50 80,80 Q50,95 20,80 Q5,50 20,20 Z"
+                  fill="none"
+                  stroke="rgba(251, 191, 36, 0.6)"
+                  strokeWidth="1"
+                />
+                <circle cx="50" cy="50" r="8" fill="rgba(251, 191, 36, 0.3)" />
+              </svg>
+            </div>
+            <div className="absolute top-0 right-0 h-32 w-32 rotate-90 opacity-20">
+              <svg viewBox="0 0 100 100" className="h-full w-full">
+                <path
+                  d="M20,20 Q50,5 80,20 Q95,50 80,80 Q50,95 20,80 Q5,50 20,20 Z"
+                  fill="none"
+                  stroke="rgba(251, 191, 36, 0.6)"
+                  strokeWidth="1"
+                />
+                <circle cx="50" cy="50" r="8" fill="rgba(251, 191, 36, 0.3)" />
+              </svg>
+            </div>
+            <div className="absolute bottom-0 left-0 h-32 w-32 -rotate-90 opacity-20">
+              <svg viewBox="0 0 100 100" className="h-full w-full">
+                <path
+                  d="M20,20 Q50,5 80,20 Q95,50 80,80 Q50,95 20,80 Q5,50 20,20 Z"
+                  fill="none"
+                  stroke="rgba(251, 191, 36, 0.6)"
+                  strokeWidth="1"
+                />
+                <circle cx="50" cy="50" r="8" fill="rgba(251, 191, 36, 0.3)" />
+              </svg>
+            </div>
+            <div className="absolute right-0 bottom-0 h-32 w-32 rotate-180 opacity-20">
+              <svg viewBox="0 0 100 100" className="h-full w-full">
+                <path
+                  d="M20,20 Q50,5 80,20 Q95,50 80,80 Q50,95 20,80 Q5,50 20,20 Z"
+                  fill="none"
+                  stroke="rgba(251, 191, 36, 0.6)"
+                  strokeWidth="1"
+                />
+                <circle cx="50" cy="50" r="8" fill="rgba(251, 191, 36, 0.3)" />
+              </svg>
+            </div>
+
+            {/* Particules flottantes */}
+            <div className="absolute top-1/4 left-1/4 h-2 w-2 animate-pulse rounded-full bg-amber-400/40"></div>
+            <div
+              className="absolute top-1/3 right-1/4 h-1 w-1 animate-pulse rounded-full bg-amber-300/30"
+              style={{ animationDelay: "1s" }}
+            ></div>
+            <div
+              className="absolute bottom-1/4 left-1/3 h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500/50"
+              style={{ animationDelay: "2s" }}
+            ></div>
+            <div
+              className="absolute right-1/3 bottom-1/3 h-1 w-1 animate-pulse rounded-full bg-amber-200/40"
+              style={{ animationDelay: "0.5s" }}
+            ></div>
+
+            {/* Bordures latérales décoratives */}
+            <div className="absolute top-1/2 left-2 h-24 w-1 -translate-y-1/2 bg-gradient-to-b from-transparent via-amber-400/30 to-transparent"></div>
+            <div className="absolute top-1/2 right-2 h-24 w-1 -translate-y-1/2 bg-gradient-to-b from-transparent via-amber-400/30 to-transparent"></div>
+            <div className="absolute top-2 left-1/2 h-1 w-24 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"></div>
+            <div className="absolute bottom-2 left-1/2 h-1 w-24 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"></div>
+          </div>
+
           {/* Cartes de l'adversaire (en haut) */}
-          <div className="p-4">
+          <div className="relative z-10 p-4">
             <div className="text-center">
-              <div className="text-muted-foreground mb-3 text-sm">
+              <div className="mb-3 text-sm text-amber-200/80">
                 Adversaire ({opponentCards.length} cartes)
               </div>
               <PlayerDeck cards={opponentCards} isOpponent={true} />
+
+              {/* Éléments décoratifs autour des cartes adversaires */}
+              <div className="absolute top-1/2 -left-4 h-8 w-8 -translate-y-1/2 opacity-30">
+                <div className="h-full w-full rounded-full border-2 border-amber-400/40 bg-amber-200/10">
+                  <div className="m-1 h-6 w-6 rounded-full bg-amber-300/30"></div>
+                </div>
+              </div>
+              <div className="absolute top-1/2 -right-4 h-8 w-8 -translate-y-1/2 opacity-30">
+                <div className="h-full w-full rounded-full border-2 border-amber-400/40 bg-amber-200/10">
+                  <div className="m-1 h-6 w-6 rounded-full bg-amber-300/30"></div>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Zone de cartes jouées (au milieu) */}
-          <div className="flex flex-1 items-center justify-center">
+          <div className="relative z-10 flex flex-1 items-center justify-center">
+            {/* Anneaux décoratifs autour du plateau */}
+            <div
+              className="absolute h-[45%] w-[45%] animate-pulse rounded-full border border-amber-400/20"
+              style={{ animationDuration: "4s" }}
+            ></div>
+            <div
+              className="absolute h-[50%] w-[50%] animate-pulse rounded-full border border-amber-300/15"
+              style={{ animationDuration: "6s", animationDelay: "1s" }}
+            ></div>
+            <div
+              className="absolute h-[55%] w-[55%] animate-pulse rounded-full border border-amber-200/10"
+              style={{ animationDuration: "8s", animationDelay: "2s" }}
+            ></div>
+
             <div className="relative aspect-square w-[35%]">
               {/* Plateau de jeu avec design élaboré */}
               <div className="relative h-full w-full rounded-2xl border-4 border-amber-400/80 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-900 shadow-2xl">
@@ -207,10 +303,19 @@ export default function Page() {
               {/* Ombre portée du plateau */}
               <div className="absolute -right-4 -bottom-4 h-full w-full rounded-2xl bg-black/20 blur-xl"></div>
             </div>
+
+            {/* Éléments décoratifs latéraux */}
+            <div className="absolute top-1/2 left-4 h-16 w-4 -translate-y-1/2 opacity-40">
+              <div className="h-full w-full rounded-full bg-gradient-to-b from-amber-400/30 via-amber-300/20 to-amber-400/30"></div>
+            </div>
+            <div className="absolute top-1/2 right-4 h-16 w-4 -translate-y-1/2 opacity-40">
+              <div className="h-full w-full rounded-full bg-gradient-to-b from-amber-400/30 via-amber-300/20 to-amber-400/30"></div>
+            </div>
           </div>
 
-          <div className="min-h-max text-center">
-            <div className="text-foreground mb-3 text-sm font-medium">
+          {/* Cartes du joueur (en bas) */}
+          <div className="relative z-10 min-h-max text-center">
+            <div className="mb-3 text-sm font-medium text-amber-100">
               Vos cartes
             </div>
             <PlayerDeck
@@ -218,6 +323,18 @@ export default function Page() {
               isOpponent={false}
               hidden={!selectedGameMode}
             />
+
+            {/* Éléments décoratifs autour des cartes du joueur */}
+            <div className="absolute bottom-1/2 -left-6 h-10 w-10 translate-y-1/2 opacity-40">
+              <div className="h-full w-full rounded-full border-2 border-amber-400/50 bg-amber-200/15">
+                <div className="m-1 h-8 w-8 rounded-full bg-amber-300/40"></div>
+              </div>
+            </div>
+            <div className="absolute -right-6 bottom-1/2 h-10 w-10 translate-y-1/2 opacity-40">
+              <div className="h-full w-full rounded-full border-2 border-amber-400/50 bg-amber-200/15">
+                <div className="m-1 h-8 w-8 rounded-full bg-amber-300/40"></div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
