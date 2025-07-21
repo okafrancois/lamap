@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/card";
 import { type Card as DeckCard } from "@/components/common/deck";
 import { GameBoard } from "@/components/common/game-board";
+import { DebugPanel } from "@/components/common/debug-panel";
+import { useGameState } from "@/hooks/use-game-state";
 import {
   IconRobot,
   IconUsers,
@@ -25,36 +27,25 @@ import { LibTitle } from "@/components/library/title";
 export default function Page() {
   const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
 
-  // Cartes d'exemple pour le plateau de jeu
-  const gameCards = [
-    { suit: "hearts", rank: "A" },
-    { suit: "diamonds", rank: "K" },
-    { suit: "clubs", rank: "Q" },
-    { suit: "spades", rank: "J" },
-    { suit: "hearts", rank: "10" },
-  ] as const;
-
-  // Cartes du joueur (visibles)
-  const playerCards: DeckCard[] = [
-    { suit: "hearts", rank: "K" },
-    { suit: "diamonds", rank: "Q" },
-    { suit: "clubs", rank: "J" },
-    { suit: "spades", rank: "A" },
-  ];
-
-  // Cartes de l'adversaire (cachées, on ne montre que le nombre)
-  const opponentCards: DeckCard[] = [
-    { suit: "hearts", rank: "A" }, // Ces valeurs ne seront pas visibles
-    { suit: "diamonds", rank: "K" },
-    { suit: "clubs", rank: "Q" },
-    { suit: "spades", rank: "J" },
-  ];
-
-  // Cartes jouées au centre
-  const playedCards: DeckCard[] = [
-    { suit: "diamonds", rank: "7" },
-    { suit: "clubs", rank: "8" },
-  ];
+  // Hook de gestion d'état du jeu
+  const {
+    phase,
+    currentTurn,
+    playerCards,
+    opponentCards,
+    playedCards,
+    playableCards,
+    hoveredCard,
+    isAnimating,
+    startGame,
+    playCard,
+    setHoveredCard,
+    endGame,
+    setPhase,
+    setCurrentTurn,
+    setPlayableCards,
+    playRandomCard,
+  } = useGameState();
 
   const gameOptions = [
     {
@@ -88,102 +79,130 @@ export default function Page() {
 
   const handleGameStart = (gameMode: string) => {
     setSelectedGameMode(gameMode);
-    // Ici vous pouvez ajouter la logique pour démarrer le jeu
+    startGame();
     console.log(`Démarrage du mode: ${gameMode}`);
   };
 
   return (
-    <PageContainer className="flex flex-col gap-6 lg:flex-row">
-      {/* Plateau de jeu - Colonne de gauche */}
-      <GameBoard
-        playerCards={playerCards}
-        opponentCards={opponentCards}
-        playedCards={playedCards}
-        gameStarted={selectedGameMode !== null}
-        className="h-full overflow-hidden rounded-lg p-0 lg:w-4/6"
+    <>
+      {/* Panneau de debug flottant */}
+      <DebugPanel
+        phase={phase}
+        currentTurn={currentTurn}
+        playerCardsCount={playerCards.length}
+        opponentCardsCount={opponentCards.length}
+        playedCardsCount={playedCards.length}
+        playableCards={playableCards}
+        hoveredCard={hoveredCard}
+        isAnimating={isAnimating}
+        onPhaseChange={setPhase}
+        onTurnChange={setCurrentTurn}
+        onStartGame={startGame}
+        onEndGame={endGame}
+        onPlayRandomCard={playRandomCard}
+        onSetPlayableCards={setPlayableCards}
+        onSimulateHover={setHoveredCard}
       />
 
-      {/* Options de jeu - Colonne de droite */}
-      <Card className="h-full pt-0 lg:w-2/6">
-        <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
-          <LibTitle as="h3" className="flex w-full items-center gap-3">
-            <div className="bg-secondary/20 rounded-lg p-2">
-              <IconCards className="text-secondary size-6" />
-            </div>
-            <div>
-              <span className="text-lg font-semibold">Modes de Jeu</span>
-              <CardDescription>Choisissez votre façon de jouer</CardDescription>
-            </div>
-          </LibTitle>
-        </CardHeader>
+      <PageContainer className="flex flex-col gap-6 lg:flex-row">
+        {/* Plateau de jeu - Colonne de gauche */}
+        <GameBoard
+          playerCards={playerCards}
+          opponentCards={opponentCards}
+          playedCards={playedCards}
+          gameStarted={phase === "playing"}
+          isPlayerTurn={currentTurn === "player" && phase === "playing"}
+          playableCards={playableCards}
+          onCardClick={playCard}
+          hoveredCard={hoveredCard}
+          onCardHover={setHoveredCard}
+          currentTurn={currentTurn}
+          className="h-full overflow-hidden rounded-lg p-0 lg:w-4/6"
+        />
 
-        <CardContent className="max-h-full space-y-4 overflow-y-scroll pt-2">
-          {gameOptions.map((option) => {
-            const IconComponent = option.icon;
-            const isSelected = selectedGameMode === option.id;
+        {/* Options de jeu - Colonne de droite */}
+        <Card className="h-full pt-0 lg:w-2/6">
+          <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
+            <LibTitle as="h3" className="flex w-full items-center gap-3">
+              <div className="bg-secondary/20 rounded-lg p-2">
+                <IconCards className="text-secondary size-6" />
+              </div>
+              <div>
+                <span className="text-lg font-semibold">Modes de Jeu</span>
+                <CardDescription>
+                  Choisissez votre façon de jouer
+                </CardDescription>
+              </div>
+            </LibTitle>
+          </CardHeader>
 
-            return (
-              <Card
-                key={option.id}
-                className={`relative cursor-pointer gap-2 border-2 p-6 transition-all duration-300 hover:shadow-lg ${
-                  isSelected
-                    ? "border-primary shadow-primary/20 scale-[1.02] shadow-lg"
-                    : "border-border hover:border-primary/50"
-                }`}
-                onClick={() => setSelectedGameMode(option.id)}
-              >
-                <div
-                  className={`absolute inset-0 bg-gradient-to-br ${option.color} opacity-5`}
-                ></div>
+          <CardContent className="max-h-full space-y-4 overflow-y-scroll pt-2">
+            {gameOptions.map((option) => {
+              const IconComponent = option.icon;
+              const isSelected = selectedGameMode === option.id;
 
-                <CardHeader className="p-0">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`rounded-lg bg-gradient-to-br p-1 ${option.color} text-white`}
+              return (
+                <Card
+                  key={option.id}
+                  className={`relative cursor-pointer gap-2 border-2 p-6 transition-all duration-300 hover:shadow-lg ${
+                    isSelected
+                      ? "border-primary shadow-primary/20 scale-[1.02] shadow-lg"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                  onClick={() => setSelectedGameMode(option.id)}
+                >
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${option.color} opacity-5`}
+                  ></div>
+
+                  <CardHeader className="p-0">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`rounded-lg bg-gradient-to-br p-1 ${option.color} text-white`}
+                      >
+                        <IconComponent className="size-6" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          {option.title}
+                          {isSelected && (
+                            <IconStar className="text-primary fill-primary size-4" />
+                          )}
+                        </CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-1 p-0">
+                    <p className="text-muted-foreground text-sm">
+                      {option.description}
+                    </p>
+
+                    <div className="text-muted-foreground flex justify-between text-xs">
+                      <span>{option.difficulty}</span>
+                      <span>{option.players}</span>
+                    </div>
+
+                    <LibButton
+                      className={`mt-3 w-full ${
+                        isSelected
+                          ? "bg-primary hover:bg-primary/90"
+                          : "variant-outline"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGameStart(option.id);
+                      }}
+                      icon={<IconPlayerPlay className="size-4" />}
                     >
-                      <IconComponent className="size-6" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        {option.title}
-                        {isSelected && (
-                          <IconStar className="text-primary fill-primary size-4" />
-                        )}
-                      </CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
+                      {isSelected ? "Commencer" : "Sélectionner"}
+                    </LibButton>
+                  </CardContent>
+                </Card>
+              );
+            })}
 
-                <CardContent className="space-y-1 p-0">
-                  <p className="text-muted-foreground text-sm">
-                    {option.description}
-                  </p>
-
-                  <div className="text-muted-foreground flex justify-between text-xs">
-                    <span>{option.difficulty}</span>
-                    <span>{option.players}</span>
-                  </div>
-
-                  <LibButton
-                    className={`mt-3 w-full ${
-                      isSelected
-                        ? "bg-primary hover:bg-primary/90"
-                        : "variant-outline"
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGameStart(option.id);
-                    }}
-                    icon={<IconPlayerPlay className="size-4" />}
-                  >
-                    {isSelected ? "Commencer" : "Sélectionner"}
-                  </LibButton>
-                </CardContent>
-              </Card>
-            );
-          })}
-
-          {/* Bouton de défi spécial 
+            {/* Bouton de défi spécial 
 
           <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10">
             <CardContent className="space-y-3 p-4 text-center">
@@ -210,8 +229,9 @@ export default function Page() {
           </Card>
           
           */}
-        </CardContent>
-      </Card>
-    </PageContainer>
+          </CardContent>
+        </Card>
+      </PageContainer>
+    </>
   );
 }

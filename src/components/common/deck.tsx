@@ -6,6 +6,7 @@ import {
   IconHeartFilled,
   IconSpadeFilled,
 } from "@tabler/icons-react";
+import { PlayButton } from "./play-button";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -35,6 +36,12 @@ interface CardProps {
   width?: number;
   height?: number;
   className?: string;
+  isPlayable?: boolean;
+  isFlipping?: boolean;
+  isPlaying?: boolean;
+  isHovered?: boolean;
+  onClick?: (e?: React.MouseEvent) => void;
+  onHover?: (hovered: boolean) => void;
 }
 
 // Composant pour une carte individuelle
@@ -44,6 +51,12 @@ const PlayingCard: React.FC<CardProps> = ({
   width = 100,
   height = 140,
   className,
+  isPlayable = true,
+  isFlipping = false,
+  isPlaying = false,
+  isHovered = false,
+  onClick,
+  onHover,
 }) => {
   const isRed = suit === "hearts" || suit === "diamonds";
 
@@ -553,8 +566,41 @@ const PlayingCard: React.FC<CardProps> = ({
     ));
   };
 
+  // Classes conditionnelles pour les animations et états
+  const cardClasses = cn(
+    "playing-card relative transition-all duration-300 ease-in-out",
+    {
+      // États de base
+      "cursor-pointer hover:scale-110": isPlayable && onClick,
+      "opacity-50 cursor-not-allowed grayscale-[0.3]": !isPlayable,
+      "cursor-default": !onClick,
+
+      // Animations spéciales
+      "animate-flip-card": isFlipping,
+      "animate-play-card": isPlaying,
+      "scale-105": isHovered && isPlayable,
+
+      // Effets de glow pour cartes jouables
+      "hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:ring-2 hover:ring-blue-400/30":
+        isPlayable && onClick,
+      "shadow-[0_0_15px_rgba(239,68,68,0.3)] ring-1 ring-red-400/20":
+        !isPlayable,
+    },
+    className,
+  );
+
   return (
-    <div className={cn("playing-card", className)}>
+    <div
+      className={cardClasses}
+      onMouseEnter={() => onHover?.(true)}
+      onMouseLeave={() => onHover?.(false)}
+    >
+      {/* Bouton Jouer au survol */}
+      <PlayButton
+        isVisible={isHovered && isPlayable && !!onClick}
+        onClick={() => onClick?.()}
+      />
+
       <svg
         width={width}
         height={height}
@@ -1182,6 +1228,11 @@ interface PlayerDeckProps {
   isOpponent?: boolean;
   className?: string;
   hidden?: boolean;
+  isPlayerTurn?: boolean;
+  playableCards?: number[];
+  onCardClick?: (cardIndex: number) => void;
+  hoveredCard?: number | null;
+  onCardHover?: (cardIndex: number | null) => void;
 }
 
 export function PlayerDeck({
@@ -1189,6 +1240,11 @@ export function PlayerDeck({
   isOpponent = false,
   className,
   hidden = false,
+  isPlayerTurn = false,
+  playableCards = [],
+  onCardClick,
+  hoveredCard,
+  onCardHover,
 }: PlayerDeckProps) {
   const cardWidth = isOpponent ? 100 : 140;
   const cardHeight = isOpponent ? 140 : 196;
@@ -1208,17 +1264,38 @@ export function PlayerDeck({
           const offsetFromMiddle = index - middleIndex;
 
           // Calcul optimisé pour la disposition
-          const rotation = offsetFromMiddle * 7; // Même rotation pour tous
+          const rotation = offsetFromMiddle * 7;
           const translateX = offsetFromMiddle * (isOpponent ? 20 : 60);
-          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 5 : 10); // Même courbure pour tous
+          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 5 : 10);
+
+          // États des cartes
+          const isCardPlayable =
+            !isOpponent && isPlayerTurn && playableCards.includes(index);
+          const isCardHovered = hoveredCard === index;
+          const hasCardAction = !isOpponent && onCardClick;
 
           return (
             <div
               key={index}
-              className="absolute cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:scale-105"
+              className={cn("absolute transition-all duration-300", {
+                "cursor-pointer": hasCardAction && isCardPlayable,
+                "cursor-not-allowed": hasCardAction && !isCardPlayable,
+                "hover:scale-110": isCardPlayable,
+                "animate-card-glow": isCardPlayable && isPlayerTurn,
+                "animate-card-shake":
+                  !isCardPlayable && isPlayerTurn && !isOpponent,
+                "z-50": isCardHovered,
+              })}
               style={{
                 transform: `translateX(${translateX}px) translateY(${translateY}px) rotate(${rotation}deg)`,
-                zIndex: 10 + index,
+                zIndex: isCardHovered ? 50 : 10 + index,
+              }}
+              onMouseEnter={() => onCardHover?.(index)}
+              onMouseLeave={() => onCardHover?.(null)}
+              onClick={() => {
+                if (isCardPlayable && onCardClick) {
+                  onCardClick(index);
+                }
               }}
             >
               <div
@@ -1240,6 +1317,12 @@ export function PlayerDeck({
                     width={cardWidth}
                     height={cardHeight}
                     className="h-full w-full shadow-md"
+                    isPlayable={isCardPlayable}
+                    isHovered={isCardHovered}
+                    onClick={() => {
+                      // Pas besoin de passer l'événement ici, PlayingCard gère son propre onClick
+                    }}
+                    onHover={(hovered) => onCardHover?.(hovered ? index : null)}
                   />
                 )}
               </div>

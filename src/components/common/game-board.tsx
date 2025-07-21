@@ -9,6 +9,12 @@ interface GameBoardProps {
   playedCards: Card[];
   gameStarted?: boolean;
   className?: string;
+  isPlayerTurn?: boolean;
+  playableCards?: number[];
+  onCardClick?: (cardIndex: number) => void;
+  hoveredCard?: number | null;
+  onCardHover?: (cardIndex: number | null) => void;
+  currentTurn?: "player" | "opponent";
 }
 
 export function GameBoard({
@@ -17,6 +23,12 @@ export function GameBoard({
   playedCards,
   gameStarted = false,
   className,
+  isPlayerTurn = false,
+  playableCards = [],
+  onCardClick,
+  hoveredCard,
+  onCardHover,
+  currentTurn = "player",
 }: GameBoardProps) {
   return (
     <div
@@ -98,8 +110,11 @@ export function GameBoard({
       {/* Cartes de l'adversaire (en haut) */}
       <div className="relative z-10 p-4">
         <div className="text-center">
-          <div className="mb-3 text-sm text-amber-200/80">
-            Adversaire ({opponentCards.length} cartes)
+          <div
+            className={`mb-3 text-sm ${currentTurn === "opponent" ? "animate-pulse text-amber-300" : "text-amber-200/80"}`}
+          >
+            Adversaire ({opponentCards.length} cartes){" "}
+            {currentTurn === "opponent" && "- À son tour"}
           </div>
           <PlayerDeck cards={opponentCards} isOpponent={true} />
 
@@ -240,13 +255,20 @@ export function GameBoard({
 
       {/* Cartes du joueur (en bas) */}
       <div className="relative z-10 min-h-max text-center">
-        <div className="mb-3 text-sm font-medium text-amber-100">
-          Vos cartes
+        <div
+          className={`mb-3 text-sm font-medium ${isPlayerTurn ? "animate-pulse text-amber-100" : "text-amber-100/60"}`}
+        >
+          Vos cartes {isPlayerTurn && "- À votre tour"}
         </div>
         <PlayerDeck
           cards={playerCards}
           isOpponent={false}
           hidden={!gameStarted}
+          isPlayerTurn={isPlayerTurn}
+          playableCards={playableCards}
+          onCardClick={onCardClick}
+          hoveredCard={hoveredCard}
+          onCardHover={onCardHover}
         />
 
         {/* Éléments décoratifs autour des cartes du joueur */}
