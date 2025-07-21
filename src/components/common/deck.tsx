@@ -1111,27 +1111,32 @@ export function PlayerDeck({
   isOpponent = false,
   className,
 }: PlayerDeckProps) {
-  const cardSize = isOpponent ? "small" : "large";
-  const cardWidth = isOpponent ? 32 : 70;
-  const cardHeight = isOpponent ? 45 : 98;
+  const cardWidth = isOpponent ? 35 : 140;
+  const cardHeight = isOpponent ? 49 : 196;
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
-      <div className="relative flex items-center justify-center">
+      <div
+        className="relative flex items-center justify-center"
+        style={{
+          width: `${cards.length * (isOpponent ? 12 : 100) + cardWidth}px`,
+          height: `${cardHeight + (isOpponent ? 12 : 100)}px`,
+        }}
+      >
         {cards.map((card, index) => {
           const totalCards = cards.length;
           const middleIndex = (totalCards - 1) / 2;
           const offsetFromMiddle = index - middleIndex;
 
-          // Calcul de la rotation et position pour l'effet d'arc
-          const rotation = offsetFromMiddle * (isOpponent ? 8 : 12); // Angle moins prononcé pour les cartes adverses
-          const translateX = offsetFromMiddle * (isOpponent ? 12 : 16); // Espacement horizontal
-          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 2 : 4); // Courbure de l'arc
+          // Calcul optimisé pour la disposition
+          const rotation = offsetFromMiddle * (isOpponent ? 7 : 10);
+          const translateX = offsetFromMiddle * (isOpponent ? 12 : 16);
+          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 2 : 4);
 
           return (
             <div
               key={index}
-              className="absolute transition-all duration-300 hover:-translate-y-2 hover:scale-110"
+              className="absolute cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:scale-105"
               style={{
                 transform: `translateX(${translateX}px) translateY(${translateY}px) rotate(${rotation}deg)`,
                 zIndex: 10 + index,
@@ -1147,7 +1152,7 @@ export function PlayerDeck({
                   <CardBack
                     width={cardWidth}
                     height={cardHeight}
-                    className="h-full w-full shadow-lg"
+                    className="h-full w-full shadow-md"
                   />
                 ) : (
                   <PlayingCard
@@ -1155,7 +1160,7 @@ export function PlayerDeck({
                     rank={card.rank}
                     width={cardWidth}
                     height={cardHeight}
-                    className="h-full w-full shadow-lg"
+                    className="h-full w-full shadow-md"
                   />
                 )}
               </div>
@@ -1182,17 +1187,17 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
       )}
     >
       {cards.length === 0 ? (
-        <div className="border-muted-foreground/30 text-muted-foreground rounded-lg border-2 border-dashed p-8 text-center">
-          <div className="text-sm">Zone de jeu</div>
+        <div className="border-muted-foreground/30 text-muted-foreground flex min-h-[120px] min-w-[180px] items-center justify-center rounded-lg border-2 border-dashed text-center">
+          <div className="text-sm opacity-60">Zone de jeu</div>
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative" style={{ width: "80px", height: "112px" }}>
           {cards.map((card, index) => (
             <div
               key={index}
               className="absolute transition-all duration-300"
               style={{
-                transform: `translateX(${index * 2}px) translateY(${index * -2}px) rotate(${index * 1}deg)`,
+                transform: `translateX(${index * 4}px) translateY(${index * -3}px) rotate(${index * 3}deg)`,
                 zIndex: index,
               }}
             >
