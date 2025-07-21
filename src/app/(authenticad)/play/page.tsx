@@ -19,8 +19,6 @@ import {
   IconUsers,
   IconWorld,
   IconPlayerPlay,
-  IconCrown,
-  IconTrophy,
   IconStar,
   IconCards,
 } from "@tabler/icons-react";
@@ -45,7 +43,6 @@ export default function Page() {
     { suit: "diamonds", rank: "Q" },
     { suit: "clubs", rank: "J" },
     { suit: "spades", rank: "A" },
-    { suit: "hearts", rank: "10" },
   ];
 
   // Cartes de l'adversaire (cachées, on ne montre que le nombre)
@@ -54,8 +51,6 @@ export default function Page() {
     { suit: "diamonds", rank: "K" },
     { suit: "clubs", rank: "Q" },
     { suit: "spades", rank: "J" },
-    { suit: "hearts", rank: "9" },
-    { suit: "diamonds", rank: "8" },
   ];
 
   // Cartes jouées au centre
@@ -104,74 +99,34 @@ export default function Page() {
     <PageContainer className="flex flex-col gap-6 lg:flex-row">
       {/* Plateau de jeu - Colonne de gauche */}
       <Card className="h-full overflow-hidden p-0 lg:w-4/6">
-        <CardContent className="p-4">
-          {selectedGameMode ? (
-            <div className="flex h-full flex-col gap-4">
-              {/* Cartes de l'adversaire (en haut) */}
-              <div>
-                <div className="text-center">
-                  <div className="text-muted-foreground mb-3 text-sm">
-                    Adversaire ({opponentCards.length} cartes)
-                  </div>
-                  <PlayerDeck cards={opponentCards} isOpponent={true} />
-                </div>
+        <CardContent className="flex h-full flex-col gap-4">
+          {/* Cartes de l'adversaire (en haut) */}
+          <div className="p-4">
+            <div className="text-center">
+              <div className="text-muted-foreground mb-3 text-sm">
+                Adversaire ({opponentCards.length} cartes)
               </div>
-
-              {/* Zone de cartes jouées (au milieu) */}
-              <div className="flex-1">
-                <div className="relative">
-                  <div className="from-primary/5 to-secondary/5 absolute inset-0 rounded-xl bg-gradient-to-r blur-lg"></div>
-                  <div className="bg-card/50 border-primary/20 relative rounded-xl border-2 border-dashed p-8 backdrop-blur-sm">
-                    <PlayedCards cards={playedCards} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Cartes du joueur (en bas) */}
-              <div className="">
-                <div className="text-center">
-                  <div className="text-foreground mb-3 text-sm font-medium">
-                    Vos cartes
-                  </div>
-                  <PlayerDeck cards={playerCards} isOpponent={false} />
-                </div>
-              </div>
+              <PlayerDeck cards={opponentCards} isOpponent={true} />
             </div>
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center space-y-8 py-16">
-              <div className="space-y-4 text-center">
-                <div className="bg-primary/10 mx-auto w-fit rounded-full p-4">
-                  <IconPlayerPlay className="text-primary size-12" />
-                </div>
-                <div>
-                  <h3 className="text-foreground text-lg font-semibold">
-                    Prêt à jouer ?
-                  </h3>
-                  <p className="text-muted-foreground">
-                    Choisissez un mode de jeu pour commencer
-                  </p>
-                </div>
-              </div>
+          </div>
 
-              {/* Statistiques rapides */}
-              <div className="grid w-full max-w-md grid-cols-3 gap-4">
-                <div className="bg-primary/5 rounded-lg p-3 text-center">
-                  <div className="text-primary text-2xl font-bold">12</div>
-                  <div className="text-muted-foreground text-xs">Victoires</div>
-                </div>
-                <div className="bg-secondary/5 rounded-lg p-3 text-center">
-                  <div className="text-secondary text-2xl font-bold">8</div>
-                  <div className="text-muted-foreground text-xs">Défaites</div>
-                </div>
-                <div className="bg-accent/5 rounded-lg p-3 text-center">
-                  <div className="text-accent-foreground text-2xl font-bold">
-                    75%
-                  </div>
-                  <div className="text-muted-foreground text-xs">Ratio</div>
-                </div>
-              </div>
+          {/* Zone de cartes jouées (au milieu) */}
+          <div className="flex flex-1 items-center justify-center">
+            <div className="bg-primary/90 border-primary/20 relative aspect-square w-[30%] rounded-xl border-2 border-dashed p-4 backdrop-blur-sm">
+              <PlayedCards cards={playedCards} />
             </div>
-          )}
+          </div>
+
+          <div className="min-h-max text-center">
+            <div className="text-foreground mb-3 text-sm font-medium">
+              Vos cartes
+            </div>
+            <PlayerDeck
+              cards={playerCards}
+              isOpponent={false}
+              hidden={!selectedGameMode}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -255,7 +210,8 @@ export default function Page() {
             );
           })}
 
-          {/* Bouton de défi spécial */}
+          {/* Bouton de défi spécial 
+
           <Card className="border-amber-500/20 bg-gradient-to-br from-amber-500/10 to-orange-500/10">
             <CardContent className="space-y-3 p-4 text-center">
               <div className="mx-auto w-fit rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 p-2">
@@ -279,6 +235,8 @@ export default function Page() {
               </LibButton>
             </CardContent>
           </Card>
+          
+          */}
         </CardContent>
       </Card>
     </PageContainer>

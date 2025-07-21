@@ -1104,23 +1104,25 @@ interface PlayerDeckProps {
   cards: Card[];
   isOpponent?: boolean;
   className?: string;
+  hidden?: boolean;
 }
 
 export function PlayerDeck({
   cards,
   isOpponent = false,
   className,
+  hidden = false,
 }: PlayerDeckProps) {
-  const cardWidth = isOpponent ? 35 : 140;
-  const cardHeight = isOpponent ? 49 : 196;
+  const cardWidth = isOpponent ? 100 : 140;
+  const cardHeight = isOpponent ? 140 : 196;
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
       <div
         className="relative flex items-center justify-center"
         style={{
-          width: `${cards.length * (isOpponent ? 12 : 100) + cardWidth}px`,
-          height: `${cardHeight + (isOpponent ? 12 : 100)}px`,
+          width: `${cards.length * (isOpponent ? 12 : 20) + cardWidth}px`,
+          height: `${cardHeight + (isOpponent ? 12 : 20)}px`,
         }}
       >
         {cards.map((card, index) => {
@@ -1129,9 +1131,9 @@ export function PlayerDeck({
           const offsetFromMiddle = index - middleIndex;
 
           // Calcul optimisé pour la disposition
-          const rotation = offsetFromMiddle * (isOpponent ? 7 : 10);
-          const translateX = offsetFromMiddle * (isOpponent ? 12 : 16);
-          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 2 : 4);
+          const rotation = offsetFromMiddle * 7; // Même rotation pour tous
+          const translateX = offsetFromMiddle * (isOpponent ? 20 : 60);
+          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 5 : 10); // Même courbure pour tous
 
           return (
             <div
@@ -1148,7 +1150,7 @@ export function PlayerDeck({
                   height: `${cardHeight}px`,
                 }}
               >
-                {isOpponent ? (
+                {isOpponent || hidden ? (
                   <CardBack
                     width={cardWidth}
                     height={cardHeight}
