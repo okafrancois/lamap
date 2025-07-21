@@ -561,22 +561,31 @@ const PlayingCard: React.FC<CardProps> = ({
         viewBox="0 0 100 140"
         className="h-full w-full"
       >
-        {/* Fond de carte avec texture et patterns */}
+        {/* Fond de carte avec texture et patterns améliorés */}
         <defs>
-          {/* Pattern de texture */}
+          {/* Pattern de texture raffinée */}
           <pattern
             id={`cardTexture-${suit}-${rank}`}
             x="0"
             y="0"
-            width="4"
-            height="4"
+            width="8"
+            height="8"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="4" height="4" className="fill-card" />
-            <rect width="2" height="2" className="fill-card/95" />
+            <rect width="8" height="8" fill="rgba(255,255,255,0.98)" />
+            <circle cx="2" cy="2" r="0.5" fill="rgba(255,255,255,0.9)" />
+            <circle cx="6" cy="6" r="0.5" fill="rgba(255,255,255,0.9)" />
+            <rect
+              x="1"
+              y="1"
+              width="6"
+              height="6"
+              fill="rgba(255,255,255,0.95)"
+              rx="1"
+            />
           </pattern>
 
-          {/* Gradient pour profondeur */}
+          {/* Gradient premium pour profondeur */}
           <linearGradient
             id={`cardGradient-${suit}-${rank}`}
             x1="0%"
@@ -584,201 +593,269 @@ const PlayingCard: React.FC<CardProps> = ({
             x2="100%"
             y2="100%"
           >
-            <stop
-              offset="0%"
-              className="text-card/90"
-              stopColor="currentColor"
-            />
-            <stop offset="50%" className="text-card" stopColor="currentColor" />
-            <stop
-              offset="100%"
-              className="text-card/80"
-              stopColor="currentColor"
-            />
+            <stop offset="0%" stopColor="rgba(255,255,255,1)" />
+            <stop offset="20%" stopColor="rgba(248,250,252,0.98)" />
+            <stop offset="80%" stopColor="rgba(241,245,249,0.95)" />
+            <stop offset="100%" stopColor="rgba(226,232,240,0.9)" />
           </linearGradient>
 
-          {/* Pattern décoratif pour les bordures */}
+          {/* Pattern décoratif élégant pour les bordures */}
           <pattern
             id={`borderPattern-${suit}-${rank}`}
             x="0"
             y="0"
-            width="10"
-            height="10"
+            width="12"
+            height="12"
             patternUnits="userSpaceOnUse"
           >
-            <circle
-              cx="2"
-              cy="2"
-              r="1"
-              className={cn(
-                "fill-current opacity-20",
-                isRed ? "text-primary" : "text-foreground",
-              )}
+            <rect width="12" height="12" fill="none" />
+            <path
+              d="M2,2 L10,2 L10,10 L2,10 Z"
+              fill="none"
+              stroke={isRed ? "rgba(239,68,68,0.1)" : "rgba(15,23,42,0.1)"}
+              strokeWidth="0.5"
             />
             <circle
-              cx="8"
-              cy="8"
-              r="1"
-              className={cn(
-                "fill-current opacity-20",
-                isRed ? "text-primary" : "text-foreground",
-              )}
+              cx="6"
+              cy="6"
+              r="1.5"
+              fill={isRed ? "rgba(239,68,68,0.05)" : "rgba(15,23,42,0.05)"}
             />
           </pattern>
 
-          {/* Ombre portée */}
-          <filter id={`cardShadow-${suit}-${rank}`}>
-            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
-            <feOffset dx="1" dy="2" result="offsetblur" />
-            <feFlood floodColor="#000000" floodOpacity="0.15" />
-            <feComposite in2="offsetblur" operator="in" />
-            <feMerge>
-              <feMergeNode />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
+          {/* Ombre portée premium */}
+          <filter
+            id={`cardShadow-${suit}-${rank}`}
+            x="-50%"
+            y="-50%"
+            width="200%"
+            height="200%"
+          >
+            <feDropShadow
+              dx="0"
+              dy="4"
+              stdDeviation="8"
+              floodColor="#000000"
+              floodOpacity="0.25"
+            />
+            <feDropShadow
+              dx="0"
+              dy="1"
+              stdDeviation="2"
+              floodColor="#000000"
+              floodOpacity="0.1"
+            />
           </filter>
+
+          {/* Effet de brillance */}
+          <linearGradient
+            id={`shine-${suit}-${rank}`}
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+          >
+            <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+            <stop offset="30%" stopColor="rgba(255,255,255,0.1)" />
+            <stop offset="70%" stopColor="rgba(255,255,255,0.05)" />
+            <stop offset="100%" stopColor="rgba(255,255,255,0.2)" />
+          </linearGradient>
+
+          {/* Bordure dorée pour les figures */}
+          {(rank === "J" || rank === "Q" || rank === "K") && (
+            <linearGradient
+              id={`goldBorder-${suit}-${rank}`}
+              x1="0%"
+              y1="0%"
+              x2="100%"
+              y2="100%"
+            >
+              <stop offset="0%" stopColor="rgba(251,191,36,0.8)" />
+              <stop offset="50%" stopColor="rgba(245,158,11,0.6)" />
+              <stop offset="100%" stopColor="rgba(217,119,6,0.4)" />
+            </linearGradient>
+          )}
         </defs>
 
-        {/* Ombre de carte */}
-        <rect
-          x="1"
-          y="2"
-          width="98"
-          height="138"
-          rx="8"
-          className="fill-black/10"
-        />
-
-        {/* Carte principale avec gradient */}
+        {/* Carte principale avec gradient premium */}
         <rect
           x="0"
           y="0"
           width="100"
           height="140"
-          rx="8"
+          rx="10"
           fill={`url(#cardGradient-${suit}-${rank})`}
-          className="stroke-border"
-          strokeWidth="1"
+          stroke={
+            rank === "J" || rank === "Q" || rank === "K"
+              ? `url(#goldBorder-${suit}-${rank})`
+              : "rgba(203,213,225,0.8)"
+          }
+          strokeWidth={rank === "J" || rank === "Q" || rank === "K" ? "2" : "1"}
           filter={`url(#cardShadow-${suit}-${rank})`}
         />
 
-        {/* Bordure décorative extérieure */}
+        {/* Bordure décorative premium */}
+        <rect
+          x="3"
+          y="3"
+          width="94"
+          height="134"
+          rx="8"
+          fill="none"
+          stroke={isRed ? "rgba(239,68,68,0.15)" : "rgba(15,23,42,0.15)"}
+          strokeWidth="1"
+          strokeDasharray="4 2"
+        />
+
+        {/* Pattern de texture subtil */}
         <rect
           x="2"
           y="2"
           width="96"
           height="136"
-          rx="7"
-          fill="none"
-          className={cn(
-            "stroke-current opacity-40",
-            isRed ? "text-primary" : "text-foreground",
-          )}
-          strokeWidth="0.5"
-          strokeDasharray="2 2"
-        />
-
-        {/* Bordure intérieure avec pattern */}
-        <rect
-          x="4"
-          y="4"
-          width="92"
-          height="132"
-          rx="6"
+          rx="9"
           fill={`url(#borderPattern-${suit}-${rank})`}
-          className={cn(
-            "stroke-current opacity-30",
-            isRed ? "text-primary" : "text-foreground",
-          )}
-          strokeWidth="0.5"
+          opacity="0.6"
         />
 
-        {/* Motifs décoratifs aux coins */}
-        <g className="opacity-10">
-          <path
-            d="M10,10 L25,10 L25,8 L10,8 Z M10,10 L10,25 L8,25 L8,10 Z"
-            className={cn(
-              "fill-current",
-              isRed ? "text-primary" : "text-foreground",
-            )}
+        {/* Effet de brillance pour les figures */}
+        {(rank === "J" || rank === "Q" || rank === "K") && (
+          <rect
+            x="1"
+            y="1"
+            width="98"
+            height="138"
+            rx="9"
+            fill={`url(#shine-${suit}-${rank})`}
+            opacity="0.3"
           />
-          <path
-            d="M75,10 L90,10 L90,8 L75,8 Z M90,10 L90,25 L92,25 L92,10 Z"
-            className={cn(
-              "fill-current",
-              isRed ? "text-primary" : "text-foreground",
-            )}
-          />
-          <path
-            d="M10,130 L25,130 L25,132 L10,132 Z M10,130 L10,115 L8,115 L8,130 Z"
-            className={cn(
-              "fill-current",
-              isRed ? "text-primary" : "text-foreground",
-            )}
-          />
-          <path
-            d="M75,130 L90,130 L90,132 L75,132 Z M90,130 L90,115 L92,115 L92,130 Z"
-            className={cn(
-              "fill-current",
-              isRed ? "text-primary" : "text-foreground",
-            )}
-          />
-        </g>
+        )}
 
-        {/* Coins supérieur gauche et inférieur droit */}
-        <g>
-          {/* Coin supérieur gauche avec fond décoratif */}
+        {/* Motifs décoratifs élégants aux coins */}
+        <g className="opacity-20">
+          {/* Coin supérieur gauche */}
           <g>
-            <rect
-              x="5"
-              y="12"
-              width="20"
-              height="25"
-              rx="3"
-              className={cn(
-                "fill-current opacity-5",
-                isRed ? "text-primary" : "text-foreground",
-              )}
+            <path
+              d="M8,8 Q15,8 15,15 L15,20 Q12,17 8,17 Z"
+              fill={isRed ? "rgba(239,68,68,0.3)" : "rgba(15,23,42,0.3)"}
             />
-            <text
-              x="10"
-              y="20"
-              fontSize="16"
-              className={cn(
-                "fill-current font-bold",
-                isRed ? "text-primary" : "text-foreground",
-              )}
-            >
-              {rank}
-            </text>
-            {renderSuitIcon(suit, 10, 29, 10)}
+            <circle
+              cx="12"
+              cy="12"
+              r="2"
+              fill={isRed ? "rgba(239,68,68,0.5)" : "rgba(15,23,42,0.5)"}
+            />
           </g>
 
-          {/* Coin inférieur droit (inversé) avec fond décoratif */}
-          <g transform="rotate(180, 50, 70)">
+          {/* Coin supérieur droit */}
+          <g>
+            <path
+              d="M92,8 Q85,8 85,15 L85,20 Q88,17 92,17 Z"
+              fill={isRed ? "rgba(239,68,68,0.3)" : "rgba(15,23,42,0.3)"}
+            />
+            <circle
+              cx="88"
+              cy="12"
+              r="2"
+              fill={isRed ? "rgba(239,68,68,0.5)" : "rgba(15,23,42,0.5)"}
+            />
+          </g>
+
+          {/* Coin inférieur gauche */}
+          <g>
+            <path
+              d="M8,132 Q15,132 15,125 L15,120 Q12,123 8,123 Z"
+              fill={isRed ? "rgba(239,68,68,0.3)" : "rgba(15,23,42,0.3)"}
+            />
+            <circle
+              cx="12"
+              cy="128"
+              r="2"
+              fill={isRed ? "rgba(239,68,68,0.5)" : "rgba(15,23,42,0.5)"}
+            />
+          </g>
+
+          {/* Coin inférieur droit */}
+          <g>
+            <path
+              d="M92,132 Q85,132 85,125 L85,120 Q88,123 92,123 Z"
+              fill={isRed ? "rgba(239,68,68,0.3)" : "rgba(15,23,42,0.3)"}
+            />
+            <circle
+              cx="88"
+              cy="128"
+              r="2"
+              fill={isRed ? "rgba(239,68,68,0.5)" : "rgba(15,23,42,0.5)"}
+            />
+          </g>
+        </g>
+
+        {/* Coins avec indices premium */}
+        <g>
+          {/* Coin supérieur gauche avec design raffiné */}
+          <g>
             <rect
-              x="5"
-              y="12"
-              width="20"
-              height="25"
+              x="4"
+              y="8"
+              width="22"
+              height="30"
+              rx="4"
+              fill="rgba(255,255,255,0.8)"
+              stroke={isRed ? "rgba(239,68,68,0.2)" : "rgba(15,23,42,0.2)"}
+              strokeWidth="1"
+            />
+            <rect
+              x="6"
+              y="10"
+              width="18"
+              height="26"
               rx="3"
-              className={cn(
-                "fill-current opacity-5",
-                isRed ? "text-primary" : "text-foreground",
-              )}
+              fill={isRed ? "rgba(239,68,68,0.05)" : "rgba(15,23,42,0.05)"}
             />
             <text
-              x="10"
-              y="20"
-              fontSize="16"
-              className={cn(
-                "fill-current font-bold",
-                isRed ? "text-primary" : "text-foreground",
-              )}
+              x="12"
+              y="22"
+              fontSize="14"
+              fontWeight="bold"
+              fill={isRed ? "#dc2626" : "#1e293b"}
+              textAnchor="start"
             >
               {rank}
             </text>
-            {renderSuitIcon(suit, 10, 29, 10)}
+            {renderSuitIcon(suit, 12, 30, 8)}
+          </g>
+
+          {/* Coin inférieur droit (inversé) avec design raffiné */}
+          <g transform="rotate(180, 50, 70)">
+            <rect
+              x="4"
+              y="8"
+              width="22"
+              height="30"
+              rx="4"
+              fill="rgba(255,255,255,0.8)"
+              stroke={isRed ? "rgba(239,68,68,0.2)" : "rgba(15,23,42,0.2)"}
+              strokeWidth="1"
+            />
+            <rect
+              x="6"
+              y="10"
+              width="18"
+              height="26"
+              rx="3"
+              fill={isRed ? "rgba(239,68,68,0.05)" : "rgba(15,23,42,0.05)"}
+            />
+            <text
+              x="12"
+              y="22"
+              fontSize="14"
+              fontWeight="bold"
+              fill={isRed ? "#dc2626" : "#1e293b"}
+              textAnchor="start"
+            >
+              {rank}
+            </text>
+            {renderSuitIcon(suit, 12, 30, 8)}
           </g>
         </g>
 
