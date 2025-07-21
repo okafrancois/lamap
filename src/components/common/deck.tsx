@@ -1184,34 +1184,40 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
   return (
     <div
       className={cn(
-        "relative flex min-h-[120px] items-center justify-center",
+        "relative flex min-h-[100px] items-center justify-center",
         className,
       )}
     >
       {cards.length === 0 ? (
-        <div className="border-muted-foreground/30 text-muted-foreground flex min-h-[120px] min-w-[180px] items-center justify-center rounded-lg border-2 border-dashed text-center">
-          <div className="text-sm opacity-60">Zone de jeu</div>
+        <div className="flex items-center justify-center text-center">
+          <div className="rounded-full border-2 border-amber-300/40 bg-amber-200/10 p-4">
+            <div className="text-xs text-amber-100/80">Aucune carte jouée</div>
+          </div>
         </div>
       ) : (
-        <div className="relative" style={{ width: "80px", height: "112px" }}>
+        <div className="relative" style={{ width: "70px", height: "98px" }}>
           {cards.map((card, index) => (
             <div
               key={index}
-              className="absolute transition-all duration-300"
+              className="absolute transition-all duration-500 hover:scale-105"
               style={{
-                transform: `translateX(${index * 4}px) translateY(${index * -3}px) rotate(${index * 3}deg)`,
+                transform: `translateX(${index * 3}px) translateY(${index * -2}px) rotate(${index * 2}deg)`,
                 zIndex: index,
+                filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
               }}
             >
               <PlayingCard
                 suit={card.suit}
                 rank={card.rank}
-                width={60}
-                height={84}
-                className="shadow-lg"
+                width={55}
+                height={77}
+                className="shadow-xl"
               />
             </div>
           ))}
+
+          {/* Effet de halo autour des cartes */}
+          <div className="absolute inset-0 rounded-lg bg-amber-200/5 blur-sm"></div>
         </div>
       )}
     </div>
