@@ -1099,5 +1099,117 @@ export function GameCard({
   );
 }
 
+// Composant pour le deck d'un joueur avec disposition en arc
+interface PlayerDeckProps {
+  cards: Card[];
+  isOpponent?: boolean;
+  className?: string;
+}
+
+export function PlayerDeck({
+  cards,
+  isOpponent = false,
+  className,
+}: PlayerDeckProps) {
+  const cardSize = isOpponent ? "small" : "large";
+  const cardWidth = isOpponent ? 32 : 70;
+  const cardHeight = isOpponent ? 45 : 98;
+
+  return (
+    <div className={cn("relative flex items-center justify-center", className)}>
+      <div className="relative flex items-center justify-center">
+        {cards.map((card, index) => {
+          const totalCards = cards.length;
+          const middleIndex = (totalCards - 1) / 2;
+          const offsetFromMiddle = index - middleIndex;
+
+          // Calcul de la rotation et position pour l'effet d'arc
+          const rotation = offsetFromMiddle * (isOpponent ? 8 : 12); // Angle moins prononcé pour les cartes adverses
+          const translateX = offsetFromMiddle * (isOpponent ? 12 : 16); // Espacement horizontal
+          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 2 : 4); // Courbure de l'arc
+
+          return (
+            <div
+              key={index}
+              className="absolute transition-all duration-300 hover:-translate-y-2 hover:scale-110"
+              style={{
+                transform: `translateX(${translateX}px) translateY(${translateY}px) rotate(${rotation}deg)`,
+                zIndex: 10 + index,
+              }}
+            >
+              <div
+                style={{
+                  width: `${cardWidth}px`,
+                  height: `${cardHeight}px`,
+                }}
+              >
+                {isOpponent ? (
+                  <CardBack
+                    width={cardWidth}
+                    height={cardHeight}
+                    className="h-full w-full shadow-lg"
+                  />
+                ) : (
+                  <PlayingCard
+                    suit={card.suit}
+                    rank={card.rank}
+                    width={cardWidth}
+                    height={cardHeight}
+                    className="h-full w-full shadow-lg"
+                  />
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// Composant pour les cartes en jeu (pile centrale)
+interface PlayedCardsProps {
+  cards: Card[];
+  className?: string;
+}
+
+export function PlayedCards({ cards, className }: PlayedCardsProps) {
+  return (
+    <div
+      className={cn(
+        "relative flex min-h-[120px] items-center justify-center",
+        className,
+      )}
+    >
+      {cards.length === 0 ? (
+        <div className="border-muted-foreground/30 text-muted-foreground rounded-lg border-2 border-dashed p-8 text-center">
+          <div className="text-sm">Zone de jeu</div>
+        </div>
+      ) : (
+        <div className="relative">
+          {cards.map((card, index) => (
+            <div
+              key={index}
+              className="absolute transition-all duration-300"
+              style={{
+                transform: `translateX(${index * 2}px) translateY(${index * -2}px) rotate(${index * 1}deg)`,
+                zIndex: index,
+              }}
+            >
+              <PlayingCard
+                suit={card.suit}
+                rank={card.rank}
+                width={60}
+                height={84}
+                className="shadow-lg"
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export { PlayingCard, CardBack, FullDeck };
 export default FullDeck;
