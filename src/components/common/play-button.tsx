@@ -26,7 +26,7 @@ export function PlayButton({ isVisible, onClick, className }: PlayButtonProps) {
     >
       <Button
         size="sm"
-        className="bg-primary hover:bg-primary/90 text-primary-foreground animate-in zoom-in-75 flex items-center gap-2 border-2 border-white/50 shadow-xl duration-200"
+        className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2 shadow-lg transition-transform hover:scale-105 active:scale-95"
       >
         <IconPlayerPlay className="size-3" />
         Jouer

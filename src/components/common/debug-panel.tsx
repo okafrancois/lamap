@@ -26,6 +26,7 @@ interface DebugPanelProps {
   playedCardsCount: number;
   playableCards: number[];
   hoveredCard: number | null;
+  selectedCard: number | null;
   isAnimating: boolean;
 
   // Actions
@@ -36,6 +37,7 @@ interface DebugPanelProps {
   onPlayRandomCard: () => void;
   onSetPlayableCards: (cards: number[]) => void;
   onSimulateHover: (cardIndex: number | null) => void;
+  onSimulateSelect: (cardIndex: number | null) => void;
 }
 
 export function DebugPanel({
@@ -46,6 +48,7 @@ export function DebugPanel({
   playedCardsCount,
   playableCards,
   hoveredCard,
+  selectedCard,
   isAnimating,
   onPhaseChange,
   onTurnChange,
@@ -54,6 +57,7 @@ export function DebugPanel({
   onPlayRandomCard,
   onSetPlayableCards,
   onSimulateHover,
+  onSimulateSelect,
 }: DebugPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -173,6 +177,12 @@ export function DebugPanel({
                 <span>Carte survolée:</span>
                 <Badge variant="outline">
                   {hoveredCard !== null ? `#${hoveredCard}` : "Aucune"}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Carte sélectionnée:</span>
+                <Badge variant={selectedCard !== null ? "default" : "outline"}>
+                  {selectedCard !== null ? `#${selectedCard}` : "Aucune"}
                 </Badge>
               </div>
             </div>
@@ -357,6 +367,33 @@ export function DebugPanel({
                   ))}
                 </div>
               </div>
+
+              <div>
+                <div className="text-muted-foreground mb-1 text-[10px]">
+                  Simulation sélection
+                </div>
+                <div className="grid grid-cols-4 gap-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onSimulateSelect(null)}
+                    className="h-6 px-1 py-1 text-[10px]"
+                  >
+                    Aucune
+                  </Button>
+                  {[0, 1, 2].map((index) => (
+                    <Button
+                      key={index}
+                      size="sm"
+                      variant={selectedCard === index ? "default" : "outline"}
+                      onClick={() => onSimulateSelect(index)}
+                      className="h-6 px-1 py-1 text-[10px]"
+                    >
+                      #{index}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
@@ -372,6 +409,7 @@ export function DebugPanel({
                 onTurnChange("player");
                 onSetPlayableCards([]);
                 onSimulateHover(null);
+                onSimulateSelect(null);
               }}
               className="w-full text-xs"
             >

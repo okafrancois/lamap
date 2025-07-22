@@ -12,6 +12,7 @@ interface GameState {
   playedCards: Card[];
   playableCards: number[];
   hoveredCard: number | null;
+  selectedCard: number | null;
   isAnimating: boolean;
 }
 
@@ -19,6 +20,8 @@ interface GameActions {
   startGame: () => void;
   playCard: (cardIndex: number) => void;
   setHoveredCard: (cardIndex: number | null) => void;
+  selectCard: (cardIndex: number | null) => void;
+  playSelectedCard: () => void;
   switchTurn: () => void;
   endGame: () => void;
   // Actions pour le debug
@@ -50,6 +53,7 @@ export function useGameState(): GameState & GameActions {
     playedCards: [],
     playableCards: [],
     hoveredCard: null,
+    selectedCard: null,
     isAnimating: false,
   });
 
@@ -159,6 +163,20 @@ export function useGameState(): GameState & GameActions {
     setGameState((prev) => ({ ...prev, playableCards: cards }));
   }, []);
 
+  const selectCard = useCallback((cardIndex: number | null) => {
+    setGameState((prev) => ({
+      ...prev,
+      selectedCard: prev.selectedCard === cardIndex ? null : cardIndex,
+    }));
+  }, []);
+
+  const playSelectedCard = useCallback(() => {
+    if (gameState.selectedCard !== null) {
+      playCard(gameState.selectedCard);
+      setGameState((prev) => ({ ...prev, selectedCard: null }));
+    }
+  }, [gameState.selectedCard, playCard]);
+
   const playRandomCard = useCallback(() => {
     if (gameState.playableCards.length > 0 && !gameState.isAnimating) {
       const randomIndex =
@@ -176,6 +194,8 @@ export function useGameState(): GameState & GameActions {
     startGame,
     playCard,
     setHoveredCard,
+    selectCard,
+    playSelectedCard,
     switchTurn,
     endGame,
     setPhase,

@@ -6,7 +6,7 @@ import {
   IconHeartFilled,
   IconSpadeFilled,
 } from "@tabler/icons-react";
-import { PlayButton } from "./play-button";
+import { AnimatedCard } from "./animated-card";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -566,41 +566,12 @@ const PlayingCard: React.FC<CardProps> = ({
     ));
   };
 
-  // Classes conditionnelles pour les animations et états
-  const cardClasses = cn(
-    "playing-card relative transition-all duration-300 ease-in-out",
-    {
-      // États de base
-      "cursor-pointer hover:scale-110": isPlayable && onClick,
-      "opacity-50 cursor-not-allowed grayscale-[0.3]": !isPlayable,
-      "cursor-default": !onClick,
-
-      // Animations spéciales
-      "animate-flip-card": isFlipping,
-      "animate-play-card": isPlaying,
-      "scale-105": isHovered && isPlayable,
-
-      // Effets de glow pour cartes jouables
-      "hover:shadow-[0_0_20px_rgba(59,130,246,0.5)] hover:ring-2 hover:ring-blue-400/30":
-        isPlayable && onClick,
-      "shadow-[0_0_15px_rgba(239,68,68,0.3)] ring-1 ring-red-400/20":
-        !isPlayable,
-    },
-    className,
-  );
-
   return (
     <div
-      className={cardClasses}
+      className={cn("playing-card relative", className)}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
     >
-      {/* Bouton Jouer au survol */}
-      <PlayButton
-        isVisible={isHovered && isPlayable && !!onClick}
-        onClick={() => onClick?.()}
-      />
-
       <svg
         width={width}
         height={height}
@@ -1231,7 +1202,9 @@ interface PlayerDeckProps {
   isPlayerTurn?: boolean;
   playableCards?: number[];
   onCardClick?: (cardIndex: number) => void;
+  onPlayCard?: () => void;
   hoveredCard?: number | null;
+  selectedCard?: number | null;
   onCardHover?: (cardIndex: number | null) => void;
 }
 
@@ -1243,7 +1216,9 @@ export function PlayerDeck({
   isPlayerTurn = false,
   playableCards = [],
   onCardClick,
+  onPlayCard,
   hoveredCard,
+  selectedCard,
   onCardHover,
 }: PlayerDeckProps) {
   const cardWidth = isOpponent ? 100 : 140;
@@ -1272,6 +1247,7 @@ export function PlayerDeck({
           const isCardPlayable =
             !isOpponent && isPlayerTurn && playableCards.includes(index);
           const isCardHovered = hoveredCard === index;
+          const isCardSelected = selectedCard === index;
           const hasCardAction = !isOpponent && onCardClick;
 
           return (
@@ -1280,10 +1256,8 @@ export function PlayerDeck({
               className={cn("absolute transition-all duration-300", {
                 "cursor-pointer": hasCardAction && isCardPlayable,
                 "cursor-not-allowed": hasCardAction && !isCardPlayable,
-                "hover:scale-110": isCardPlayable,
-                "animate-card-glow": isCardPlayable && isPlayerTurn,
-                "animate-card-shake":
-                  !isCardPlayable && isPlayerTurn && !isOpponent,
+                "hover:scale-105": isCardPlayable,
+                "opacity-60": !isCardPlayable && isPlayerTurn && !isOpponent,
                 "z-50": isCardHovered,
               })}
               style={{
@@ -1298,34 +1272,28 @@ export function PlayerDeck({
                 }
               }}
             >
-              <div
-                style={{
-                  width: `${cardWidth}px`,
-                  height: `${cardHeight}px`,
+              <AnimatedCard
+                card={card}
+                width={cardWidth}
+                height={cardHeight}
+                isOpponent={isOpponent}
+                isPlayable={isCardPlayable}
+                isHovered={isCardHovered}
+                isSelected={isCardSelected}
+                hidden={hidden}
+                onClick={() => {
+                  if (isCardPlayable && onCardClick) {
+                    onCardClick(index);
+                  }
                 }}
-              >
-                {isOpponent || hidden ? (
-                  <CardBack
-                    width={cardWidth}
-                    height={cardHeight}
-                    className="h-full w-full shadow-md"
-                  />
-                ) : (
-                  <PlayingCard
-                    suit={card.suit}
-                    rank={card.rank}
-                    width={cardWidth}
-                    height={cardHeight}
-                    className="h-full w-full shadow-md"
-                    isPlayable={isCardPlayable}
-                    isHovered={isCardHovered}
-                    onClick={() => {
-                      // Pas besoin de passer l'événement ici, PlayingCard gère son propre onClick
-                    }}
-                    onHover={(hovered) => onCardHover?.(hovered ? index : null)}
-                  />
-                )}
-              </div>
+                onPlayClick={() => {
+                  if (onPlayCard) {
+                    onPlayCard();
+                  }
+                }}
+                onHover={(hovered) => onCardHover?.(hovered ? index : null)}
+                className="h-full w-full shadow-md"
+              />
             </div>
           );
         })}
@@ -1358,12 +1326,11 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
         <div className="relative" style={{ width: "70px", height: "98px" }}>
           {cards.map((card, index) => (
             <div
-              key={index}
-              className="absolute transition-all duration-500 hover:scale-105"
+              key={`${card.suit}-${card.rank}-${index}`}
+              className="absolute transition-transform duration-300 hover:scale-105"
               style={{
                 transform: `translateX(${index * 3}px) translateY(${index * -2}px) rotate(${index * 2}deg)`,
                 zIndex: index,
-                filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
               }}
             >
               <PlayingCard
@@ -1371,13 +1338,10 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
                 rank={card.rank}
                 width={55}
                 height={77}
-                className="shadow-xl"
+                className="shadow-lg"
               />
             </div>
           ))}
-
-          {/* Effet de halo autour des cartes */}
-          <div className="absolute inset-0 rounded-lg bg-amber-200/5 blur-sm"></div>
         </div>
       )}
     </div>

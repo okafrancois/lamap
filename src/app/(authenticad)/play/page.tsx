@@ -40,6 +40,9 @@ export default function Page() {
     startGame,
     playCard,
     setHoveredCard,
+    selectCard,
+    playSelectedCard,
+    selectedCard,
     endGame,
     setPhase,
     setCurrentTurn,
@@ -94,6 +97,7 @@ export default function Page() {
         playedCardsCount={playedCards.length}
         playableCards={playableCards}
         hoveredCard={hoveredCard}
+        selectedCard={selectedCard}
         isAnimating={isAnimating}
         onPhaseChange={setPhase}
         onTurnChange={setCurrentTurn}
@@ -102,6 +106,7 @@ export default function Page() {
         onPlayRandomCard={playRandomCard}
         onSetPlayableCards={setPlayableCards}
         onSimulateHover={setHoveredCard}
+        onSimulateSelect={selectCard}
       />
 
       <PageContainer className="flex flex-col gap-6 lg:flex-row">
@@ -113,8 +118,10 @@ export default function Page() {
           gameStarted={phase === "playing"}
           isPlayerTurn={currentTurn === "player" && phase === "playing"}
           playableCards={playableCards}
-          onCardClick={playCard}
+          onCardClick={selectCard}
+          onPlayCard={playSelectedCard}
           hoveredCard={hoveredCard}
+          selectedCard={selectedCard}
           onCardHover={setHoveredCard}
           currentTurn={currentTurn}
           className="h-full overflow-hidden rounded-lg p-0 lg:w-4/6"
