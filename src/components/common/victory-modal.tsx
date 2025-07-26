@@ -18,6 +18,7 @@ interface VictoryModalProps {
   opponentKoras: number;
   betAmount: number;
   korasWon: number;
+  gameLog?: Array<{ message: string; timestamp: number }>;
   onPlayAgain: () => void;
   onClose: () => void;
   onViewHistory?: () => void;
@@ -31,12 +32,86 @@ export function VictoryModal({
   opponentKoras,
   betAmount,
   korasWon,
+  gameLog = [],
   onPlayAgain,
   onClose,
   onViewHistory,
   onEnterReview,
 }: VictoryModalProps) {
   if (!isVisible) return null;
+
+  // Analyser les logs pour détecter le type de victoire
+  const getVictoryType = () => {
+    const recentLogs = gameLog.slice(-10); // Regarder les 10 derniers messages
+
+    for (const log of recentLogs) {
+      const message = log.message;
+
+      // Détecter les Koras
+      if (message.includes("TRIPLE KORA (333)")) {
+        return {
+          type: "triple_kora",
+          title: "TRIPLE KORA ! 🎯",
+          description: "Victoire avec 3 cartes 3 consécutives",
+          multiplier: "x4",
+          special: true,
+        };
+      }
+      if (message.includes("DOUBLE KORA (33 Export)")) {
+        return {
+          type: "double_kora",
+          title: "DOUBLE KORA ! 🔥",
+          description: "Victoire avec 2 cartes 3 consécutives",
+          multiplier: "x3",
+          special: true,
+        };
+      }
+      if (message.includes("KORA Simple")) {
+        return {
+          type: "simple_kora",
+          title: "KORA ! 🏆",
+          description: "Victoire avec un 3 au tour final",
+          multiplier: "x2",
+          special: true,
+        };
+      }
+
+      // Détecter les victoires automatiques
+      if (message.includes("Victoire automatique")) {
+        if (message.includes("Somme < 21")) {
+          return {
+            type: "auto_sum",
+            title: "Victoire Automatique ! ⚡",
+            description: "Somme des cartes inférieure à 21",
+            multiplier: "x1",
+            special: true,
+          };
+        }
+        if (message.includes("Somme la plus faible")) {
+          return {
+            type: "auto_lowest",
+            title: "Victoire Automatique ! 📊",
+            description: "Plus petite somme (les deux < 21)",
+            multiplier: "x1",
+            special: true,
+          };
+        }
+      }
+    }
+
+    // Victoire normale
+    return {
+      type: "normal",
+      title: isVictory ? "Victoire ! 🎉" : "Défaite ! 💀",
+      description: isVictory
+        ? "Vous avez la main au tour final"
+        : "L'adversaire a la main au tour final",
+      multiplier: "x1",
+      special: false,
+    };
+  };
+
+  const victoryType = getVictoryType();
 
   const victoryMessages = [
     "🎉 C'est toi le ndoss !",
@@ -88,11 +163,24 @@ export function VictoryModal({
                 isVictory ? "text-primary" : "text-destructive"
               }`}
             >
-              {isVictory ? "VICTOIRE !" : "DÉFAITE !"}
+              {victoryType.special && isVictory
+                ? victoryType.title
+                : isVictory
+                  ? "VICTOIRE !"
+                  : "DÉFAITE !"}
             </h2>
             <p className="text-foreground text-lg font-medium">
-              {randomMessage}
+              {victoryType.special ? victoryType.description : randomMessage}
             </p>
+
+            {/* Multiplicateur de gains si spécial */}
+            {victoryType.special &&
+              isVictory &&
+              victoryType.multiplier !== "x1" && (
+                <div className="mt-2 inline-block rounded-full bg-yellow-500 px-3 py-1 text-sm font-bold text-yellow-900">
+                  Mise {victoryType.multiplier} !
+                </div>
+              )}
           </div>
 
           {/* Informations des mises */}

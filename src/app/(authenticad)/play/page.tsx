@@ -369,7 +369,25 @@ export default function PlayPage() {
         playerKoras={aiGame.playerKoras}
         opponentKoras={aiGame.opponentKoras}
         betAmount={aiGame.currentBet}
-        korasWon={aiGame.currentBet}
+        korasWon={(() => {
+          // Calculer les vrais gains à partir des logs
+          const recentLogs = aiGame.gameLog.slice(-10);
+
+          for (const log of recentLogs) {
+            const message = log.message;
+
+            // Extraire les gains des messages de gains
+            const gainRegex = /(?:Vous gagnez|Adversaire gagne) (\d+) koras/;
+            const gainMatch = gainRegex.exec(message);
+            if (gainMatch?.[1] && message.includes("Vous gagnez")) {
+              return parseInt(gainMatch[1]);
+            }
+          }
+
+          // Par défaut, retourner la mise de base
+          return aiGame.currentBet;
+        })()}
+        gameLog={aiGame.gameLog}
         onPlayAgain={() => {
           setShowVictoryModal(false);
           handleNewGame();
