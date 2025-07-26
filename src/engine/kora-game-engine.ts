@@ -5,19 +5,35 @@ export type Player = "player" | "opponent";
 export type GameStatus = "waiting" | "playing" | "ended" | "victory" | "defeat";
 export type KoraType = "none" | "simple" | "double" | "triple";
 
+export interface PlayedCard {
+  card: Card;
+  player: Player;
+  round: number;
+  timestamp: number;
+}
+
+export interface GameAction {
+  type: "PLAY_CARD" | "START_GAME" | "END_GAME" | "SYNC_STATE";
+  payload: unknown;
+  timestamp: number;
+  playerId?: string;
+  actionId: string;
+}
+
 export interface GameState {
   // État général
+  gameId: string;
   status: GameStatus;
-  currentRound: number; // Tour actuel (1-5)
-  playerWithHand: Player; // Qui a la main
-  firstPlayer: Player; // Qui a commencé (pour alternance)
+  currentRound: number;
+  playerWithHand: Player;
+  firstPlayer: Player;
 
-  // Cartes
+  // Cartes avec IDs déterministes
   playerCards: Card[];
   opponentCards: Card[];
-  playedCards: { card: Card; player: Player; round: number }[];
+  playedCards: PlayedCard[];
 
-  // Dernière carte jouée (pour déterminer la famille obligatoire)
+  // Dernière carte jouée
   lastPlayedCard: Card | null;
   lastPlayedBy: Player | null;
 
@@ -25,13 +41,19 @@ export interface GameState {
   playerKoras: number;
   opponentKoras: number;
   currentBet: number;
-  koraStreak: { player: Player; count: number; rounds: number[] }; // Pour détecter 33, 333
+  koraStreak: { player: Player; count: number; rounds: number[] };
+
+  // Seed pour reproductibilité
+  seed: string;
+
+  // Version de l'état pour synchronisation
+  version: number;
 
   // Mode God pour debug
   godMode: boolean;
 
-  // Messages et logs
-  gameLog: string[];
+  // Messages et logs avec timestamps
+  gameLog: Array<{ message: string; timestamp: number }>;
 }
 
 export interface GameActions {
@@ -59,7 +81,11 @@ export class KoraGameEngine {
   }
 
   private getInitialState(): GameState {
+    const seed = Date.now().toString();
     return {
+      gameId: `game-${seed}`,
+      seed,
+      version: 0,
       status: "waiting",
       currentRound: 0,
       playerWithHand: "player",
@@ -105,7 +131,7 @@ export class KoraGameEngine {
           suit,
           rank,
           jouable: false,
-          id: `${suit}-${rank}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: `${suit}-${rank}-${this.state.seed}-${suits.indexOf(suit) * 13 + ranks.indexOf(rank)}`,
         });
       });
     });
@@ -172,11 +198,8 @@ export class KoraGameEngine {
         status: "victory",
         playerCards,
         opponentCards,
-        gameLog: [
-          ...this.state.gameLog,
-          "🏆 Victoire automatique ! (Somme < 21)",
-        ],
       };
+      this.log("🏆 Victoire automatique ! (Somme < 21)");
       this.notifyListeners();
       return;
     }
@@ -187,11 +210,8 @@ export class KoraGameEngine {
         status: "defeat",
         playerCards,
         opponentCards,
-        gameLog: [
-          ...this.state.gameLog,
-          "💀 Défaite automatique ! (Adversaire somme < 21)",
-        ],
       };
+      this.log("💀 Défaite automatique ! (Adversaire somme < 21)");
       this.notifyListeners();
       return;
     }
@@ -204,11 +224,10 @@ export class KoraGameEngine {
         status: winner === "player" ? "victory" : "defeat",
         playerCards,
         opponentCards,
-        gameLog: [
-          ...this.state.gameLog,
-          `🎯 Victoire automatique ! (Somme la plus faible: ${winner === "player" ? playerSum : opponentSum})`,
-        ],
       };
+      this.log(
+        `🎯 Victoire automatique ! (Somme la plus faible: ${winner === "player" ? playerSum : opponentSum})`,
+      );
       this.notifyListeners();
       return;
     }
@@ -224,11 +243,10 @@ export class KoraGameEngine {
       firstPlayer,
       playerCards,
       opponentCards,
-      gameLog: [
-        ...this.state.gameLog,
-        `🎲 ${firstPlayer === "player" ? "Vous commencez" : "L'adversaire commence"} !`,
-      ],
     };
+    this.log(
+      `🎲 ${firstPlayer === "player" ? "Vous commencez" : "L'adversaire commence"} !`,
+    );
 
     // Mettre à jour les cartes jouables
     this.updatePlayableCards();
@@ -271,12 +289,13 @@ export class KoraGameEngine {
     }
 
     // Jouer la carte
-    const newPlayedCards = [
+    const newPlayedCards: PlayedCard[] = [
       ...this.state.playedCards,
       {
         card,
         player,
         round: this.state.currentRound,
+        timestamp: Date.now(),
       },
     ];
 
@@ -499,10 +518,10 @@ export class KoraGameEngine {
   }
 
   private log(message: string): void {
-    const timestamp = new Date().toLocaleTimeString();
-    const logEntry = `[${timestamp}] ${message}`;
+    const timestamp = Date.now();
+    const logEntry = { message, timestamp };
     this.state.gameLog.push(logEntry);
-    console.log(logEntry);
+    console.log(`[${new Date(timestamp).toLocaleTimeString()}] ${message}`);
   }
 
   // ========== MODE GOD POUR DEBUG ==========
@@ -537,6 +556,77 @@ export class KoraGameEngine {
       `🔧 [God Mode] Cartes de ${player === "player" ? "joueur" : "adversaire"} modifiées`,
     );
     this.notifyListeners();
+  }
+
+  // ========== VALIDATION DES ACTIONS ==========
+
+  public validateAction(action: GameAction): {
+    valid: boolean;
+    error?: string;
+  } {
+    switch (action.type) {
+      case "PLAY_CARD":
+        return this.validatePlayCardAction(action.payload);
+      case "START_GAME":
+        return this.validateStartGameAction();
+      default:
+        return { valid: false, error: "Action non reconnue" };
+    }
+  }
+
+  private validatePlayCardAction(payload: unknown): {
+    valid: boolean;
+    error?: string;
+  } {
+    if (
+      !payload ||
+      typeof payload !== "object" ||
+      !("cardId" in payload) ||
+      !("player" in payload) ||
+      typeof payload.cardId !== "string" ||
+      typeof payload.player !== "string"
+    ) {
+      return { valid: false, error: "Payload invalide pour jouer une carte" };
+    }
+
+    const { cardId, player } = payload as { cardId: string; player: string };
+
+    if (player !== "player" && player !== "opponent") {
+      return { valid: false, error: "Joueur invalide" };
+    }
+
+    const typedPlayer = player as Player;
+
+    if (this.state.status !== "playing") {
+      return { valid: false, error: "La partie n'est pas en cours" };
+    }
+
+    if (!this.isPlayerTurn(typedPlayer) && !this.state.godMode) {
+      return { valid: false, error: "Ce n'est pas le tour de ce joueur" };
+    }
+
+    const playerCards =
+      typedPlayer === "player"
+        ? this.state.playerCards
+        : this.state.opponentCards;
+    const card = playerCards.find((c) => c.id === cardId);
+
+    if (!card) {
+      return { valid: false, error: "Carte non trouvée" };
+    }
+
+    if (!this.canPlayCard(cardId, typedPlayer)) {
+      return { valid: false, error: "Cette carte n'est pas jouable" };
+    }
+
+    return { valid: true };
+  }
+
+  private validateStartGameAction(): { valid: boolean; error?: string } {
+    if (this.state.status === "playing") {
+      return { valid: false, error: "Une partie est déjà en cours" };
+    }
+    return { valid: true };
   }
 
   // ========== INTERFACE PUBLIQUE ==========

@@ -23,7 +23,7 @@ import {
 import { useState } from "react";
 import { LibTitle } from "@/components/library/title";
 
-export default function Page() {
+export default function PlayPage() {
   const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null); // ID de la carte sélectionnée
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
@@ -102,10 +102,6 @@ export default function Page() {
         setSelectedCard(card.id);
       }
     }
-  };
-
-  const isCardSelected = (cardId: string) => {
-    return selectedCard === cardId;
   };
 
   // Conversion du selectedCard (ID) vers l'index pour l'ancienne interface

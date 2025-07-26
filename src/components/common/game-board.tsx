@@ -19,6 +19,22 @@ interface GameBoardProps {
   onCardHover?: (cardIndex: number | null) => void;
   currentTurn?: "player" | "opponent";
   godMode?: boolean;
+
+  // Props pour multijoueur
+  gameId?: string;
+  playerId?: string;
+  gameStatus?: "waiting" | "playing" | "ended" | "victory" | "defeat";
+  connectionStatus?: "connected" | "disconnected" | "reconnecting";
+  round?: number;
+  maxRounds?: number;
+
+  // Callbacks pour multijoueur
+  onPlayerJoin?: (playerId: string) => void;
+  onPlayerLeave?: (playerId: string) => void;
+  onGameStateSync?: (gameState: unknown) => void;
+  onConnectionChange?: (
+    status: "connected" | "disconnected" | "reconnecting",
+  ) => void;
 }
 
 export function GameBoard({
@@ -37,6 +53,20 @@ export function GameBoard({
   onCardHover,
   currentTurn = "player",
   godMode = false,
+
+  // Props multijoueur avec valeurs par défaut
+  gameId,
+  playerId,
+  gameStatus = "waiting",
+  connectionStatus = "connected",
+  round = 1,
+  maxRounds = 5,
+
+  // Callbacks multijoueur (optionnels)
+  onPlayerJoin,
+  onPlayerLeave,
+  onGameStateSync,
+  onConnectionChange,
 }: GameBoardProps) {
   return (
     <div
@@ -118,11 +148,33 @@ export function GameBoard({
       {/* Cartes de l'adversaire (en haut) */}
       <div className="relative z-10 p-4">
         <div className="text-center">
-          <div
-            className={`mb-3 text-sm ${currentTurn === "opponent" ? "text-amber-300" : "text-amber-200/80"}`}
-          >
-            Adversaire ({opponentCards.length} cartes){" "}
-            {currentTurn === "opponent" && "- À son tour"}
+          <div className="mb-2 flex items-center justify-center gap-2">
+            <div
+              className={`text-sm ${currentTurn === "opponent" ? "text-amber-300" : "text-amber-200/80"}`}
+            >
+              Adversaire ({opponentCards.length} cartes){" "}
+              {currentTurn === "opponent" && "- À son tour"}
+            </div>
+            {/* Indicateurs multijoueur */}
+            {gameId && (
+              <div className="flex items-center gap-1">
+                <div
+                  className={`h-2 w-2 rounded-full ${
+                    connectionStatus === "connected"
+                      ? "bg-green-400"
+                      : connectionStatus === "reconnecting"
+                        ? "animate-pulse bg-yellow-400"
+                        : "bg-red-400"
+                  }`}
+                  title={`Connexion: ${connectionStatus}`}
+                />
+                {round && maxRounds && (
+                  <span className="text-xs text-amber-300/60">
+                    {round}/{maxRounds}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
           <PlayerDeck
             cards={opponentCards}
