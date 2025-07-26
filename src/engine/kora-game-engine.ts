@@ -117,7 +117,9 @@ export class KoraGameEngine {
     const shuffled = [...deck];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      const temp = shuffled[i]!;
+      shuffled[i] = shuffled[j]!;
+      shuffled[j] = temp;
     }
     return shuffled;
   }
@@ -468,7 +470,7 @@ export class KoraGameEngine {
       return this.state.playerWithHand === player;
     } else if (currentRoundCards.length === 1) {
       // Une carte jouée : c'est à l'autre joueur
-      const firstPlayer = currentRoundCards[0].player;
+      const firstPlayer = currentRoundCards[0]!.player;
       return firstPlayer !== player;
     } else {
       // Deux cartes jouées : tour terminé
