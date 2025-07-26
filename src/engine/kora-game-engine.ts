@@ -191,6 +191,8 @@ export class KoraGameEngine {
 
     this.log(`Somme joueur: ${playerSum}, Somme adversaire: ${opponentSum}`);
 
+    // Seule victoire spéciale à la distribution : somme < 21 (gérée ci-dessous)
+
     // Vérification victoire automatique (somme < 21)
     if (playerSum < 21 && opponentSum >= 21) {
       this.state = {
@@ -199,7 +201,7 @@ export class KoraGameEngine {
         playerCards,
         opponentCards,
       };
-      this.log("🏆 Victoire automatique ! (Somme < 21)");
+      this.handleAutomaticVictory("player", "Somme < 21");
       this.notifyListeners();
       return;
     }
@@ -211,7 +213,7 @@ export class KoraGameEngine {
         playerCards,
         opponentCards,
       };
-      this.log("💀 Défaite automatique ! (Adversaire somme < 21)");
+      this.handleAutomaticVictory("opponent", "Somme < 21");
       this.notifyListeners();
       return;
     }
@@ -225,8 +227,9 @@ export class KoraGameEngine {
         playerCards,
         opponentCards,
       };
-      this.log(
-        `🎯 Victoire automatique ! (Somme la plus faible: ${winner === "player" ? playerSum : opponentSum})`,
+      this.handleAutomaticVictory(
+        winner,
+        `Somme la plus faible: ${winner === "player" ? playerSum : opponentSum}`,
       );
       this.notifyListeners();
       return;
@@ -397,9 +400,60 @@ export class KoraGameEngine {
     const winnerCard = roundCards.find((rc) => rc.player === winner)?.card;
 
     if (winnerCard && winnerCard.rank === "3") {
+      // Kora simple au tour 5
       this.log("🏆 KORA ! Victoire avec un 3 au tour final !");
-      // TODO: Implémenter la logique des koras multiples (33, 333)
+
+      // Vérifier les exploits multiples (33, 333)
+      const playerPlayedCards = this.state.playedCards
+        .filter((pc) => pc.player === winner)
+        .map((pc) => pc.card.rank);
+
+      const consecutiveThrees = this.countConsecutiveThrees(playerPlayedCards);
+
+      if (consecutiveThrees >= 3) {
+        this.log("🎯 TRIPLE KORA (333) ! Mise quadruplée !");
+        this.applyKoraMultiplier(winner, 4);
+      } else if (consecutiveThrees >= 2) {
+        this.log("🎯 DOUBLE KORA (33 Export) ! Mise triplée !");
+        this.applyKoraMultiplier(winner, 3);
+      } else {
+        this.log("🎯 KORA Simple ! Mise doublée !");
+        this.applyKoraMultiplier(winner, 2);
+      }
     }
+  }
+
+  private countConsecutiveThrees(ranks: string[]): number {
+    let maxConsecutive = 0;
+    let currentConsecutive = 0;
+
+    for (const rank of ranks) {
+      if (rank === "3") {
+        currentConsecutive++;
+        maxConsecutive = Math.max(maxConsecutive, currentConsecutive);
+      } else {
+        currentConsecutive = 0;
+      }
+    }
+
+    return maxConsecutive;
+  }
+
+  private applyKoraMultiplier(winner: Player, multiplier: number): void {
+    const betAmount = this.state.currentBet;
+    const korasWon = betAmount * multiplier;
+
+    if (winner === "player") {
+      this.state.playerKoras += korasWon;
+      this.state.opponentKoras -= betAmount; // L'adversaire perd la mise de base
+    } else {
+      this.state.opponentKoras += korasWon;
+      this.state.playerKoras -= betAmount;
+    }
+
+    this.log(
+      `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${korasWon} koras (x${multiplier}) !`,
+    );
   }
 
   private endGame(winner: Player): void {
@@ -408,7 +462,20 @@ export class KoraGameEngine {
       `🎉 Fin de partie ! ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} !`,
     );
 
-    // TODO: Gérer les gains/pertes de koras
+    // Gérer les gains/pertes de koras pour une partie normale
+    const betAmount = this.state.currentBet;
+
+    if (winner === "player") {
+      this.state.playerKoras += betAmount;
+      this.state.opponentKoras -= betAmount;
+    } else {
+      this.state.opponentKoras += betAmount;
+      this.state.playerKoras -= betAmount;
+    }
+
+    this.log(
+      `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${betAmount} koras`,
+    );
   }
 
   // ========== GESTION DES CARTES JOUABLES ==========
@@ -661,6 +728,27 @@ Koras Adversaire: ${state.opponentKoras}
 Mode God: ${state.godMode ? "✅" : "❌"}
 ═══════════════════════════
     `.trim();
+  }
+
+  // ========== CAS SPÉCIAUX ET VICTOIRES AUTOMATIQUES ==========
+
+  private handleAutomaticVictory(winner: Player, reason: string): void {
+    // Victoire automatique donne la mise de base
+    const betAmount = this.state.currentBet;
+
+    if (winner === "player") {
+      this.state.playerKoras += betAmount;
+      this.state.opponentKoras -= betAmount;
+      this.log(`🏆 Victoire automatique ! ${reason}`);
+    } else {
+      this.state.opponentKoras += betAmount;
+      this.state.playerKoras -= betAmount;
+      this.log(`💀 Défaite automatique ! ${reason}`);
+    }
+
+    this.log(
+      `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${betAmount} koras`,
+    );
   }
 }
 
