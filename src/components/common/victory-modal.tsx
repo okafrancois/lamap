@@ -134,7 +134,7 @@ export function VictoryModal({
     : defeatMessages[Math.floor(Math.random() * defeatMessages.length)];
 
   return (
-    <div className="animate-in fade-in bg-background/80 fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm duration-500">
+    <div className="animate-in fade-in bg-background/50 fixed inset-0 z-[100] flex items-center justify-center backdrop-blur-sm duration-500">
       <Card
         className={`card-game-effect mx-4 w-full max-w-md ${
           isVictory ? "border-primary/50" : "border-destructive/50"
