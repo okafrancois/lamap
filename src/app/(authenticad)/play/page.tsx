@@ -11,10 +11,8 @@ import {
 } from "@/components/ui/card";
 import { GameBoard } from "@/components/common/game-board";
 import { VictoryModal } from "@/components/common/victory-modal";
-import {
-  GameHistory,
-  type GameHistoryEntry,
-} from "@/components/common/game-history";
+import { GameReviewSheet } from "@/components/common/game-review-sheet";
+
 import { useAIGame } from "@/hooks/use-ai-game";
 import {
   IconRobot,
@@ -38,9 +36,7 @@ export default function PlayPage() {
     "medium",
   );
   const [showVictoryModal, setShowVictoryModal] = useState(false);
-  const [showGameHistory, setShowGameHistory] = useState(false);
-  const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
-  const [currentViewRound, setCurrentViewRound] = useState(1);
+  const [showReviewSheet, setShowReviewSheet] = useState(false);
 
   // Hook pour jouer contre l'IA
   const aiGame = useAIGame(aiDifficulty);
@@ -48,22 +44,9 @@ export default function PlayPage() {
   // Détecter la fin de partie et afficher le modal
   useEffect(() => {
     if (aiGame.phase === "victory" || aiGame.phase === "defeat") {
-      // Créer un historique factice basé sur les cartes jouées
-      const mockHistory: GameHistoryEntry[] = [];
-      for (let i = 1; i <= aiGame.currentRound; i++) {
-        mockHistory.push({
-          round: i,
-          playerCard: { suit: "hearts", rank: `${i + 2}` },
-          opponentCard: { suit: "spades", rank: `${i + 3}` },
-          winner: Math.random() > 0.5 ? "player" : "opponent",
-          playerHasHand: Math.random() > 0.5,
-        });
-      }
-      setGameHistory(mockHistory);
-      setCurrentViewRound(aiGame.currentRound);
       setShowVictoryModal(true);
     }
-  }, [aiGame.phase, aiGame.currentRound]);
+  }, [aiGame.phase]);
 
   const gameOptions = [
     {
@@ -395,19 +378,16 @@ export default function PlayPage() {
           setShowVictoryModal(false);
           setSelectedGameMode(null);
         }}
-        onViewHistory={() => {
+        onEnterReview={() => {
           setShowVictoryModal(false);
-          setShowGameHistory(true);
+          setShowReviewSheet(true);
         }}
       />
 
-      {/* Historique de la partie */}
-      <GameHistory
-        isVisible={showGameHistory}
-        history={gameHistory}
-        currentViewRound={currentViewRound}
-        onClose={() => setShowGameHistory(false)}
-        onRoundSelect={setCurrentViewRound}
+      {/* Sheet de review */}
+      <GameReviewSheet
+        open={showReviewSheet}
+        onOpenChange={setShowReviewSheet}
       />
     </PageContainer>
   );
