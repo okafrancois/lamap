@@ -1331,22 +1331,22 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
           </div>
         </div>
       ) : (
-        <div className="relative" style={{ width: "70px", height: "98px" }}>
+        <div className="relative" style={{ width: "120px", height: "168px" }}>
           {cards.map((card, index) => (
             <div
               key={`${card.suit}-${card.rank}-${index}`}
               className="absolute transition-transform duration-300 hover:scale-105"
               style={{
-                transform: `translateX(${index * 3}px) translateY(${index * -2}px) rotate(${index * 2}deg)`,
+                transform: `translateX(${index * 5}px) translateY(${index * -3}px) rotate(${index * 3}deg)`,
                 zIndex: index,
               }}
             >
               <PlayingCard
                 suit={card.suit}
                 rank={card.rank}
-                width={55}
-                height={77}
-                className="shadow-lg"
+                width={100}
+                height={140}
+                className="border border-white/20 shadow-xl"
               />
             </div>
           ))}
