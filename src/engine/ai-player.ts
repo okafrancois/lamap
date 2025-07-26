@@ -127,15 +127,15 @@ export class AIPlayer {
   private getCardValue(rank: string): number {
     switch (rank) {
       case "A":
-        return 1;
-      case "J":
-        return 11;
-      case "Q":
-        return 12;
+        return 14; // As est la carte la plus forte
       case "K":
         return 13;
+      case "Q":
+        return 12;
+      case "J":
+        return 11;
       default:
-        return parseInt(rank);
+        return parseInt(rank); // 2-10 gardent leur valeur numérique
     }
   }
 
