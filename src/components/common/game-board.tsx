@@ -77,7 +77,8 @@ export function GameBoard({
   return (
     <div
       className={cn(
-        "relative flex h-screen max-h-screen flex-col gap-2 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+        "relative flex h-full flex-col bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+        "safe-area-inset-y", // Support pour les écrans avec encoche
         className,
       )}
     >
@@ -151,12 +152,12 @@ export function GameBoard({
         <div className="absolute bottom-2 left-1/2 h-1 w-24 -translate-x-1/2 bg-gradient-to-r from-transparent via-amber-400/30 to-transparent"></div>
       </div>
 
-      {/* Cartes de l'adversaire (en haut) */}
-      <div className="relative z-10 flex-shrink-0 p-2">
+      {/* Cartes de l'adversaire (en haut) - Optimisé mobile */}
+      <div className="relative z-10 flex-shrink-0 px-2 py-1 sm:p-2">
         <div className="text-center">
           <div className="mb-2 flex items-center justify-center gap-2">
             <div
-              className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-300 ${
+              className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-300 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 ${
                 currentTurn === "opponent"
                   ? "border border-red-500/30 bg-gradient-to-r from-red-500/20 to-red-600/20 shadow-lg"
                   : "border border-gray-500/20 bg-gray-500/10"
@@ -170,21 +171,26 @@ export function GameBoard({
                 }`}
               ></div>
               <span
-                className={`text-sm font-medium ${
+                className={`text-xs font-medium sm:text-sm ${
                   currentTurn === "opponent"
                     ? "text-red-200"
                     : "text-amber-200/80"
                 }`}
               >
-                Adversaire ({opponentCards.length} cartes)
+                <span className="hidden sm:inline">Adversaire </span>
+                <span className="sm:hidden">IA </span>({opponentCards.length})
                 {currentTurn === "opponent" && (
-                  <span className="ml-2 animate-pulse">🎯 À son tour</span>
+                  <span className="ml-1 animate-pulse text-xs sm:ml-2">
+                    <span className="hidden sm:inline">🎯 À son tour</span>
+                    <span className="sm:hidden">🎯</span>
+                  </span>
                 )}
               </span>
-              {/* Indication de qui a la main */}
+              {/* Indication de qui a la main - Mobile optimisé */}
               {gameStarted && playerWithHand === "opponent" && (
-                <div className="ml-2 animate-pulse rounded-full bg-yellow-500 px-2 py-1 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50">
-                  👑 LA MAIN
+                <div className="ml-1 animate-pulse rounded-full bg-yellow-500 px-1 py-0.5 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50 sm:ml-2 sm:px-2 sm:py-1">
+                  <span className="hidden sm:inline">👑 LA MAIN</span>
+                  <span className="sm:hidden">👑</span>
                 </div>
               )}
             </div>
@@ -231,8 +237,8 @@ export function GameBoard({
         </div>
       </div>
 
-      {/* Zone de cartes jouées (au milieu) */}
-      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center">
+      {/* Zone de cartes jouées (au milieu) - Mobile optimisé */}
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 sm:px-4">
         {/* Anneaux décoratifs autour du plateau */}
         <div
           className="absolute h-[45%] w-[45%] animate-pulse rounded-full border border-amber-400/20"
@@ -247,7 +253,7 @@ export function GameBoard({
           style={{ animationDuration: "8s", animationDelay: "2s" }}
         ></div>
 
-        <div className="relative aspect-square w-[35%]">
+        <div className="relative aspect-square w-[70%] sm:w-[50%] md:w-[40%] lg:w-[35%]">
           {/* Plateau de jeu avec design élaboré */}
           <div className="relative h-full w-full rounded-2xl border-4 border-amber-400/80 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-900 shadow-2xl">
             {/* Effet de profondeur avec ombres intérieures */}
@@ -352,11 +358,11 @@ export function GameBoard({
         </div>
       </div>
 
-      {/* Cartes du joueur (en bas) */}
-      <div className="relative z-10 flex-shrink-0 p-2 text-center">
-        <div className="mb-2 flex justify-center">
+      {/* Cartes du joueur (en bas) - Mobile optimisé */}
+      <div className="relative z-10 flex-shrink-0 px-2 py-1 text-center sm:p-2">
+        <div className="mb-1 flex justify-center sm:mb-2">
           <div
-            className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-300 ${
+            className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-300 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 ${
               isPlayerTurn
                 ? "border border-green-500/30 bg-gradient-to-r from-green-500/20 to-green-600/20 shadow-lg"
                 : "border border-gray-500/20 bg-gray-500/10"
@@ -370,19 +376,24 @@ export function GameBoard({
               }`}
             ></div>
             <span
-              className={`text-sm font-medium ${
+              className={`text-xs font-medium sm:text-sm ${
                 isPlayerTurn ? "text-green-200" : "text-amber-100/60"
               }`}
             >
-              Vos cartes
+              <span className="hidden sm:inline">Vos cartes</span>
+              <span className="sm:hidden">Vous</span>
               {isPlayerTurn && (
-                <span className="ml-2 animate-pulse">🎯 À votre tour</span>
+                <span className="ml-1 animate-pulse text-xs sm:ml-2">
+                  <span className="hidden sm:inline">🎯 À votre tour</span>
+                  <span className="sm:hidden">🎯</span>
+                </span>
               )}
             </span>
-            {/* Indication de qui a la main */}
+            {/* Indication de qui a la main - Mobile optimisé */}
             {gameStarted && playerWithHand === "player" && (
-              <div className="ml-2 animate-pulse rounded-full bg-yellow-500 px-2 py-1 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50">
-                👑 LA MAIN
+              <div className="ml-1 animate-pulse rounded-full bg-yellow-500 px-1 py-0.5 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50 sm:ml-2 sm:px-2 sm:py-1">
+                <span className="hidden sm:inline">👑 LA MAIN</span>
+                <span className="sm:hidden">👑</span>
               </div>
             )}
           </div>

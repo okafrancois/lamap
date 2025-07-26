@@ -1227,16 +1227,17 @@ export function PlayerDeck({
   selectedCard,
   onCardHover,
 }: PlayerDeckProps) {
-  const cardWidth = isOpponent ? 100 : 140;
-  const cardHeight = isOpponent ? 140 : 196;
+  // Tailles optimisées pour mobile (valeurs de base pour mobile)
+  const cardWidth = isOpponent ? 80 : 110; // Plus petites sur mobile
+  const cardHeight = isOpponent ? 112 : 154;
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
       <div
         className="relative flex items-center justify-center"
         style={{
-          width: `${cards.length * (isOpponent ? 20 : 35) + cardWidth}px`,
-          height: `${cardHeight + (isOpponent ? 12 : 20)}px`,
+          width: `${cards.length * (isOpponent ? 15 : 25) + cardWidth}px`, // Espacement réduit pour mobile
+          height: `${cardHeight + (isOpponent ? 8 : 15)}px`,
         }}
       >
         {cards.map((card, index) => {
@@ -1244,10 +1245,10 @@ export function PlayerDeck({
           const middleIndex = (totalCards - 1) / 2;
           const offsetFromMiddle = index - middleIndex;
 
-          // Calcul optimisé pour la disposition avec plus d'espacement
-          const rotation = offsetFromMiddle * 7;
-          const translateX = offsetFromMiddle * (isOpponent ? 35 : 85);
-          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 5 : 10);
+          // Calcul optimisé pour mobile avec espacement réduit
+          const rotation = offsetFromMiddle * 5; // Rotation réduite pour mobile
+          const translateX = offsetFromMiddle * (isOpponent ? 25 : 60); // Espacement horizontal réduit
+          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 3 : 6); // Espacement vertical réduit
 
           // États des cartes
           const isCardPlayable =
@@ -1262,8 +1263,9 @@ export function PlayerDeck({
               className={cn("absolute transition-all duration-300", {
                 "cursor-pointer": hasCardAction && isCardPlayable,
                 "cursor-not-allowed": hasCardAction && !isCardPlayable,
-                "hover:scale-105": isCardPlayable,
+                "hover:scale-105 active:scale-95": isCardPlayable, // Feedback tactile mobile
                 "z-50": isCardHovered,
+                "touch-manipulation": true, // Optimisation tactile
               })}
               style={{
                 transform: `translateX(${translateX}px) translateY(${translateY}px) rotate(${rotation}deg)`,
