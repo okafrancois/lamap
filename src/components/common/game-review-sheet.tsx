@@ -118,7 +118,7 @@ export function GameReviewSheet({ open, onOpenChange }: GameReviewSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full p-0 sm:max-w-[70vw]">
+      <SheetContent className="min-h-full w-full p-0 sm:max-w-[70vw]">
         <div className="flex h-full flex-col">
           <SheetHeader className="border-border border-b p-4">
             <SheetTitle className="flex items-center justify-between">
@@ -142,7 +142,7 @@ export function GameReviewSheet({ open, onOpenChange }: GameReviewSheetProps) {
                 round={currentRound}
                 maxRounds={totalRounds}
                 gameStatus="playing"
-                className="h-full"
+                className="mx-auto h-full w-[80%] rounded-lg"
               />
             )}
           </div>
