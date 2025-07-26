@@ -1,3 +1,5 @@
+"use client";
+
 import { Button as ShadButton } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
