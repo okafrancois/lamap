@@ -55,7 +55,13 @@ export function useAIGame(difficulty: "easy" | "medium" | "hard" = "medium") {
     const timeoutId = setTimeout(handleAITurn, 100);
 
     return () => clearTimeout(timeoutId);
-  }, [koraEngine.phase, koraEngine.currentTurn, isAIThinking, difficulty]);
+  }, [
+    koraEngine.phase,
+    koraEngine.currentTurn,
+    isAIThinking,
+    difficulty,
+    koraEngine,
+  ]);
 
   const startAIGame = () => {
     setIsAIThinking(false);
