@@ -118,7 +118,7 @@ export function GameReviewSheet({ open, onOpenChange }: GameReviewSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full p-0 sm:max-w-none" side="bottom">
+      <SheetContent className="w-full p-0 sm:max-w-none">
         <div className="flex h-[90vh] flex-col">
           <SheetHeader className="border-border border-b p-4">
             <SheetTitle className="flex items-center justify-between">
