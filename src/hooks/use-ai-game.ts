@@ -18,12 +18,6 @@ export function useAIGame(difficulty: "easy" | "medium" | "hard" = "medium") {
   // Gérer le tour de l'IA automatiquement
   useEffect(() => {
     const handleAITurn = () => {
-      console.log("🤖 Check IA:", {
-        phase: koraEngine.phase,
-        currentTurn: koraEngine.currentTurn,
-        isAIThinking,
-      });
-
       // Éviter les appels multiples simultanés
       if (isAIThinking) return;
 
@@ -32,7 +26,6 @@ export function useAIGame(difficulty: "easy" | "medium" | "hard" = "medium") {
         koraEngine.phase === "playing" &&
         koraEngine.currentTurn === "opponent"
       ) {
-        console.log("🤖 IA va jouer !");
         setIsAIThinking(true);
 
         // Délai pour simuler la réflexion de l'IA
@@ -65,27 +58,13 @@ export function useAIGame(difficulty: "easy" | "medium" | "hard" = "medium") {
   }, [koraEngine.phase, koraEngine.currentTurn, isAIThinking, difficulty]);
 
   const startAIGame = () => {
-    console.log("🎮 Démarrage de la partie contre l'IA");
     setIsAIThinking(false);
     koraEngine.startGame();
-    console.log("🎮 Phase après démarrage:", koraEngine.phase);
   };
 
   const playCardAgainstAI = (cardId: string) => {
-    console.log(
-      "🎯 Joueur joue carte:",
-      cardId,
-      "currentTurn:",
-      koraEngine.currentTurn,
-    );
     if (koraEngine.currentTurn === "player" && !isAIThinking) {
       const success = koraEngine.playCard(cardId, "player");
-      console.log(
-        "🎯 Carte jouée avec succès:",
-        success,
-        "nouveau tour:",
-        koraEngine.currentTurn,
-      );
       return success;
     }
     return false;

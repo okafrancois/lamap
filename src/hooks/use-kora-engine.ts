@@ -116,6 +116,7 @@ export function useKoraEngine() {
     currentRound: gameState.currentRound,
     playerKoras: gameState.playerKoras,
     opponentKoras: gameState.opponentKoras,
+    playerWithHand: gameState.playerWithHand,
     godMode: gameState.godMode,
     gameLog: gameState.gameLog,
 

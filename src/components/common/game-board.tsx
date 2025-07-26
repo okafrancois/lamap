@@ -28,6 +28,9 @@ interface GameBoardProps {
   round?: number;
   maxRounds?: number;
 
+  // Indication de qui a la main
+  playerWithHand?: "player" | "opponent";
+
   // Callbacks pour multijoueur
   onPlayerJoin?: (playerId: string) => void;
   onPlayerLeave?: (playerId: string) => void;
@@ -62,6 +65,9 @@ export function GameBoard({
   round = 1,
   maxRounds = 5,
 
+  // Indication de qui a la main
+  playerWithHand,
+
   // Callbacks multijoueur (optionnels)
   onPlayerJoin,
   onPlayerLeave,
@@ -71,7 +77,7 @@ export function GameBoard({
   return (
     <div
       className={cn(
-        "relative flex h-full flex-col gap-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
+        "relative flex h-screen max-h-screen flex-col gap-2 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900",
         className,
       )}
     >
@@ -146,14 +152,41 @@ export function GameBoard({
       </div>
 
       {/* Cartes de l'adversaire (en haut) */}
-      <div className="relative z-10 p-4">
+      <div className="relative z-10 flex-shrink-0 p-2">
         <div className="text-center">
           <div className="mb-2 flex items-center justify-center gap-2">
             <div
-              className={`text-sm ${currentTurn === "opponent" ? "text-amber-300" : "text-amber-200/80"}`}
+              className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-300 ${
+                currentTurn === "opponent"
+                  ? "border border-red-500/30 bg-gradient-to-r from-red-500/20 to-red-600/20 shadow-lg"
+                  : "border border-gray-500/20 bg-gray-500/10"
+              }`}
             >
-              Adversaire ({opponentCards.length} cartes){" "}
-              {currentTurn === "opponent" && "- À son tour"}
+              <div
+                className={`h-3 w-3 rounded-full ${
+                  currentTurn === "opponent"
+                    ? "animate-pulse bg-red-500 shadow-lg shadow-red-500/50"
+                    : "bg-gray-400"
+                }`}
+              ></div>
+              <span
+                className={`text-sm font-medium ${
+                  currentTurn === "opponent"
+                    ? "text-red-200"
+                    : "text-amber-200/80"
+                }`}
+              >
+                Adversaire ({opponentCards.length} cartes)
+                {currentTurn === "opponent" && (
+                  <span className="ml-2 animate-pulse">🎯 À son tour</span>
+                )}
+              </span>
+              {/* Indication de qui a la main */}
+              {gameStarted && playerWithHand === "opponent" && (
+                <div className="ml-2 animate-pulse rounded-full bg-yellow-500 px-2 py-1 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50">
+                  👑 LA MAIN
+                </div>
+              )}
             </div>
             {/* Indicateurs multijoueur */}
             {gameId && (
@@ -199,7 +232,7 @@ export function GameBoard({
       </div>
 
       {/* Zone de cartes jouées (au milieu) */}
-      <div className="relative z-10 flex flex-1 items-center justify-center">
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center">
         {/* Anneaux décoratifs autour du plateau */}
         <div
           className="absolute h-[45%] w-[45%] animate-pulse rounded-full border border-amber-400/20"
@@ -320,11 +353,39 @@ export function GameBoard({
       </div>
 
       {/* Cartes du joueur (en bas) */}
-      <div className="relative z-10 min-h-max text-center">
-        <div
-          className={`mb-3 text-sm font-medium ${isPlayerTurn ? "text-amber-100" : "text-amber-100/60"}`}
-        >
-          Vos cartes {isPlayerTurn && "- À votre tour"}
+      <div className="relative z-10 flex-shrink-0 p-2 text-center">
+        <div className="mb-2 flex justify-center">
+          <div
+            className={`flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-300 ${
+              isPlayerTurn
+                ? "border border-green-500/30 bg-gradient-to-r from-green-500/20 to-green-600/20 shadow-lg"
+                : "border border-gray-500/20 bg-gray-500/10"
+            }`}
+          >
+            <div
+              className={`h-3 w-3 rounded-full ${
+                isPlayerTurn
+                  ? "animate-pulse bg-green-500 shadow-lg shadow-green-500/50"
+                  : "bg-gray-400"
+              }`}
+            ></div>
+            <span
+              className={`text-sm font-medium ${
+                isPlayerTurn ? "text-green-200" : "text-amber-100/60"
+              }`}
+            >
+              Vos cartes
+              {isPlayerTurn && (
+                <span className="ml-2 animate-pulse">🎯 À votre tour</span>
+              )}
+            </span>
+            {/* Indication de qui a la main */}
+            {gameStarted && playerWithHand === "player" && (
+              <div className="ml-2 animate-pulse rounded-full bg-yellow-500 px-2 py-1 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50">
+                👑 LA MAIN
+              </div>
+            )}
+          </div>
         </div>
         <PlayerDeck
           cards={playerCards}

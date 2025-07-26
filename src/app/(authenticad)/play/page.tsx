@@ -69,11 +69,12 @@ export default function PlayPage() {
     },
   ];
 
-  const handleGameStart = (gameMode: string) => {
-    console.log("🎯 handleGameStart appelé avec:", gameMode);
-    if (gameMode === "ai") {
-      console.log("🎯 Mode IA sélectionné");
-      setSelectedGameMode(gameMode);
+  const handleModeSelect = (gameMode: string) => {
+    setSelectedGameMode(gameMode);
+  };
+
+  const handleGameStart = () => {
+    if (selectedGameMode === "ai") {
       aiGame.startAIGame();
     }
   };
@@ -117,8 +118,8 @@ export default function PlayPage() {
   };
 
   return (
-    <PageContainer className="flex flex-col gap-6 lg:flex-row">
-      {/* Plateau de jeu - Colonne de gauche */}
+    <PageContainer className="relative flex h-screen flex-col gap-6 overflow-hidden lg:flex-row">
+      {/* Plateau de jeu - Largeur adaptative */}
       <GameBoard
         playerCards={aiGame.playerCards}
         opponentCards={aiGame.opponentCards}
@@ -139,11 +140,20 @@ export default function PlayPage() {
         selectedCard={getSelectedCardIndex()}
         onCardHover={handleCardHover}
         currentTurn={aiGame.currentTurn}
-        className="h-full overflow-hidden rounded-lg p-0 lg:w-4/6"
+        playerWithHand={aiGame.playerWithHand}
+        className={`h-full max-h-full overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
+          aiGame.phase === "playing" ? "lg:w-full" : "lg:w-4/6"
+        }`}
       />
 
-      {/* Options de jeu - Colonne de droite */}
-      <Card className="h-full pt-0 lg:w-2/6">
+      {/* Options de jeu - Colonne de droite avec animation */}
+      <Card
+        className={`h-full pt-0 transition-all duration-700 ease-in-out ${
+          aiGame.phase === "playing"
+            ? "lg:pointer-events-none lg:w-0 lg:overflow-hidden lg:opacity-0"
+            : "lg:w-2/6 lg:opacity-100"
+        }`}
+      >
         <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
           <LibTitle as="h3" className="flex w-full items-center gap-3">
             <div className="bg-secondary/20 rounded-lg p-2">
@@ -221,9 +231,19 @@ export default function PlayPage() {
           {selectedGameMode === "ai" && aiGame.phase === "waiting" && (
             <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-purple-600/10">
               <CardContent className="p-4">
-                <h4 className="mb-3 font-semibold text-purple-700 dark:text-purple-300">
-                  Difficulté de l&apos;IA
-                </h4>
+                <div className="mb-3 flex items-center justify-between">
+                  <h4 className="font-semibold text-purple-700 dark:text-purple-300">
+                    Difficulté de l&apos;IA
+                  </h4>
+                  <LibButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedGameMode(null)}
+                    className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
+                  >
+                    ← Retour
+                  </LibButton>
+                </div>
                 <div className="space-y-2">
                   {(["easy", "medium", "hard"] as const).map((difficulty) => (
                     <LibButton
@@ -240,89 +260,179 @@ export default function PlayPage() {
                     </LibButton>
                   ))}
                 </div>
+                <LibButton
+                  className="mt-3 w-full bg-purple-600 hover:bg-purple-700"
+                  onClick={handleGameStart}
+                  icon={<IconPlayerPlay className="size-4" />}
+                >
+                  🚀 Commencer la partie
+                </LibButton>
               </CardContent>
             </Card>
           )}
 
-          {/* Modes de jeu */}
-          {gameOptions.map((option) => {
-            const IconComponent = option.icon;
-            const isSelected = selectedGameMode === option.id;
+          {/* Modes de jeu - Masqués si un mode est sélectionné */}
+          {!selectedGameMode &&
+            gameOptions.map((option) => {
+              const IconComponent = option.icon;
+              const isSelected = selectedGameMode === option.id;
 
-            return (
-              <Card
-                key={option.id}
-                className={`relative cursor-pointer gap-2 border-2 p-6 transition-all duration-300 ${
-                  !option.available
-                    ? "cursor-not-allowed border-gray-300 opacity-50"
-                    : isSelected
-                      ? "border-primary shadow-primary/20 scale-[1.02] shadow-lg hover:shadow-lg"
-                      : "border-border hover:border-primary/50 hover:shadow-lg"
-                }`}
-                onClick={() =>
-                  option.available && setSelectedGameMode(option.id)
-                }
-              >
-                <CardHeader className="p-0">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`rounded-lg bg-gradient-to-br p-1 ${option.color} text-white`}
-                    >
-                      <IconComponent className="size-6" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        {option.title}
-                        {isSelected && (
-                          <IconStar className="text-primary fill-primary size-4" />
-                        )}
-                        {!option.available && (
-                          <span className="text-xs text-gray-500">
-                            (Bientôt)
-                          </span>
-                        )}
-                      </CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                <CardContent className="space-y-1 p-0">
-                  <p className="text-muted-foreground text-sm">
-                    {option.description}
-                  </p>
-
-                  <div className="text-muted-foreground flex justify-between text-xs">
-                    <span>{option.difficulty}</span>
-                    <span>{option.players}</span>
-                  </div>
-
-                  <LibButton
-                    className={`mt-3 w-full ${
-                      isSelected && option.available
-                        ? "bg-primary hover:bg-primary/90"
-                        : "variant-outline"
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (option.available) {
-                        handleGameStart(option.id);
-                      }
-                    }}
-                    disabled={!option.available}
-                    icon={<IconPlayerPlay className="size-4" />}
-                  >
-                    {!option.available
-                      ? "Indisponible"
+              return (
+                <Card
+                  key={option.id}
+                  className={`relative cursor-pointer gap-2 border-2 p-6 transition-all duration-300 ${
+                    !option.available
+                      ? "cursor-not-allowed border-gray-300 opacity-50"
                       : isSelected
-                        ? "Commencer la partie"
-                        : "Sélectionner"}
-                  </LibButton>
-                </CardContent>
-              </Card>
-            );
-          })}
+                        ? "border-primary shadow-primary/20 scale-[1.02] shadow-lg hover:shadow-lg"
+                        : "border-border hover:border-primary/50 hover:shadow-lg"
+                  }`}
+                  onClick={() =>
+                    option.available && handleModeSelect(option.id)
+                  }
+                >
+                  <CardHeader className="p-0">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`rounded-lg bg-gradient-to-br p-1 ${option.color} text-white`}
+                      >
+                        <IconComponent className="size-6" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="flex items-center gap-2 text-base">
+                          {option.title}
+                          {isSelected && (
+                            <IconStar className="text-primary fill-primary size-4" />
+                          )}
+                          {!option.available && (
+                            <span className="text-xs text-gray-500">
+                              (Bientôt)
+                            </span>
+                          )}
+                        </CardTitle>
+                      </div>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-1 p-0">
+                    <p className="text-muted-foreground text-sm">
+                      {option.description}
+                    </p>
+
+                    <div className="text-muted-foreground flex justify-between text-xs">
+                      <span>{option.difficulty}</span>
+                      <span>{option.players}</span>
+                    </div>
+
+                    <LibButton
+                      className={`mt-3 w-full ${
+                        isSelected && option.available
+                          ? "bg-primary hover:bg-primary/90"
+                          : "variant-outline"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (option.available) {
+                          if (isSelected) {
+                            handleGameStart();
+                          } else {
+                            handleModeSelect(option.id);
+                          }
+                        }
+                      }}
+                      disabled={!option.available}
+                      icon={<IconPlayerPlay className="size-4" />}
+                    >
+                      {!option.available
+                        ? "Indisponible"
+                        : isSelected
+                          ? "Commencer la partie"
+                          : "Sélectionner"}
+                    </LibButton>
+                  </CardContent>
+                </Card>
+              );
+            })}
         </CardContent>
       </Card>
+
+      {/* Bulle d'information flottante pendant la partie */}
+      {aiGame.phase === "playing" && (
+        <div className="animate-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-500">
+          <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 shadow-2xl backdrop-blur-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <div className="rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
+                    <IconCards className="size-5 text-white" />
+                  </div>
+                  {aiGame.isAIThinking && (
+                    <div className="absolute -top-1 -right-1">
+                      <div className="h-3 w-3 animate-pulse rounded-full bg-orange-400"></div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-cyan-700 dark:text-cyan-300">
+                      Tour {aiGame.currentRound}/5
+                    </h4>
+                    {/* Indication de qui a la main dans la bulle */}
+                    <div
+                      className={`rounded-full px-2 py-1 text-xs font-bold ${
+                        aiGame.playerWithHand === "player"
+                          ? "bg-yellow-500 text-yellow-900"
+                          : "bg-orange-500 text-orange-900"
+                      }`}
+                    >
+                      👑 {aiGame.playerWithHand === "player" ? "VOUS" : "IA"}{" "}
+                      avez la main
+                    </div>
+                    <div
+                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
+                        aiGame.currentTurn === "player"
+                          ? "bg-green-500/20 text-green-700 dark:text-green-300"
+                          : aiGame.isAIThinking
+                            ? "bg-orange-500/20 text-orange-700 dark:text-orange-300"
+                            : "bg-red-500/20 text-red-700 dark:text-red-300"
+                      }`}
+                    >
+                      <div
+                        className={`h-2 w-2 rounded-full ${
+                          aiGame.currentTurn === "player"
+                            ? "bg-green-500"
+                            : aiGame.isAIThinking
+                              ? "animate-pulse bg-orange-500"
+                              : "bg-red-500"
+                        }`}
+                      ></div>
+                      {aiGame.currentTurn === "player"
+                        ? "Votre tour"
+                        : aiGame.isAIThinking
+                          ? "IA réfléchit..."
+                          : "Tour de l'IA"}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4 text-xs text-cyan-600 dark:text-cyan-400">
+                    <span>Vous: {aiGame.playerKoras} koras</span>
+                    <span>IA: {aiGame.opponentKoras} koras</span>
+                  </div>
+                </div>
+
+                <LibButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleNewGame}
+                  className="ml-2 text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
+                  icon={<IconRefresh className="size-4" />}
+                ></LibButton>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </PageContainer>
   );
 }
