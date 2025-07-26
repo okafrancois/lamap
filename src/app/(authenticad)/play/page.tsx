@@ -12,6 +12,7 @@ import {
 import { GameBoard } from "@/components/common/game-board";
 import { VictoryModal } from "@/components/common/victory-modal";
 import { GameReviewSheet } from "@/components/common/game-review-sheet";
+import { SoundControls } from "@/components/common/sound-controls";
 
 import { useAIGame } from "@/hooks/use-ai-game";
 import {
@@ -27,6 +28,7 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { LibTitle } from "@/components/library/title";
+import { useSound } from "@/hooks/use-sound";
 
 export default function PlayPage() {
   const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
@@ -41,12 +43,23 @@ export default function PlayPage() {
   // Hook pour jouer contre l'IA
   const aiGame = useAIGame(aiDifficulty);
 
+  // Hook pour les sons
+  const { playSound } = useSound();
+
   // Détecter la fin de partie et afficher le modal
   useEffect(() => {
     if (aiGame.phase === "victory" || aiGame.phase === "defeat") {
+      void playSound("game_end");
       setShowVictoryModal(true);
     }
-  }, [aiGame.phase]);
+  }, [aiGame.phase, playSound]);
+
+  // Détecter les changements de tour pour jouer le son
+  useEffect(() => {
+    if (aiGame.phase === "playing") {
+      void playSound("turn_change", { volume: 0.4 });
+    }
+  }, [aiGame.currentTurn, aiGame.phase, playSound]);
 
   const gameOptions = [
     {
@@ -87,11 +100,13 @@ export default function PlayPage() {
 
   const handleGameStart = () => {
     if (selectedGameMode === "ai") {
+      void playSound("game_start");
       aiGame.startAIGame();
     }
   };
 
   const handleCardClick = (cardId: string) => {
+    void playSound("card_select");
     if (selectedCard === cardId) {
       setSelectedCard(null);
     } else {
@@ -103,6 +118,7 @@ export default function PlayPage() {
     if (selectedCard && aiGame.currentTurn === "player") {
       const success = aiGame.playCardAgainstAI(selectedCard);
       if (success) {
+        void playSound("card_play");
         setSelectedCard(null);
       }
     }
@@ -124,6 +140,7 @@ export default function PlayPage() {
   };
 
   const handleNewGame = () => {
+    void playSound("shuffle_cards");
     setSelectedCard(null);
     setHoveredCard(null);
     aiGame.startAIGame();
@@ -361,6 +378,13 @@ export default function PlayPage() {
           </div>
         </div>
       )}
+
+      {/* Contrôles audio en bas à gauche */}
+      <div className="fixed bottom-4 left-4 z-50">
+        <div className="rounded-lg border border-white/20 bg-black/80 px-2 py-1 shadow-xl backdrop-blur-sm">
+          <SoundControls className="[&_button]:text-white/70 [&_button:hover]:text-white [&_span]:text-white/70" />
+        </div>
+      </div>
 
       {/* Modal de victoire/défaite */}
       <VictoryModal

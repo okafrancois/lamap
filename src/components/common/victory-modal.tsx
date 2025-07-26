@@ -10,6 +10,8 @@ import {
   IconHistory,
   IconPlayerPlay,
 } from "@tabler/icons-react";
+import { useSound } from "@/hooks/use-sound";
+import { useEffect, useCallback } from "react";
 
 interface VictoryModalProps {
   isVisible: boolean;
@@ -38,10 +40,10 @@ export function VictoryModal({
   onViewHistory,
   onEnterReview,
 }: VictoryModalProps) {
-  if (!isVisible) return null;
+  const { playSound } = useSound();
 
   // Analyser les logs pour détecter le type de victoire
-  const getVictoryType = () => {
+  const getVictoryType = useCallback(() => {
     const recentLogs = gameLog.slice(-10); // Regarder les 10 derniers messages
 
     for (const log of recentLogs) {
@@ -109,9 +111,43 @@ export function VictoryModal({
       multiplier: "x1",
       special: false,
     };
-  };
+  }, [gameLog, isVictory]);
 
   const victoryType = getVictoryType();
+
+  // Jouer le son d'ouverture du modal et son spécial
+  useEffect(() => {
+    if (isVisible) {
+      void playSound("modal_open");
+
+      // Déterminer et jouer le son spécial après un délai
+      setTimeout(() => {
+        if (isVictory) {
+          switch (victoryType.type) {
+            case "triple_kora":
+              void playSound("kora_triple");
+              break;
+            case "double_kora":
+              void playSound("kora_double");
+              break;
+            case "simple_kora":
+              void playSound("kora_simple");
+              break;
+            case "auto_sum":
+            case "auto_lowest":
+              void playSound("auto_victory");
+              break;
+            default:
+              void playSound("victory");
+          }
+        } else {
+          void playSound("defeat");
+        }
+      }, 500); // Délai pour laisser le modal s'afficher
+    }
+  }, [isVisible, isVictory, victoryType.type, playSound]);
+
+  if (!isVisible) return null;
 
   const victoryMessages = [
     "🎉 C'est toi le ndoss !",
