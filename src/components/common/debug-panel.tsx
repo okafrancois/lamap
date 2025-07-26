@@ -33,6 +33,12 @@ interface DebugPanelProps {
   onEndGame: () => void;
   onSetVictory: () => void;
   onSetDefeat: () => void;
+  onToggleGodMode?: () => void;
+  onForcePlayerHand?: (player: "player" | "opponent") => void;
+  godMode?: boolean;
+  currentRound?: number;
+  playerKoras?: number;
+  opponentKoras?: number;
   onPlayRandomCard: () => void;
   onSetPlayableCards: (cards: number[]) => void;
   onSimulateHover: (cardIndex: number | null) => void;
@@ -55,6 +61,12 @@ export function DebugPanel({
   onEndGame,
   onSetVictory,
   onSetDefeat,
+  onToggleGodMode,
+  onForcePlayerHand,
+  godMode = false,
+  currentRound = 0,
+  playerKoras = 0,
+  opponentKoras = 0,
   onPlayRandomCard,
   onSetPlayableCards,
   onSimulateHover,
@@ -188,6 +200,63 @@ export function DebugPanel({
               <span className="text-yellow-300">
                 {playableCards.length > 0 ? playableCards.join(", ") : "Aucune"}
               </span>
+            </div>
+          </div>
+
+          {/* Mode God */}
+          {onToggleGodMode && (
+            <div>
+              <h4 className="mb-2 text-xs font-medium text-red-200">
+                Mode God
+              </h4>
+              <div className="grid grid-cols-1 gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onToggleGodMode}
+                  className={`h-7 border text-xs ${
+                    godMode
+                      ? "border-red-400/50 bg-red-500/20 text-red-300"
+                      : "border-white/20 text-white hover:bg-white/20"
+                  }`}
+                >
+                  {godMode ? "🔓 God Mode ON" : "🔒 God Mode OFF"}
+                </Button>
+                {godMode && onForcePlayerHand && (
+                  <div className="mt-1 grid grid-cols-2 gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onForcePlayerHand("player")}
+                      className="h-6 border border-green-400/30 text-[10px] text-green-300 hover:bg-green-500/20"
+                    >
+                      👤 Main Joueur
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onForcePlayerHand("opponent")}
+                      className="h-6 border border-red-400/30 text-[10px] text-red-300 hover:bg-red-500/20"
+                    >
+                      🤖 Main Adversaire
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Informations Game Engine */}
+          <div>
+            <h4 className="mb-2 text-xs font-medium text-cyan-200">
+              Game Engine
+            </h4>
+            <div className="space-y-1 text-xs text-white/80">
+              <div>Tour: {currentRound}/5</div>
+              <div className="grid grid-cols-2 gap-2">
+                <span>Koras J: {playerKoras}</span>
+                <span>Koras A: {opponentKoras}</span>
+              </div>
             </div>
           </div>
 

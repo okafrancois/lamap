@@ -30,6 +30,8 @@ export type Rank =
 export type Card = {
   suit: Suit;
   rank: Rank;
+  jouable: boolean;
+  id: string;
 };
 
 interface CardProps {
