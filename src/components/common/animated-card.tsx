@@ -43,7 +43,7 @@ export function AnimatedCard({
         "-translate-y-2 scale-105": isSelected,
         "-translate-y-4 scale-110 opacity-0": isPlaying,
         "cursor-pointer hover:scale-105": isPlayable && onClick,
-        "opacity-50 grayscale": !isPlayable,
+        "cursor-not-allowed": !isPlayable,
       })}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
@@ -56,8 +56,9 @@ export function AnimatedCard({
       {/* Bouton Jouer pour carte sélectionnée */}
       {!isOpponent && !hidden && (
         <PlayButton
-          isVisible={isSelected && isPlayable && !!onPlayClick}
+          isVisible={isSelected && !!onPlayClick}
           onClick={() => onPlayClick?.()}
+          isPlayable={isPlayable}
         />
       )}
 

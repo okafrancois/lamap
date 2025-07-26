@@ -12,7 +12,7 @@ export default auth((req) => {
   const isHomePage = req.nextUrl.pathname === "/";
 
   if (isAuthPage && isLoggedIn) {
-    return Response.redirect(new URL("/dashboard", req.nextUrl));
+    return Response.redirect(new URL("/play", req.nextUrl));
   }
 
   if (isProtectedPage && !isLoggedIn) {

@@ -44,6 +44,8 @@ export default function Page() {
     playSelectedCard,
     selectedCard,
     endGame,
+    setVictory,
+    setDefeat,
     setPhase,
     setCurrentTurn,
     setPlayableCards,
@@ -103,6 +105,8 @@ export default function Page() {
         onTurnChange={setCurrentTurn}
         onStartGame={startGame}
         onEndGame={endGame}
+        onSetVictory={setVictory}
+        onSetDefeat={setDefeat}
         onPlayRandomCard={playRandomCard}
         onSetPlayableCards={setPlayableCards}
         onSimulateHover={setHoveredCard}

@@ -1259,7 +1259,6 @@ export function PlayerDeck({
                 "cursor-pointer": hasCardAction && isCardPlayable,
                 "cursor-not-allowed": hasCardAction && !isCardPlayable,
                 "hover:scale-105": isCardPlayable,
-                "opacity-60": !isCardPlayable && isPlayerTurn && !isOpponent,
                 "z-50": isCardHovered,
               })}
               style={{

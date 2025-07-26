@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { type Card } from "@/components/common/deck";
 
-export type GamePhase = "waiting" | "playing" | "ended";
+export type GamePhase = "waiting" | "playing" | "ended" | "victory" | "defeat";
 export type PlayerTurn = "player" | "opponent";
 
 interface GameState {
@@ -24,6 +24,8 @@ interface GameActions {
   playSelectedCard: () => void;
   switchTurn: () => void;
   endGame: () => void;
+  setVictory: () => void;
+  setDefeat: () => void;
   // Actions pour le debug
   setPhase: (phase: GamePhase) => void;
   setCurrentTurn: (turn: PlayerTurn) => void;
@@ -150,6 +152,26 @@ export function useGameState(): GameState & GameActions {
     }));
   }, []);
 
+  const setVictory = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: "victory",
+      playableCards: [],
+      hoveredCard: null,
+      selectedCard: null,
+    }));
+  }, []);
+
+  const setDefeat = useCallback(() => {
+    setGameState((prev) => ({
+      ...prev,
+      phase: "defeat",
+      playableCards: [],
+      hoveredCard: null,
+      selectedCard: null,
+    }));
+  }, []);
+
   // Actions pour le debug
   const setPhase = useCallback((phase: GamePhase) => {
     setGameState((prev) => ({ ...prev, phase }));
@@ -198,6 +220,8 @@ export function useGameState(): GameState & GameActions {
     playSelectedCard,
     switchTurn,
     endGame,
+    setVictory,
+    setDefeat,
     setPhase,
     setCurrentTurn,
     setPlayableCards,

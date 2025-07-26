@@ -2,17 +2,14 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   IconBug,
   IconPlayerPlay,
-  IconPlayerPause,
-  IconRefresh,
+  IconPlayerStop,
   IconCards,
-  IconEye,
-  IconEyeOff,
+  IconChevronUp,
+  IconChevronDown,
   IconX,
 } from "@tabler/icons-react";
 import type { GamePhase, PlayerTurn } from "@/hooks/use-game-state";
@@ -34,6 +31,8 @@ interface DebugPanelProps {
   onTurnChange: (turn: PlayerTurn) => void;
   onStartGame: () => void;
   onEndGame: () => void;
+  onSetVictory: () => void;
+  onSetDefeat: () => void;
   onPlayRandomCard: () => void;
   onSetPlayableCards: (cards: number[]) => void;
   onSimulateHover: (cardIndex: number | null) => void;
@@ -54,371 +53,308 @@ export function DebugPanel({
   onTurnChange,
   onStartGame,
   onEndGame,
+  onSetVictory,
+  onSetDefeat,
   onPlayRandomCard,
   onSetPlayableCards,
   onSimulateHover,
   onSimulateSelect,
 }: DebugPanelProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    const startX = e.clientX - position.x;
-    const startY = e.clientY - position.y;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      setPosition({
-        x: e.clientX - startX,
-        y: e.clientY - startY,
-      });
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
-
-  const getPhaseColor = (phase: GamePhase) => {
-    switch (phase) {
-      case "waiting":
-        return "bg-gray-500";
-      case "playing":
-        return "bg-green-500";
-      case "ended":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getTurnColor = (turn: PlayerTurn) => {
-    return turn === "player" ? "bg-blue-500" : "bg-purple-500";
-  };
-
-  if (!isOpen) {
+  if (!isVisible) {
     return (
-      <div
-        className="fixed z-[100] cursor-move"
-        style={{ left: position.x, top: position.y }}
-        onMouseDown={handleMouseDown}
-      >
+      <div className="fixed right-4 bottom-4 z-50">
         <Button
           size="sm"
           variant="outline"
-          className="bg-background/90 border-2 shadow-lg backdrop-blur-sm"
-          onClick={() => setIsOpen(true)}
+          onClick={() => setIsVisible(true)}
+          className="border-white/20 bg-black/50 text-white backdrop-blur-sm hover:bg-white/20"
         >
           <IconBug className="size-4" />
-          Debug
         </Button>
       </div>
     );
   }
 
   return (
-    <div
-      className="fixed z-[100] w-80"
-      style={{ left: position.x, top: position.y }}
-    >
-      <Card className="bg-background/95 border-2 shadow-2xl backdrop-blur-sm">
-        <CardHeader
-          className="cursor-move pb-2 select-none"
-          onMouseDown={handleMouseDown}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <IconBug className="size-4 text-orange-500" />
-              <CardTitle className="text-sm">Panneau de Debug</CardTitle>
-            </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setIsOpen(false)}
-              className="h-6 w-6 p-0"
-            >
-              <IconX className="size-3" />
-            </Button>
-          </div>
-        </CardHeader>
+    <div className="fixed right-4 bottom-4 z-50 rounded-lg border border-white/20 bg-black/40 shadow-2xl backdrop-blur-md">
+      {/* Header */}
+      <div className="flex items-center justify-between rounded-t-lg border-b border-white/10 bg-white/10 p-2">
+        <h3 className="flex items-center gap-1 text-sm font-medium text-white">
+          <IconBug className="size-4 text-orange-400" />
+          Debug
+        </h3>
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="h-6 w-6 p-0 text-white hover:bg-white/20"
+          >
+            {isCollapsed ? (
+              <IconChevronUp className="size-3" />
+            ) : (
+              <IconChevronDown className="size-3" />
+            )}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsVisible(false)}
+            className="h-6 w-6 p-0 text-white hover:bg-white/20"
+          >
+            <IconX className="size-3" />
+          </Button>
+        </div>
+      </div>
 
-        <CardContent className="space-y-4 text-xs">
-          {/* États Actuels */}
+      {!isCollapsed && (
+        <div className="w-64 space-y-3 p-3">
+          {/* États Actuels - Format compact */}
           <div>
-            <h4 className="text-foreground/80 mb-2 font-medium">
+            <h4 className="mb-2 text-xs font-medium text-blue-200">
               États Actuels
             </h4>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span>Phase:</span>
-                <Badge className={`${getPhaseColor(phase)} text-white`}>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="text-white/80">
+                Phase:{" "}
+                <Badge
+                  variant={phase === "playing" ? "default" : "secondary"}
+                  className="ml-1 text-xs"
+                >
                   {phase}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Tour:</span>
-                <Badge className={`${getTurnColor(currentTurn)} text-white`}>
+              <div className="text-white/80">
+                Tour:{" "}
+                <Badge
+                  variant={currentTurn === "player" ? "default" : "outline"}
+                  className="ml-1 text-xs"
+                >
                   {currentTurn}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Animation:</span>
-                <Badge variant={isAnimating ? "destructive" : "secondary"}>
-                  {isAnimating ? "En cours" : "Inactive"}
+              <div className="text-white/80">
+                Animation:{" "}
+                <Badge
+                  variant={isAnimating ? "destructive" : "secondary"}
+                  className="ml-1 text-xs"
+                >
+                  {isAnimating ? "Active" : "Inactive"}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Carte survolée:</span>
-                <Badge variant="outline">
+              <div className="text-white/80">
+                Carte survolée:{" "}
+                <span className="text-amber-300">
                   {hoveredCard !== null ? `#${hoveredCard}` : "Aucune"}
-                </Badge>
+                </span>
               </div>
-              <div className="flex items-center justify-between">
-                <span>Carte sélectionnée:</span>
-                <Badge variant={selectedCard !== null ? "default" : "outline"}>
+              <div className="col-span-2 text-white/80">
+                Carte sélectionnée:{" "}
+                <span className="text-blue-300">
                   {selectedCard !== null ? `#${selectedCard}` : "Aucune"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Cartes - Format compact */}
+          <div>
+            <h4 className="mb-2 text-xs font-medium text-green-200">Cartes</h4>
+            <div className="flex justify-between text-xs">
+              <div className="text-center">
+                <div className="text-[10px] text-white/60">Joueur</div>
+                <Badge variant="outline" className="border-white/30 text-white">
+                  {playerCardsCount}
+                </Badge>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] text-white/60">Jouées</div>
+                <Badge variant="outline" className="border-white/30 text-white">
+                  {playedCardsCount}
+                </Badge>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] text-white/60">Adversaire</div>
+                <Badge variant="outline" className="border-white/30 text-white">
+                  {opponentCardsCount}
                 </Badge>
               </div>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Cartes */}
-          <div>
-            <h4 className="text-foreground/80 mb-2 font-medium">Cartes</h4>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div>
-                <div className="text-muted-foreground text-[10px]">Joueur</div>
-                <Badge variant="secondary">{playerCardsCount}</Badge>
-              </div>
-              <div>
-                <div className="text-muted-foreground text-[10px]">Jouées</div>
-                <Badge variant="secondary">{playedCardsCount}</Badge>
-              </div>
-              <div>
-                <div className="text-muted-foreground text-[10px]">
-                  Adversaire
-                </div>
-                <Badge variant="secondary">{opponentCardsCount}</Badge>
-              </div>
-            </div>
-            <div className="mt-2">
-              <div className="text-muted-foreground mb-1 text-[10px]">
-                Cartes jouables: {playableCards.join(", ") || "Aucune"}
-              </div>
+            <div className="mt-2 text-xs text-white/80">
+              Cartes jouables:{" "}
+              <span className="text-yellow-300">
+                {playableCards.length > 0 ? playableCards.join(", ") : "Aucune"}
+              </span>
             </div>
           </div>
-
-          <Separator />
 
           {/* Actions Rapides */}
           <div>
-            <h4 className="text-foreground/80 mb-2 font-medium">
+            <h4 className="mb-2 text-xs font-medium text-purple-200">
               Actions Rapides
             </h4>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-1">
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 onClick={onStartGame}
-                disabled={phase === "playing"}
-                className="text-xs"
+                className="h-7 border border-white/20 text-xs text-white hover:bg-white/20"
               >
                 <IconPlayerPlay className="mr-1 size-3" />
                 Démarrer
               </Button>
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 onClick={onEndGame}
-                disabled={phase === "ended"}
-                className="text-xs"
+                className="h-7 border border-white/20 text-xs text-white hover:bg-white/20"
               >
-                <IconPlayerPause className="mr-1 size-3" />
+                <IconPlayerStop className="mr-1 size-3" />
                 Terminer
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={onPlayRandomCard}
-                disabled={playableCards.length === 0 || isAnimating}
-                className="col-span-2 text-xs"
+                variant="ghost"
+                onClick={onSetVictory}
+                className="h-7 border border-green-400/30 text-xs text-green-300 hover:bg-green-500/20"
               >
-                <IconCards className="mr-1 size-3" />
-                Jouer une carte aléatoire
+                🏆 Victoire
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={onSetDefeat}
+                className="h-7 border border-red-400/30 text-xs text-red-300 hover:bg-red-500/20"
+              >
+                💀 Défaite
               </Button>
             </div>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onPlayRandomCard}
+              className="mt-1 h-7 w-full border border-white/20 text-xs text-white hover:bg-white/20"
+            >
+              <IconCards className="mr-1 size-3" />
+              Jouer une carte aléatoire
+            </Button>
           </div>
 
-          <Separator />
-
-          {/* Contrôles Avancés */}
+          {/* Contrôles - Ultra compact */}
           <div>
-            <h4 className="text-foreground/80 mb-2 font-medium">Contrôles</h4>
-            <div className="space-y-2">
+            <h4 className="mb-2 text-xs font-medium text-orange-200">
+              Contrôles
+            </h4>
+
+            {/* Phase */}
+            <div className="mb-2">
+              <div className="mb-1 text-[10px] text-white/60">Phase</div>
+              <div className="grid grid-cols-5 gap-1">
+                {(
+                  ["waiting", "playing", "ended", "victory", "defeat"] as const
+                ).map((p) => (
+                  <Button
+                    key={p}
+                    size="sm"
+                    variant={phase === p ? "default" : "ghost"}
+                    onClick={() => onPhaseChange(p)}
+                    className="h-6 border border-white/10 text-[9px] text-white hover:bg-white/20"
+                  >
+                    {p === "victory"
+                      ? "🏆"
+                      : p === "defeat"
+                        ? "💀"
+                        : p.charAt(0).toUpperCase()}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tour */}
+            <div className="mb-2">
+              <div className="mb-1 text-[10px] text-white/60">Tour</div>
+              <div className="grid grid-cols-2 gap-1">
+                {(["player", "opponent"] as const).map((turn) => (
+                  <Button
+                    key={turn}
+                    size="sm"
+                    variant={currentTurn === turn ? "default" : "ghost"}
+                    onClick={() => onTurnChange(turn)}
+                    className="h-6 border border-white/10 text-[10px] text-white hover:bg-white/20"
+                  >
+                    {turn === "player" ? "Joueur" : "Adversaire"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Cartes jouables */}
+            <div className="mb-2">
+              <div className="mb-1 text-[10px] text-white/60">
+                Cartes jouables
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                {["∅", "0,1", "All", "#2"].map((preset, index) => (
+                  <Button
+                    key={preset}
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (index === 0) onSetPlayableCards([]);
+                      else if (index === 1) onSetPlayableCards([0, 1]);
+                      else if (index === 2) onSetPlayableCards([0, 1, 2]);
+                      else onSetPlayableCards([2]);
+                    }}
+                    className="h-6 border border-white/10 text-[10px] text-white hover:bg-white/20"
+                  >
+                    {preset}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Simulation */}
+            <div className="grid grid-cols-2 gap-2">
               <div>
-                <div className="text-muted-foreground mb-1 text-[10px]">
-                  Phase
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  {(["waiting", "playing", "ended"] as GamePhase[]).map((p) => (
+                <div className="mb-1 text-[10px] text-white/60">Survol</div>
+                <div className="grid grid-cols-4 gap-1">
+                  {[null, 0, 1, 2].map((cardIndex) => (
                     <Button
-                      key={p}
+                      key={cardIndex ?? "none"}
                       size="sm"
-                      variant={phase === p ? "default" : "outline"}
-                      onClick={() => onPhaseChange(p)}
-                      className="h-6 px-2 py-1 text-[10px]"
+                      variant="ghost"
+                      onClick={() => onSimulateHover(cardIndex)}
+                      className="h-5 border border-white/10 text-[9px] text-white hover:bg-white/20"
                     >
-                      {p}
+                      {cardIndex !== null ? cardIndex : "∅"}
                     </Button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <div className="text-muted-foreground mb-1 text-[10px]">
-                  Tour
-                </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {(["player", "opponent"] as PlayerTurn[]).map((t) => (
-                    <Button
-                      key={t}
-                      size="sm"
-                      variant={currentTurn === t ? "default" : "outline"}
-                      onClick={() => onTurnChange(t)}
-                      className="h-6 px-2 py-1 text-[10px]"
-                    >
-                      {t}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-muted-foreground mb-1 text-[10px]">
-                  Cartes jouables
-                </div>
+                <div className="mb-1 text-[10px] text-white/60">Sélection</div>
                 <div className="grid grid-cols-4 gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSetPlayableCards([])}
-                    className="h-6 px-1 py-1 text-[10px]"
-                  >
-                    Aucune
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSetPlayableCards([0, 1])}
-                    className="h-6 px-1 py-1 text-[10px]"
-                  >
-                    0,1
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSetPlayableCards([0, 1, 2, 3, 4])}
-                    className="h-6 px-1 py-1 text-[10px]"
-                  >
-                    Toutes
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSetPlayableCards([2])}
-                    className="h-6 px-1 py-1 text-[10px]"
-                  >
-                    #2
-                  </Button>
-                </div>
-              </div>
-
-              <div>
-                <div className="text-muted-foreground mb-1 text-[10px]">
-                  Simulation survol
-                </div>
-                <div className="grid grid-cols-4 gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSimulateHover(null)}
-                    className="h-6 px-1 py-1 text-[10px]"
-                  >
-                    <IconEyeOff className="size-2" />
-                  </Button>
-                  {[0, 1, 2].map((index) => (
+                  {[null, 0, 1, 2].map((cardIndex) => (
                     <Button
-                      key={index}
+                      key={cardIndex ?? "none"}
                       size="sm"
-                      variant={hoveredCard === index ? "default" : "outline"}
-                      onClick={() => onSimulateHover(index)}
-                      className="h-6 px-1 py-1 text-[10px]"
+                      variant="ghost"
+                      onClick={() => onSimulateSelect(cardIndex)}
+                      className="h-5 border border-white/10 text-[9px] text-white hover:bg-white/20"
                     >
-                      #{index}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <div className="text-muted-foreground mb-1 text-[10px]">
-                  Simulation sélection
-                </div>
-                <div className="grid grid-cols-4 gap-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onSimulateSelect(null)}
-                    className="h-6 px-1 py-1 text-[10px]"
-                  >
-                    Aucune
-                  </Button>
-                  {[0, 1, 2].map((index) => (
-                    <Button
-                      key={index}
-                      size="sm"
-                      variant={selectedCard === index ? "default" : "outline"}
-                      onClick={() => onSimulateSelect(index)}
-                      className="h-6 px-1 py-1 text-[10px]"
-                    >
-                      #{index}
+                      {cardIndex !== null ? cardIndex : "∅"}
                     </Button>
                   ))}
                 </div>
               </div>
             </div>
           </div>
-
-          <Separator />
-
-          {/* Actions de Reset */}
-          <div>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => {
-                onPhaseChange("waiting");
-                onTurnChange("player");
-                onSetPlayableCards([]);
-                onSimulateHover(null);
-                onSimulateSelect(null);
-              }}
-              className="w-full text-xs"
-            >
-              <IconRefresh className="mr-1 size-3" />
-              Reset Complet
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }

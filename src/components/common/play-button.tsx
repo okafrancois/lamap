@@ -8,9 +8,15 @@ interface PlayButtonProps {
   isVisible: boolean;
   onClick: () => void;
   className?: string;
+  isPlayable?: boolean;
 }
 
-export function PlayButton({ isVisible, onClick, className }: PlayButtonProps) {
+export function PlayButton({
+  isVisible,
+  onClick,
+  className,
+  isPlayable = true,
+}: PlayButtonProps) {
   if (!isVisible) return null;
 
   return (
@@ -26,10 +32,24 @@ export function PlayButton({ isVisible, onClick, className }: PlayButtonProps) {
     >
       <Button
         size="sm"
-        className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2 shadow-lg transition-transform hover:scale-105 active:scale-95"
+        disabled={!isPlayable}
+        className={`flex items-center gap-2 shadow-lg transition-transform ${
+          isPlayable
+            ? "bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105 active:scale-95"
+            : "cursor-not-allowed bg-red-500/80 text-white"
+        }`}
       >
-        <IconPlayerPlay className="size-3" />
-        Jouer
+        {isPlayable ? (
+          <>
+            <IconPlayerPlay className="size-3" />
+            Jouer
+          </>
+        ) : (
+          <>
+            <span className="text-xl">🚫</span>
+            Non jouable
+          </>
+        )}
       </Button>
     </div>
   );
