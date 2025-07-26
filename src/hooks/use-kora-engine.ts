@@ -75,10 +75,30 @@ export function useKoraEngine() {
             ? ("defeat" as const)
             : ("waiting" as const),
 
-    currentTurn:
-      gameState.playerWithHand === "player"
-        ? ("player" as const)
-        : ("opponent" as const),
+    currentTurn: (() => {
+      // Déterminer qui doit jouer maintenant basé sur la logique du game engine
+      const currentRoundCards = gameState.playedCards.filter(
+        (p) => p.round === gameState.currentRound,
+      );
+
+      if (currentRoundCards.length === 0) {
+        // Aucune carte jouée ce tour : c'est à celui qui a la main
+        return gameState.playerWithHand === "player"
+          ? ("player" as const)
+          : ("opponent" as const);
+      } else if (currentRoundCards.length === 1) {
+        // Une carte jouée : c'est à l'autre joueur
+        const firstPlayer = currentRoundCards[0]!.player;
+        return firstPlayer !== "player"
+          ? ("player" as const)
+          : ("opponent" as const);
+      } else {
+        // Deux cartes jouées : tour terminé, en attente de résolution
+        return gameState.playerWithHand === "player"
+          ? ("player" as const)
+          : ("opponent" as const);
+      }
+    })(),
 
     playerCards: convertCardsForOldInterface(gameState.playerCards),
     opponentCards: convertCardsForOldInterface(gameState.opponentCards),
