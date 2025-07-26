@@ -1235,7 +1235,7 @@ export function PlayerDeck({
       <div
         className="relative flex items-center justify-center"
         style={{
-          width: `${cards.length * (isOpponent ? 12 : 20) + cardWidth}px`,
+          width: `${cards.length * (isOpponent ? 20 : 35) + cardWidth}px`,
           height: `${cardHeight + (isOpponent ? 12 : 20)}px`,
         }}
       >
@@ -1244,9 +1244,9 @@ export function PlayerDeck({
           const middleIndex = (totalCards - 1) / 2;
           const offsetFromMiddle = index - middleIndex;
 
-          // Calcul optimisé pour la disposition
+          // Calcul optimisé pour la disposition avec plus d'espacement
           const rotation = offsetFromMiddle * 7;
-          const translateX = offsetFromMiddle * (isOpponent ? 20 : 60);
+          const translateX = offsetFromMiddle * (isOpponent ? 35 : 85);
           const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 5 : 10);
 
           // États des cartes

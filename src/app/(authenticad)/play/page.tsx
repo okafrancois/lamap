@@ -10,6 +10,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { GameBoard } from "@/components/common/game-board";
+import { VictoryModal } from "@/components/common/victory-modal";
+import {
+  GameHistory,
+  type GameHistoryEntry,
+} from "@/components/common/game-history";
 import { useAIGame } from "@/hooks/use-ai-game";
 import {
   IconRobot,
@@ -22,7 +27,7 @@ import {
   IconSkull,
   IconRefresh,
 } from "@tabler/icons-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LibTitle } from "@/components/library/title";
 
 export default function PlayPage() {
@@ -32,9 +37,33 @@ export default function PlayPage() {
   const [aiDifficulty, setAiDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium",
   );
+  const [showVictoryModal, setShowVictoryModal] = useState(false);
+  const [showGameHistory, setShowGameHistory] = useState(false);
+  const [gameHistory, setGameHistory] = useState<GameHistoryEntry[]>([]);
+  const [currentViewRound, setCurrentViewRound] = useState(1);
 
   // Hook pour jouer contre l'IA
   const aiGame = useAIGame(aiDifficulty);
+
+  // Détecter la fin de partie et afficher le modal
+  useEffect(() => {
+    if (aiGame.phase === "victory" || aiGame.phase === "defeat") {
+      // Créer un historique factice basé sur les cartes jouées
+      const mockHistory: GameHistoryEntry[] = [];
+      for (let i = 1; i <= aiGame.currentRound; i++) {
+        mockHistory.push({
+          round: i,
+          playerCard: { suit: "hearts", rank: `${i + 2}` },
+          opponentCard: { suit: "spades", rank: `${i + 3}` },
+          winner: Math.random() > 0.5 ? "player" : "opponent",
+          playerHasHand: Math.random() > 0.5,
+        });
+      }
+      setGameHistory(mockHistory);
+      setCurrentViewRound(aiGame.currentRound);
+      setShowVictoryModal(true);
+    }
+  }, [aiGame.phase, aiGame.currentRound]);
 
   const gameOptions = [
     {
@@ -167,62 +196,33 @@ export default function PlayPage() {
         </CardHeader>
 
         <CardContent className="max-h-full space-y-4 overflow-y-scroll pt-4">
-          {/* État de la partie */}
-          {aiGame.phase !== "waiting" && (
+          {/* État de la partie - Simplifié */}
+          {aiGame.phase === "playing" && (
             <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
               <CardContent className="space-y-3 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="mx-auto w-fit rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
-                      {aiGame.phase === "victory" ? (
-                        <IconTrophy className="size-5 text-white" />
-                      ) : aiGame.phase === "defeat" ? (
-                        <IconSkull className="size-5 text-white" />
-                      ) : (
-                        <IconCards className="size-5 text-white" />
-                      )}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-cyan-700 dark:text-cyan-300">
-                        {aiGame.phase === "victory"
-                          ? "Victoire !"
-                          : aiGame.phase === "defeat"
-                            ? "Défaite !"
-                            : "Partie en cours"}
-                      </h3>
-                      <p className="text-muted-foreground text-xs">
-                        {aiGame.phase === "playing" && (
-                          <>
-                            Tour {aiGame.currentRound}/5 -
-                            {aiGame.currentTurn === "player"
-                              ? " Votre tour"
-                              : aiGame.isAIThinking
-                                ? " IA réfléchit..."
-                                : " Tour de l&apos;IA"}
-                          </>
-                        )}
-                      </p>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-fit rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
+                    <IconCards className="size-5 text-white" />
                   </div>
-                  {(aiGame.phase === "victory" ||
-                    aiGame.phase === "defeat") && (
-                    <LibButton
-                      variant="outline"
-                      size="sm"
-                      onClick={handleNewGame}
-                      icon={<IconRefresh className="size-4" />}
-                    >
-                      Rejouer
-                    </LibButton>
-                  )}
+                  <div>
+                    <h3 className="font-semibold text-cyan-700 dark:text-cyan-300">
+                      Partie en cours
+                    </h3>
+                    <p className="text-muted-foreground text-xs">
+                      Tour {aiGame.currentRound}/5 -
+                      {aiGame.currentTurn === "player"
+                        ? " Votre tour"
+                        : aiGame.isAIThinking
+                          ? " IA réfléchit..."
+                          : " Tour de l&apos;IA"}
+                    </p>
+                  </div>
                 </div>
 
-                {aiGame.phase === "playing" && (
-                  <div className="flex justify-between text-xs">
-                    <span>Vos Koras: {aiGame.playerKoras}</span>
-                    <span>IA: {aiGame.opponentKoras}</span>
-                  </div>
-                )}
+                <div className="flex justify-between text-xs">
+                  <span>Vos Koras: {aiGame.playerKoras}</span>
+                  <span>IA: {aiGame.opponentKoras}</span>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -356,83 +356,59 @@ export default function PlayPage() {
         </CardContent>
       </Card>
 
-      {/* Bulle d'information flottante pendant la partie */}
+      {/* Bulle compacte en bas à droite */}
       {aiGame.phase === "playing" && (
-        <div className="animate-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-500">
-          <Card className="border-cyan-500/30 bg-gradient-to-br from-cyan-500/20 to-blue-500/20 shadow-2xl backdrop-blur-sm">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
-                    <IconCards className="size-5 text-white" />
-                  </div>
-                  {aiGame.isAIThinking && (
-                    <div className="absolute -top-1 -right-1">
-                      <div className="h-3 w-3 animate-pulse rounded-full bg-orange-400"></div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-semibold text-cyan-700 dark:text-cyan-300">
-                      Tour {aiGame.currentRound}/5
-                    </h4>
-                    {/* Indication de qui a la main dans la bulle */}
-                    <div
-                      className={`rounded-full px-2 py-1 text-xs font-bold ${
-                        aiGame.playerWithHand === "player"
-                          ? "bg-yellow-500 text-yellow-900"
-                          : "bg-orange-500 text-orange-900"
-                      }`}
-                    >
-                      👑 {aiGame.playerWithHand === "player" ? "VOUS" : "IA"}{" "}
-                      avez la main
-                    </div>
-                    <div
-                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${
-                        aiGame.currentTurn === "player"
-                          ? "bg-green-500/20 text-green-700 dark:text-green-300"
-                          : aiGame.isAIThinking
-                            ? "bg-orange-500/20 text-orange-700 dark:text-orange-300"
-                            : "bg-red-500/20 text-red-700 dark:text-red-300"
-                      }`}
-                    >
-                      <div
-                        className={`h-2 w-2 rounded-full ${
-                          aiGame.currentTurn === "player"
-                            ? "bg-green-500"
-                            : aiGame.isAIThinking
-                              ? "animate-pulse bg-orange-500"
-                              : "bg-red-500"
-                        }`}
-                      ></div>
-                      {aiGame.currentTurn === "player"
-                        ? "Votre tour"
-                        : aiGame.isAIThinking
-                          ? "IA réfléchit..."
-                          : "Tour de l'IA"}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 text-xs text-cyan-600 dark:text-cyan-400">
-                    <span>Vous: {aiGame.playerKoras} koras</span>
-                    <span>IA: {aiGame.opponentKoras} koras</span>
-                  </div>
-                </div>
-
-                <LibButton
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleNewGame}
-                  className="ml-2 text-cyan-600 hover:text-cyan-700 dark:text-cyan-400"
-                  icon={<IconRefresh className="size-4" />}
-                ></LibButton>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="animate-in slide-in-from-bottom-4 fixed right-4 bottom-4 z-50 duration-500">
+          <div className="rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-sm text-white shadow-xl backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <span>Tour {aiGame.currentRound}/5</span>
+              <span className="text-yellow-400">•</span>
+              <span>
+                {aiGame.playerKoras} vs {aiGame.opponentKoras}
+              </span>
+              <LibButton
+                variant="ghost"
+                size="sm"
+                onClick={handleNewGame}
+                className="ml-1 h-6 w-6 p-0 text-white/70 hover:text-white"
+              >
+                <IconRefresh className="size-3" />
+              </LibButton>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Modal de victoire/défaite */}
+      <VictoryModal
+        isVisible={showVictoryModal}
+        isVictory={aiGame.phase === "victory"}
+        playerKoras={aiGame.playerKoras}
+        opponentKoras={aiGame.opponentKoras}
+        betAmount={aiGame.currentBet}
+        korasWon={aiGame.currentBet}
+        onPlayAgain={() => {
+          setShowVictoryModal(false);
+          handleNewGame();
+        }}
+        onClose={() => {
+          setShowVictoryModal(false);
+          setSelectedGameMode(null);
+        }}
+        onViewHistory={() => {
+          setShowVictoryModal(false);
+          setShowGameHistory(true);
+        }}
+      />
+
+      {/* Historique de la partie */}
+      <GameHistory
+        isVisible={showGameHistory}
+        history={gameHistory}
+        currentViewRound={currentViewRound}
+        onClose={() => setShowGameHistory(false)}
+        onRoundSelect={setCurrentViewRound}
+      />
     </PageContainer>
   );
 }
