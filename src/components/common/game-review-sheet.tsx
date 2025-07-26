@@ -33,12 +33,14 @@ const mockHistory = [
       { id: "2", suit: "clubs", rank: "7", jouable: false },
       { id: "3", suit: "spades", rank: "K", jouable: false },
       { id: "4", suit: "diamonds", rank: "2", jouable: false },
+      { id: "9", suit: "hearts", rank: "J", jouable: false },
     ] as Card[],
     opponentCards: [
       { id: "5", suit: "spades", rank: "4", jouable: false },
       { id: "6", suit: "hearts", rank: "8", jouable: false },
       { id: "7", suit: "clubs", rank: "Q", jouable: false },
       { id: "8", suit: "diamonds", rank: "A", jouable: false },
+      { id: "10", suit: "spades", rank: "5", jouable: false },
     ] as Card[],
     playedCards: [
       { id: "1", suit: "hearts", rank: "3", jouable: false },
@@ -53,11 +55,13 @@ const mockHistory = [
       { id: "2", suit: "clubs", rank: "7", jouable: false },
       { id: "3", suit: "spades", rank: "K", jouable: false },
       { id: "4", suit: "diamonds", rank: "2", jouable: false },
+      { id: "9", suit: "hearts", rank: "J", jouable: false },
     ] as Card[],
     opponentCards: [
       { id: "6", suit: "hearts", rank: "8", jouable: false },
       { id: "7", suit: "clubs", rank: "Q", jouable: false },
       { id: "8", suit: "diamonds", rank: "A", jouable: false },
+      { id: "10", suit: "spades", rank: "5", jouable: false },
     ] as Card[],
     playedCards: [
       { id: "2", suit: "clubs", rank: "7", jouable: false },
@@ -71,14 +75,48 @@ const mockHistory = [
     playerCards: [
       { id: "3", suit: "spades", rank: "K", jouable: false },
       { id: "4", suit: "diamonds", rank: "2", jouable: false },
+      { id: "9", suit: "hearts", rank: "J", jouable: false },
     ] as Card[],
     opponentCards: [
       { id: "6", suit: "hearts", rank: "8", jouable: false },
       { id: "8", suit: "diamonds", rank: "A", jouable: false },
+      { id: "10", suit: "spades", rank: "5", jouable: false },
     ] as Card[],
     playedCards: [
       { id: "4", suit: "diamonds", rank: "2", jouable: false },
       { id: "6", suit: "hearts", rank: "8", jouable: false },
+    ] as Card[],
+    playerWithHand: "opponent" as const,
+    currentTurn: "player" as const,
+  },
+  {
+    round: 4,
+    playerCards: [
+      { id: "3", suit: "spades", rank: "K", jouable: false },
+      { id: "9", suit: "hearts", rank: "J", jouable: false },
+    ] as Card[],
+    opponentCards: [
+      { id: "8", suit: "diamonds", rank: "A", jouable: false },
+      { id: "10", suit: "spades", rank: "5", jouable: false },
+    ] as Card[],
+    playedCards: [
+      { id: "9", suit: "hearts", rank: "J", jouable: false },
+      { id: "8", suit: "diamonds", rank: "A", jouable: false },
+    ] as Card[],
+    playerWithHand: "opponent" as const,
+    currentTurn: "player" as const,
+  },
+  {
+    round: 5,
+    playerCards: [
+      { id: "3", suit: "spades", rank: "K", jouable: false },
+    ] as Card[],
+    opponentCards: [
+      { id: "10", suit: "spades", rank: "5", jouable: false },
+    ] as Card[],
+    playedCards: [
+      { id: "3", suit: "spades", rank: "K", jouable: false },
+      { id: "10", suit: "spades", rank: "5", jouable: false },
     ] as Card[],
     playerWithHand: "player" as const,
     currentTurn: "opponent" as const,

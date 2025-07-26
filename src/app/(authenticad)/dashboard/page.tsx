@@ -1,8 +1,6 @@
 import { ChartAreaInteractive } from "@/components/layout/chart-area-interactive";
-import { DataTable } from "@/components/layout/data-table";
 import { SectionCards } from "@/components/layout/section-cards";
 
-import data from "./data.json";
 import { PageContainer } from "@/components/layout/page-container";
 
 export default function Page() {
@@ -12,7 +10,6 @@ export default function Page() {
       <div className="px-4 lg:px-6">
         <ChartAreaInteractive />
       </div>
-      <DataTable data={data} />
     </PageContainer>
   );
 }

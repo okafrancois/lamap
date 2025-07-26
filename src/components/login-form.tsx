@@ -36,10 +36,11 @@ export function LoginForm({
       if (result?.error) {
         setError("Nom d'utilisateur ou mot de passe incorrect");
       } else if (result?.ok) {
-        router.push("/dashboard");
+        router.push("/play");
       }
     } catch (err) {
       setError("Une erreur est survenue lors de la connexion");
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
