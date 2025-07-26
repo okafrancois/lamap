@@ -15,6 +15,7 @@ interface AnimatedCardProps {
   isFlipping?: boolean;
   isPlaying?: boolean;
   hidden?: boolean;
+  revealOpponent?: boolean;
   onClick?: () => void;
   onPlayClick?: () => void;
   onHover?: (hovered: boolean) => void;
@@ -32,6 +33,7 @@ export function AnimatedCard({
   isFlipping = false,
   isPlaying = false,
   hidden = false,
+  revealOpponent = false,
   onClick,
   onPlayClick,
   onHover,
@@ -63,7 +65,7 @@ export function AnimatedCard({
       )}
 
       {/* Carte */}
-      {isOpponent || hidden ? (
+      {hidden || (isOpponent && !revealOpponent) ? (
         <CardBack width={width} height={height} className={className} />
       ) : (
         <div>

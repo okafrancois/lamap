@@ -1203,6 +1203,7 @@ interface PlayerDeckProps {
   isOpponent?: boolean;
   className?: string;
   hidden?: boolean;
+  revealOpponentCards?: boolean;
   isPlayerTurn?: boolean;
   playableCards?: number[];
   onCardClick?: (cardIndex: number) => void;
@@ -1217,6 +1218,7 @@ export function PlayerDeck({
   isOpponent = false,
   className,
   hidden = false,
+  revealOpponentCards = false,
   isPlayerTurn = false,
   playableCards = [],
   onCardClick,
@@ -1284,6 +1286,7 @@ export function PlayerDeck({
                 isHovered={isCardHovered}
                 isSelected={isCardSelected}
                 hidden={hidden}
+                revealOpponent={revealOpponentCards}
                 onClick={() => {
                   if (isCardPlayable && onCardClick) {
                     onCardClick(index);

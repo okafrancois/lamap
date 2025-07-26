@@ -12,11 +12,13 @@ interface GameBoardProps {
   isPlayerTurn?: boolean;
   playableCards?: number[];
   onCardClick?: (cardIndex: number) => void;
+  onOpponentCardClick?: (cardIndex: number) => void;
   onPlayCard?: () => void;
   hoveredCard?: number | null;
   selectedCard?: number | null;
   onCardHover?: (cardIndex: number | null) => void;
   currentTurn?: "player" | "opponent";
+  godMode?: boolean;
 }
 
 export function GameBoard({
@@ -28,11 +30,13 @@ export function GameBoard({
   isPlayerTurn = false,
   playableCards = [],
   onCardClick,
+  onOpponentCardClick,
   onPlayCard,
   hoveredCard,
   selectedCard,
   onCardHover,
   currentTurn = "player",
+  godMode = false,
 }: GameBoardProps) {
   return (
     <div
@@ -120,7 +124,13 @@ export function GameBoard({
             Adversaire ({opponentCards.length} cartes){" "}
             {currentTurn === "opponent" && "- À son tour"}
           </div>
-          <PlayerDeck cards={opponentCards} isOpponent={true} />
+          <PlayerDeck
+            cards={opponentCards}
+            isOpponent={true}
+            revealOpponentCards={godMode}
+            onCardClick={godMode ? onOpponentCardClick : undefined}
+            playableCards={playableCards}
+          />
 
           {/* Éléments décoratifs autour des cartes adversaires */}
           <div className="absolute top-1/2 -left-4 h-8 w-8 -translate-y-1/2 opacity-30">

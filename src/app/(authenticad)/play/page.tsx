@@ -185,6 +185,14 @@ export default function Page() {
             }
           }}
           onPlayCard={handlePlayCard}
+          godMode={koraEngine.godMode}
+          onOpponentCardClick={(cardIndex) => {
+            const card = koraEngine.opponentCards[cardIndex];
+            if (card) {
+              // Sélectionner et jouer pour l'adversaire en mode God
+              koraEngine.playCard(card.id, "opponent");
+            }
+          }}
           hoveredCard={hoveredCard}
           selectedCard={getSelectedCardIndex()}
           onCardHover={handleCardHover}
