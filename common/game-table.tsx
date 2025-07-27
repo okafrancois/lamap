@@ -1,12 +1,13 @@
-import { PlayedCards, type Card } from "./deck";
+import { PlayedCards } from "./deck";
 import {
   GameTablePattern,
   AnimatedRing,
   DecorativeBorder,
 } from "./decorative-icons";
+import type { PlayedCard } from "@/engine/kora-game-engine";
 
 interface GameTableProps {
-  playedCards: Card[];
+  playedCards: PlayedCard[];
   className?: string;
 }
 
@@ -30,7 +31,7 @@ export function GameTable({ playedCards, className = "" }: GameTableProps) {
         className="border-amber-200/10"
       />
 
-      <div className="relative aspect-square w-auto min-w-[200px] lg:min-w-[300px]">
+      <div className="relative aspect-[6/4] max-h-[500px] w-auto max-w-[500px] min-w-[300px] lg:min-w-[400px]">
         {/* Plateau de jeu principal */}
         <div className="relative h-full w-full rounded-2xl border-4 border-amber-400/80 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-900 shadow-2xl">
           {/* Effet de profondeur */}
@@ -46,7 +47,7 @@ export function GameTable({ playedCards, className = "" }: GameTableProps) {
           <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-transparent via-amber-200/10 to-transparent" />
 
           {/* Zone des cartes au centre */}
-          <div className="flex h-full items-center justify-center p-6">
+          <div className="flex h-full items-center justify-center">
             <PlayedCards cards={playedCards} />
           </div>
 
@@ -55,9 +56,6 @@ export function GameTable({ playedCards, className = "" }: GameTableProps) {
             <div className="h-full w-full rounded-2xl bg-gradient-to-br from-emerald-500/10 via-transparent to-emerald-900/20" />
           </div>
         </div>
-
-        {/* Ombre portée */}
-        <div className="absolute -right-4 -bottom-4 h-full w-full rounded-2xl bg-black/20 blur-xl" />
       </div>
 
       {/* Éléments décoratifs latéraux */}

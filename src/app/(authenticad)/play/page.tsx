@@ -27,8 +27,10 @@ import {
 import { useState, useEffect } from "react";
 import { LibTitle } from "@/components/library/title";
 import { useSound } from "@/hooks/use-sound";
+import { useMobile } from "@/hooks/use-mobile";
 
 export default function PlayPage() {
+  const isMobile = useMobile();
   const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
@@ -150,11 +152,7 @@ export default function PlayPage() {
 
   // INTERFACE DESKTOP (ORIGINALE RESTAURÉE)
   return (
-    <PageContainer
-      className={`relative flex h-full flex-col ${
-        aiGame.phase === "playing" ? "gap-0" : "gap-6"
-      } px-0 lg:flex-row`}
-    >
+    <PageContainer fluid={true} className={`relative flex h-full gap-4`}>
       {/* Plateau de jeu - Largeur adaptative */}
       <GameBoard
         playerCards={aiGame.playerCards}
@@ -177,18 +175,16 @@ export default function PlayPage() {
         onCardHover={handleCardHover}
         currentTurn={aiGame.currentTurn}
         playerWithHand={aiGame.playerWithHand}
-        className={`h-full max-h-full overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
+        className={`overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
           aiGame.phase === "playing" ? "lg:w-full" : "lg:w-4/6"
         }`}
       />
 
       {/* Options de jeu - Colonne de droite avec animation */}
       <Card
-        className={`h-full pt-0 transition-all duration-700 ease-in-out ${
-          aiGame.phase === "playing" ? "hidden" : "w-2/6"
-        }`}
+        className={`h-full w-2/6 pt-0 transition-all duration-700 ease-in-out`}
       >
-        <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
+        <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !p-3">
           <LibTitle as="h3" className="flex w-full items-center gap-3">
             <div className="bg-secondary/20 rounded-lg p-2">
               <IconCards className="text-secondary size-6" />
@@ -200,7 +196,7 @@ export default function PlayPage() {
           </LibTitle>
         </CardHeader>
 
-        <CardContent className="max-h-full space-y-4 overflow-y-scroll pt-4">
+        <CardContent className="max-h-full space-y-4 overflow-y-scroll">
           {/* État de la partie - Simplifié */}
           {aiGame.phase === "playing" && (
             <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">

@@ -9,13 +9,17 @@ export function PageContainer({
   className?: string;
   fluid?: boolean;
 }) {
+  if (fluid) {
+    return (
+      <div className={cn(`absolute inset-0 overflow-y-scroll`, className)}>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div
-      className={cn(
-        `absolute inset-0 container overflow-y-scroll`,
-        fluid && "px-0!",
-        className,
-      )}
+      className={cn(`absolute inset-0 container overflow-y-scroll`, className)}
     >
       {children}
     </div>

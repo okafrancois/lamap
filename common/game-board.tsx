@@ -5,11 +5,12 @@ import { cn } from "@/lib/utils";
 import { BackgroundDecorations } from "./background-decorations";
 import { GameTable } from "./game-table";
 import { OpponentArea, PlayerArea } from "./player-area";
+import type { PlayedCard } from "@/engine/kora-game-engine";
 
 interface GameBoardProps {
   playerCards: Card[];
   opponentCards: Card[];
-  playedCards: Card[];
+  playedCards: PlayedCard[];
   gameStarted?: boolean;
   className?: string;
   isPlayerTurn?: boolean;

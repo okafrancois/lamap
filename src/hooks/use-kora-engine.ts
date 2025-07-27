@@ -104,7 +104,7 @@ export function useKoraEngine() {
 
     playerCards: convertCardsForOldInterface(gameState.playerCards),
     opponentCards: convertCardsForOldInterface(gameState.opponentCards),
-    playedCards: gameState.playedCards.map((p) => p.card),
+    playedCards: gameState.playedCards, // Garder les PlayedCard[] avec l'info du joueur
 
     playableCards: gameState.playerCards
       .map((card, index) => (card.jouable ? index : -1))

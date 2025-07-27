@@ -9,6 +9,7 @@ import {
   IconSpadeFilled,
 } from "@tabler/icons-react";
 import { AnimatedCard } from "./animated-card";
+import type { PlayedCard } from "@/engine/kora-game-engine";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -1227,28 +1228,25 @@ export function PlayerDeck({
   selectedCard,
   onCardHover,
 }: PlayerDeckProps) {
-  // Tailles optimisées pour mobile (valeurs de base pour mobile)
-  const cardWidth = isOpponent ? 80 : 110; // Plus petites sur mobile
+  const cardWidth = isOpponent ? 80 : 110;
   const cardHeight = isOpponent ? 112 : 154;
+  const cardSpacing = cardWidth + 8;
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>
       <div
         className="relative flex items-center justify-center"
         style={{
-          width: `${cards.length * (isOpponent ? 15 : 25) + cardWidth}px`, // Espacement réduit pour mobile
-          height: `${cardHeight + (isOpponent ? 8 : 15)}px`,
+          width: `${cards.length * cardSpacing - cardSpacing + cardWidth}px`,
+          height: `${cardHeight}px`,
         }}
       >
         {cards.map((card, index) => {
-          const totalCards = cards.length;
-          const middleIndex = (totalCards - 1) / 2;
-          const offsetFromMiddle = index - middleIndex;
-
-          // Calcul optimisé pour mobile avec espacement réduit
-          const rotation = offsetFromMiddle * 5; // Rotation réduite pour mobile
-          const translateX = offsetFromMiddle * (isOpponent ? 25 : 60); // Espacement horizontal réduit
-          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 3 : 10); // Espacement vertical réduit
+          // Centrer les cartes autour du point central
+          const totalWidth =
+            cards.length * cardSpacing - cardSpacing + cardWidth;
+          const startOffset = -totalWidth / 2 + cardWidth / 2;
+          const translateX = startOffset + index * cardSpacing;
 
           // États des cartes
           const isCardPlayable =
@@ -1263,12 +1261,12 @@ export function PlayerDeck({
               className={cn("absolute transition-all duration-300", {
                 "cursor-pointer": hasCardAction && isCardPlayable,
                 "cursor-not-allowed": hasCardAction && !isCardPlayable,
-                "hover:scale-105 active:scale-95": isCardPlayable, // Feedback tactile mobile
+                "hover:scale-105 active:scale-95": isCardPlayable,
                 "z-50": isCardHovered,
-                "touch-manipulation": true, // Optimisation tactile
+                "touch-manipulation": true,
               })}
               style={{
-                transform: `translateX(${translateX}px) translateY(${translateY}px) rotate(${rotation}deg)`,
+                transform: `translateX(${translateX}px)`,
                 zIndex: isCardHovered ? 50 : 10 + index,
               }}
               onMouseEnter={() => onCardHover?.(index)}
@@ -1312,15 +1310,23 @@ export function PlayerDeck({
 
 // Composant pour les cartes en jeu (pile centrale)
 interface PlayedCardsProps {
-  cards: Card[];
+  cards: PlayedCard[];
   className?: string;
 }
 
 export function PlayedCards({ cards, className }: PlayedCardsProps) {
+  // Séparer les cartes selon le joueur qui les a jouées
+  const opponentCards = cards.filter(
+    (playedCard) => playedCard.player === "opponent",
+  );
+  const playerCards = cards.filter(
+    (playedCard) => playedCard.player === "player",
+  );
+
   return (
     <div
       className={cn(
-        "relative flex min-h-[100px] items-center justify-center",
+        "relative flex min-h-[200px] flex-col items-center justify-center gap-1",
         className,
       )}
     >
@@ -1331,26 +1337,48 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
           </div>
         </div>
       ) : (
-        <div className="relative" style={{ width: "120px", height: "168px" }}>
-          {cards.map((card, index) => (
-            <div
-              key={`${card.suit}-${card.rank}-${index}`}
-              className="absolute transition-transform duration-300 hover:scale-105"
-              style={{
-                transform: `translateX(${index * 5}px) translateY(${index * -3}px) rotate(${index * 3}deg)`,
-                zIndex: index,
-              }}
-            >
-              <PlayingCard
-                suit={card.suit}
-                rank={card.rank}
-                width={100}
-                height={140}
-                className="border border-white/20 shadow-xl"
-              />
-            </div>
-          ))}
-        </div>
+        <>
+          {/* Rangée de l'adversaire */}
+          <div className="flex items-center gap-2">
+            {opponentCards.map((playedCard, index) => (
+              <div
+                key={`opponent-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
+                className="transition-transform duration-300"
+              >
+                <PlayingCard
+                  suit={playedCard.card.suit}
+                  rank={playedCard.card.rank}
+                  width={77}
+                  height={108}
+                  className="shadow-lg"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Séparateur visuel */}
+          {opponentCards.length > 0 && playerCards.length > 0 && (
+            <div className="h-px w-16 bg-amber-300/40"></div>
+          )}
+
+          {/* Rangée du joueur */}
+          <div className="flex items-center gap-2">
+            {playerCards.map((playedCard, index) => (
+              <div
+                key={`player-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
+                className="transition-transform duration-300"
+              >
+                <PlayingCard
+                  suit={playedCard.card.suit}
+                  rank={playedCard.card.rank}
+                  width={77}
+                  height={108}
+                  className="shadow-lg"
+                />
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
