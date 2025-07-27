@@ -1248,7 +1248,7 @@ export function PlayerDeck({
           // Calcul optimisé pour mobile avec espacement réduit
           const rotation = offsetFromMiddle * 5; // Rotation réduite pour mobile
           const translateX = offsetFromMiddle * (isOpponent ? 25 : 60); // Espacement horizontal réduit
-          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 3 : 6); // Espacement vertical réduit
+          const translateY = Math.abs(offsetFromMiddle) * (isOpponent ? 3 : 10); // Espacement vertical réduit
 
           // États des cartes
           const isCardPlayable =

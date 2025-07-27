@@ -150,7 +150,11 @@ export default function PlayPage() {
 
   // INTERFACE DESKTOP (ORIGINALE RESTAURÉE)
   return (
-    <PageContainer className="relative flex h-full flex-col gap-6 px-0 lg:flex-row">
+    <PageContainer
+      className={`relative flex h-full flex-col ${
+        aiGame.phase === "playing" ? "gap-0" : "gap-6"
+      } px-0 lg:flex-row`}
+    >
       {/* Plateau de jeu - Largeur adaptative */}
       <GameBoard
         playerCards={aiGame.playerCards}
@@ -181,9 +185,7 @@ export default function PlayPage() {
       {/* Options de jeu - Colonne de droite avec animation */}
       <Card
         className={`h-full pt-0 transition-all duration-700 ease-in-out ${
-          aiGame.phase === "playing"
-            ? "pointer-events-none w-0 overflow-hidden opacity-0"
-            : "w-2/6 opacity-100"
+          aiGame.phase === "playing" ? "hidden" : "w-2/6"
         }`}
       >
         <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
