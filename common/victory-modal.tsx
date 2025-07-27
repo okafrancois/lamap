@@ -1,7 +1,6 @@
 "use client";
 
 import { LibButton } from "@/components/library/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   IconTrophy,
   IconSkull,

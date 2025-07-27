@@ -12,7 +12,6 @@ import {
 import { GameBoard } from "common/game-board";
 import { VictoryModal } from "common/victory-modal";
 import { GameReviewSheet } from "common/game-review-sheet";
-import { SoundControls } from "common/sound-controls";
 
 import { useAIGame } from "@/hooks/use-ai-game";
 import {
@@ -27,10 +26,8 @@ import {
 import { useState, useEffect } from "react";
 import { LibTitle } from "@/components/library/title";
 import { useSound } from "@/hooks/use-sound";
-import { useMobile } from "@/hooks/use-mobile";
 
 export default function PlayPage() {
-  const isMobile = useMobile();
   const [selectedGameMode, setSelectedGameMode] = useState<string | null>(null);
   const [selectedCard, setSelectedCard] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
@@ -150,7 +147,6 @@ export default function PlayPage() {
     aiGame.startAIGame();
   };
 
-  // INTERFACE DESKTOP (ORIGINALE RESTAURÉE)
   return (
     <PageContainer fluid={true} className={`relative flex h-full gap-4`}>
       {/* Plateau de jeu - Largeur adaptative */}
