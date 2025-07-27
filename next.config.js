@@ -11,6 +11,13 @@ const config = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  compiler: {
+    // Supprimer les console.log en production, garder les error et warn
+    removeConsole:
+      process.env.NODE_ENV === "production"
+        ? { exclude: ["error", "warn"] }
+        : false,
+  },
 };
 
 export default config;

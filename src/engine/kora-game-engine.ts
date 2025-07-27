@@ -1,9 +1,12 @@
 import { type Card, type Suit, type Rank } from "@/components/common/deck";
+import { AIPlayer } from "./ai-player";
 
 // Types spécifiques au game engine
 export type Player = "player" | "opponent";
 export type GameStatus = "waiting" | "playing" | "ended" | "victory" | "defeat";
 export type KoraType = "none" | "simple" | "double" | "triple";
+export type AIDifficulty = "easy" | "medium" | "hard";
+export type GameMode = "ai" | "online" | "local";
 
 export interface PlayedCard {
   card: Card;
@@ -52,6 +55,11 @@ export interface GameState {
   // Mode God pour debug
   godMode: boolean;
 
+  // Configuration IA et mode de jeu
+  gameMode: GameMode;
+  aiDifficulty: AIDifficulty;
+  isAIThinking: boolean;
+
   // Messages et logs avec timestamps
   gameLog: Array<{ message: string; timestamp: number }>;
 }
@@ -75,9 +83,11 @@ export interface GameActions {
 export class KoraGameEngine {
   private state: GameState;
   private listeners: ((state: GameState) => void)[] = [];
+  private aiPlayer: AIPlayer;
 
   constructor() {
     this.state = this.getInitialState();
+    this.aiPlayer = new AIPlayer(this.state.aiDifficulty);
   }
 
   private getInitialState(): GameState {
@@ -100,6 +110,9 @@ export class KoraGameEngine {
       currentBet: 10,
       koraStreak: { player: "player", count: 0, rounds: [] },
       godMode: false,
+      gameMode: "ai",
+      aiDifficulty: "medium",
+      isAIThinking: false,
       gameLog: [],
     };
   }
@@ -749,6 +762,70 @@ Mode God: ${state.godMode ? "✅" : "❌"}
     this.log(
       `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${betAmount} koras`,
     );
+  }
+
+  // ========== GESTION DE L'IA ==========
+
+  public setGameMode(mode: GameMode): void {
+    this.state.gameMode = mode;
+    this.notifyListeners();
+  }
+
+  public setAIDifficulty(difficulty: AIDifficulty): void {
+    this.state.aiDifficulty = difficulty;
+    this.aiPlayer.setDifficulty(difficulty);
+    this.notifyListeners();
+  }
+
+  public async triggerAITurn(): Promise<void> {
+    if (this.state.gameMode !== "ai" || this.state.status !== "playing") {
+      return;
+    }
+
+    // Vérifier si c'est le tour de l'IA
+    const currentRoundCards = this.state.playedCards.filter(
+      (p) => p.round === this.state.currentRound,
+    );
+
+    const isAITurn = (() => {
+      if (currentRoundCards.length === 0) {
+        return this.state.playerWithHand === "opponent";
+      } else if (currentRoundCards.length === 1) {
+        const firstPlayer = currentRoundCards[0]!.player;
+        return firstPlayer !== "opponent";
+      } else {
+        return false; // Deux cartes jouées, tour terminé
+      }
+    })();
+
+    if (!isAITurn || this.state.isAIThinking) {
+      return;
+    }
+
+    // Marquer l'IA comme en réflexion
+    this.state.isAIThinking = true;
+    this.notifyListeners();
+
+    // Délai de réflexion basé sur la difficulté
+    const thinkingTime =
+      this.state.aiDifficulty === "easy"
+        ? 500
+        : this.state.aiDifficulty === "medium"
+          ? 1000
+          : 1500;
+
+    await new Promise((resolve) => setTimeout(resolve, thinkingTime));
+
+    // L'IA choisit sa carte
+    const chosenCard = this.aiPlayer.chooseCard(this.state);
+
+    if (chosenCard) {
+      this.playCard(chosenCard.id, "opponent");
+    }
+
+    // Marquer l'IA comme ayant fini de réfléchir
+    this.state.isAIThinking = false;
+    this.notifyListeners();
   }
 }
 

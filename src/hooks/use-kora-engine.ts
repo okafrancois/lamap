@@ -5,6 +5,8 @@ import {
   gameEngine,
   type GameState,
   type Player,
+  type GameMode,
+  type AIDifficulty,
 } from "@/engine/kora-game-engine";
 import { type Card } from "@/components/common/deck";
 
@@ -140,10 +142,29 @@ export function useKoraEngine() {
     getPlayableCards,
     canPlayCard,
     getGameSummary,
+
+    // Gestion IA
+    gameMode: gameState.gameMode,
+    aiDifficulty: gameState.aiDifficulty,
+    isAIThinking: gameState.isAIThinking,
+    setGameMode: useCallback((mode: "ai" | "online" | "local") => {
+      gameEngine.setGameMode(mode);
+    }, []),
+    setAIDifficulty: useCallback((difficulty: "easy" | "medium" | "hard") => {
+      gameEngine.setAIDifficulty(difficulty);
+    }, []),
+    triggerAITurn: useCallback(async () => {
+      await gameEngine.triggerAITurn();
+    }, []),
   };
 
   return legacyInterface;
 }
 
 // Export des types pour compatibilité
-export type { GameState, Player } from "@/engine/kora-game-engine";
+export type {
+  GameState,
+  Player,
+  GameMode,
+  AIDifficulty,
+} from "@/engine/kora-game-engine";

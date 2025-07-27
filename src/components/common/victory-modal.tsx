@@ -155,16 +155,7 @@ export function VictoryModal({
     }
   }, [isVisible, isVictory, victoryType.type, playSound]);
 
-  console.log(
-    "🎭 VictoryModal render - isVisible:",
-    isVisible,
-    "isVictory:",
-    isVictory,
-  );
   if (!isVisible) return null;
-
-  // Vérifier si on est côté client avant d'utiliser createPortal
-  if (typeof window === "undefined") return null;
 
   const victoryMessages = [
     "🎉 C'est toi le ndoss !",

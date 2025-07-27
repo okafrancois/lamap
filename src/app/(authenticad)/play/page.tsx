@@ -53,23 +53,14 @@ export default function PlayPage() {
 
   // Détecter la fin de partie et afficher le modal
   useEffect(() => {
-    console.log(
-      "🔍 Debug - Phase changed:",
-      aiGame.phase,
-      "showVictoryModal:",
-      showVictoryModal,
-    );
     if (aiGame.phase === "victory" || aiGame.phase === "defeat") {
-      console.log(
-        "🎮 Game ended, phase:",
-        aiGame.phase,
-        "showing modal for mobile:",
-        isMobile,
-      );
       void playSound("game_end");
       setShowVictoryModal(true);
+    } else {
+      // Réinitialiser le modal quand on n'est plus en fin de partie
+      setShowVictoryModal(false);
     }
-  }, [aiGame.phase, playSound, isMobile, showVictoryModal]);
+  }, [aiGame.phase, playSound]);
 
   // Détecter les changements de tour pour jouer le son
   useEffect(() => {
@@ -160,6 +151,7 @@ export default function PlayPage() {
     void playSound("shuffle_cards");
     setSelectedCard(null);
     setHoveredCard(null);
+    setShowVictoryModal(false); // S'assurer que le modal est fermé
     aiGame.startAIGame();
   };
 
@@ -167,6 +159,7 @@ export default function PlayPage() {
     setSelectedGameMode(null);
     setSelectedCard(null);
     setHoveredCard(null);
+    setShowVictoryModal(false); // S'assurer que le modal est fermé
   };
 
   // INTERFACE MOBILE
