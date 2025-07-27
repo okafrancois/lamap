@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { type Card } from "@/components/common/deck";
+import { type Card } from "common/deck";
 
 export type GamePhase = "waiting" | "playing" | "ended" | "victory" | "defeat";
 export type PlayerTurn = "player" | "opponent";

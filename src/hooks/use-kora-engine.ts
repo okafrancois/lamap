@@ -8,7 +8,7 @@ import {
   type GameMode,
   type AIDifficulty,
 } from "@/engine/kora-game-engine";
-import { type Card } from "@/components/common/deck";
+import { type Card } from "common/deck";
 
 // Conversion entre les anciens types et les nouveaux types du game engine
 export function useKoraEngine() {

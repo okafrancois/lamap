@@ -1,4 +1,4 @@
-import { type Card, type Suit, type Rank } from "@/components/common/deck";
+import { type Card, type Suit, type Rank } from "common/deck";
 import { AIPlayer } from "./ai-player";
 
 // Types spécifiques au game engine

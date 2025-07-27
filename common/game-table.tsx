@@ -30,7 +30,7 @@ export function GameTable({ playedCards, className = "" }: GameTableProps) {
         className="border-amber-200/10"
       />
 
-      <div className="relative aspect-square w-[70%] sm:w-[50%] md:w-[40%] lg:w-[35%]">
+      <div className="relative aspect-square w-auto min-w-[200px] lg:min-w-[300px]">
         {/* Plateau de jeu principal */}
         <div className="relative h-full w-full rounded-2xl border-4 border-amber-400/80 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-900 shadow-2xl">
           {/* Effet de profondeur */}

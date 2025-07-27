@@ -17,11 +17,7 @@ export default function AuthenticatedLayout({
       }
     >
       <AppSidebar variant="inset" />
-      <SidebarInset>
-        <main className="@container/main absolute inset-0 container overflow-x-hidden overflow-y-scroll">
-          {children}
-        </main>
-      </SidebarInset>
+      <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
   );
 }

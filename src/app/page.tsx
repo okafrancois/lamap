@@ -15,7 +15,7 @@ import {
   IconUsersGroup,
 } from "@tabler/icons-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { CardBack, PlayingCard } from "@/components/common/deck";
+import { CardBack, PlayingCard } from "common/deck";
 import { LibButton } from "@/components/library/button";
 
 export default async function HomePage() {

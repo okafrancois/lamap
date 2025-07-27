@@ -9,10 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { GameBoard } from "@/components/common/game-board";
-import { VictoryModal } from "@/components/common/victory-modal";
-import { GameReviewSheet } from "@/components/common/game-review-sheet";
-import { SoundControls } from "@/components/common/sound-controls";
+import { GameBoard } from "common/game-board";
+import { VictoryModal } from "common/victory-modal";
+import { GameReviewSheet } from "common/game-review-sheet";
+import { SoundControls } from "common/sound-controls";
 
 import { useAIGame } from "@/hooks/use-ai-game";
 import { useMobile } from "@/hooks/use-mobile";
@@ -23,8 +23,6 @@ import {
   IconPlayerPlay,
   IconStar,
   IconCards,
-  IconTrophy,
-  IconSkull,
   IconRefresh,
   IconX,
 } from "@tabler/icons-react";
@@ -305,156 +303,153 @@ export default function PlayPage() {
 
     // Interface Menu Mobile
     return (
-      <div className="min-h-screen">
-        <PageContainer className="min-h-screen p-4">
-          <div className="mb-8 pt-4 text-center">
-            <h1 className="text-primary mb-3 text-3xl font-bold tracking-tight">
-              🃏 Kora Battle
-            </h1>
-            <p className="text-muted-foreground text-lg">
-              Choisissez votre mode de jeu
-            </p>
-          </div>
+      <PageContainer className="min-h-screen px-0!">
+        <div className="mb-8 pt-4 text-center">
+          <h1 className="text-primary mb-3 text-3xl font-bold tracking-tight">
+            🃏 Kora Battle
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            Choisissez votre mode de jeu
+          </p>
+        </div>
 
-          <div className="mx-auto max-w-sm space-y-4">
-            {selectedGameMode === "ai" && (
-              <Card className="border-primary/30 from-primary/10 to-primary/20 bg-gradient-to-br backdrop-blur-sm">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-primary text-lg">
-                      🤖 Configuration IA
-                    </CardTitle>
+        <div className="mx-auto max-w-sm space-y-4">
+          {selectedGameMode === "ai" && (
+            <Card className="border-primary/30 from-primary/10 to-primary/20 bg-gradient-to-br backdrop-blur-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-primary text-lg">
+                    🤖 Configuration IA
+                  </CardTitle>
+                  <LibButton
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToMenu}
+                  >
+                    ← Retour
+                  </LibButton>
+                </div>
+                <CardDescription>
+                  Choisissez le niveau de difficulté
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {(["easy", "medium", "hard"] as const).map((difficulty) => (
                     <LibButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleBackToMenu}
+                      key={difficulty}
+                      variant={
+                        aiDifficulty === difficulty ? "default" : "outline"
+                      }
+                      className={`w-full justify-start py-6 text-left ${
+                        aiDifficulty === difficulty
+                          ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "border-primary/30 hover:bg-primary/20"
+                      }`}
+                      onClick={() => setAiDifficulty(difficulty)}
                     >
-                      ← Retour
-                    </LibButton>
-                  </div>
-                  <CardDescription>
-                    Choisissez le niveau de difficulté
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    {(["easy", "medium", "hard"] as const).map((difficulty) => (
-                      <LibButton
-                        key={difficulty}
-                        variant={
-                          aiDifficulty === difficulty ? "default" : "outline"
-                        }
-                        className={`w-full justify-start py-6 text-left ${
-                          aiDifficulty === difficulty
-                            ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
-                            : "border-primary/30 hover:bg-primary/20"
-                        }`}
-                        onClick={() => setAiDifficulty(difficulty)}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">
-                            {difficulty === "easy" && "🟢"}
-                            {difficulty === "medium" && "🟡"}
-                            {difficulty === "hard" && "🔴"}
-                          </span>
-                          <div>
-                            <div className="font-semibold capitalize">
-                              {difficulty}
-                            </div>
-                            <div className="text-xs opacity-70">
-                              {difficulty === "easy" && "Parfait pour débuter"}
-                              {difficulty === "medium" &&
-                                "Équilibré et amusant"}
-                              {difficulty === "hard" && "Pour les experts"}
-                            </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">
+                          {difficulty === "easy" && "🟢"}
+                          {difficulty === "medium" && "🟡"}
+                          {difficulty === "hard" && "🔴"}
+                        </span>
+                        <div>
+                          <div className="font-semibold capitalize">
+                            {difficulty}
+                          </div>
+                          <div className="text-xs opacity-70">
+                            {difficulty === "easy" && "Parfait pour débuter"}
+                            {difficulty === "medium" && "Équilibré et amusant"}
+                            {difficulty === "hard" && "Pour les experts"}
                           </div>
                         </div>
-                      </LibButton>
-                    ))}
-                  </div>
-
-                  <LibButton
-                    onClick={handleGameStart}
-                    className="bg-primary hover:bg-primary/90 w-full rounded-xl py-4 text-lg font-bold shadow-lg"
-                  >
-                    🚀 Commencer la partie
-                  </LibButton>
-                </CardContent>
-              </Card>
-            )}
-
-            {!selectedGameMode &&
-              gameOptions.map((option) => {
-                const IconComponent = option.icon;
-                return (
-                  <Card
-                    key={option.id}
-                    className={`cursor-pointer border-2 transition-all duration-300 ${
-                      !option.available
-                        ? "border-border cursor-not-allowed opacity-50"
-                        : "border-border hover:border-primary/50 hover:shadow-xl"
-                    }`}
-                    onClick={() =>
-                      option.available && handleModeSelect(option.id)
-                    }
-                  >
-                    <CardContent className="p-6">
-                      <div className="mb-4 flex items-center gap-4">
-                        <div
-                          className={`rounded-xl bg-gradient-to-br p-3 ${option.color}`}
-                        >
-                          <IconComponent className="size-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-foreground mb-1 text-lg font-bold">
-                            {option.title}
-                            {!option.available && (
-                              <span className="text-muted-foreground ml-2 text-xs">
-                                (Bientôt)
-                              </span>
-                            )}
-                          </h3>
-                          <p className="text-muted-foreground text-sm">
-                            {option.description}
-                          </p>
-                        </div>
                       </div>
+                    </LibButton>
+                  ))}
+                </div>
 
-                      <div className="text-muted-foreground mb-4 flex items-center justify-between text-xs">
-                        <span>Difficulté: {option.difficulty}</span>
-                        <span>{option.players}</span>
-                      </div>
+                <LibButton
+                  onClick={handleGameStart}
+                  className="bg-primary hover:bg-primary/90 w-full rounded-xl py-4 text-lg font-bold shadow-lg"
+                >
+                  🚀 Commencer la partie
+                </LibButton>
+              </CardContent>
+            </Card>
+          )}
 
-                      <LibButton
-                        className={`w-full py-3 font-medium ${
-                          option.available
-                            ? "bg-secondary hover:bg-secondary/80"
-                            : "cursor-not-allowed opacity-50"
-                        }`}
-                        disabled={!option.available}
+          {!selectedGameMode &&
+            gameOptions.map((option) => {
+              const IconComponent = option.icon;
+              return (
+                <Card
+                  key={option.id}
+                  className={`cursor-pointer border-2 transition-all duration-300 ${
+                    !option.available
+                      ? "border-border cursor-not-allowed opacity-50"
+                      : "border-border hover:border-primary/50 hover:shadow-xl"
+                  }`}
+                  onClick={() =>
+                    option.available && handleModeSelect(option.id)
+                  }
+                >
+                  <CardContent className="p-6">
+                    <div className="mb-4 flex items-center gap-4">
+                      <div
+                        className={`rounded-xl bg-gradient-to-br p-3 ${option.color}`}
                       >
-                        {option.available ? "Sélectionner" : "Indisponible"}
-                      </LibButton>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-          </div>
+                        <IconComponent className="size-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-foreground mb-1 text-lg font-bold">
+                          {option.title}
+                          {!option.available && (
+                            <span className="text-muted-foreground ml-2 text-xs">
+                              (Bientôt)
+                            </span>
+                          )}
+                        </h3>
+                        <p className="text-muted-foreground text-sm">
+                          {option.description}
+                        </p>
+                      </div>
+                    </div>
 
-          <div className="fixed right-4 bottom-4 left-4 flex justify-center">
-            <div className="border-border bg-card/50 rounded-lg border px-4 py-2 backdrop-blur-sm">
-              <SoundControls />
-            </div>
+                    <div className="text-muted-foreground mb-4 flex items-center justify-between text-xs">
+                      <span>Difficulté: {option.difficulty}</span>
+                      <span>{option.players}</span>
+                    </div>
+
+                    <LibButton
+                      className={`w-full py-3 font-medium ${
+                        option.available
+                          ? "bg-secondary hover:bg-secondary/80"
+                          : "cursor-not-allowed opacity-50"
+                      }`}
+                      disabled={!option.available}
+                    >
+                      {option.available ? "Sélectionner" : "Indisponible"}
+                    </LibButton>
+                  </CardContent>
+                </Card>
+              );
+            })}
+        </div>
+
+        <div className="fixed right-4 bottom-4 left-4 flex justify-center">
+          <div className="border-border bg-card/50 rounded-lg border px-4 py-2 backdrop-blur-sm">
+            <SoundControls />
           </div>
-        </PageContainer>
-      </div>
+        </div>
+      </PageContainer>
     );
   }
 
   // INTERFACE DESKTOP (ORIGINALE RESTAURÉE)
   return (
-    <PageContainer className="relative flex h-screen flex-col gap-6 overflow-hidden lg:flex-row">
+    <PageContainer className="relative flex h-screen flex-col gap-6 overflow-hidden! lg:flex-row">
       {/* Plateau de jeu - Largeur adaptative */}
       <GameBoard
         playerCards={aiGame.playerCards}
