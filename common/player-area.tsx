@@ -110,9 +110,7 @@ export function PlayerArea({
   className = "",
 }: PlayerAreaProps) {
   return (
-    <div
-      className={`relative z-10 flex-shrink-0 px-2 py-1 text-center sm:p-2 ${className}`}
-    >
+    <div className={`relative min-h-max py-8 text-center ${className}`}>
       <PlayerStatus
         isCurrentTurn={isPlayerTurn}
         cardCount={cards.length}

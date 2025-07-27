@@ -15,7 +15,6 @@ import { GameReviewSheet } from "common/game-review-sheet";
 import { SoundControls } from "common/sound-controls";
 
 import { useAIGame } from "@/hooks/use-ai-game";
-import { useMobile } from "@/hooks/use-mobile";
 import {
   IconRobot,
   IconUsers,
@@ -24,7 +23,6 @@ import {
   IconStar,
   IconCards,
   IconRefresh,
-  IconX,
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { LibTitle } from "@/components/library/title";
@@ -39,9 +37,6 @@ export default function PlayPage() {
   );
   const [showVictoryModal, setShowVictoryModal] = useState(false);
   const [showReviewSheet, setShowReviewSheet] = useState(false);
-
-  // Hook pour détecter mobile vs desktop
-  const isMobile = useMobile();
 
   // Hook pour jouer contre l'IA
   const aiGame = useAIGame(aiDifficulty);
@@ -153,303 +148,9 @@ export default function PlayPage() {
     aiGame.startAIGame();
   };
 
-  const handleBackToMenu = () => {
-    setSelectedGameMode(null);
-    setSelectedCard(null);
-    setHoveredCard(null);
-    setShowVictoryModal(false); // S'assurer que le modal est fermé
-  };
-
-  // INTERFACE MOBILE
-  if (isMobile) {
-    // Interface en cours de jeu - Mobile
-    if (aiGame.phase === "playing") {
-      return (
-        <div className="bg-background min-h-screen">
-          {/* Header Mobile Compact */}
-          <div className="border-border bg-card/50 flex h-14 items-center justify-between border-b px-4 backdrop-blur-sm">
-            <div className="text-foreground flex items-center gap-3">
-              <span className="text-sm font-medium">
-                Tour {aiGame.currentRound}/5
-              </span>
-              <div className="bg-primary h-1 w-1 rounded-full"></div>
-              <span className="text-sm">
-                {aiGame.playerKoras} vs {aiGame.opponentKoras}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <SoundControls />
-
-              <LibButton
-                variant="ghost"
-                size="sm"
-                onClick={handleBackToMenu}
-                title="Retour au menu"
-              >
-                <IconX className="size-4" />
-              </LibButton>
-            </div>
-          </div>
-
-          {/* Game Board Mobile */}
-          <div className="h-[calc(100vh-3.5rem-4rem)] flex-1 overflow-hidden">
-            <GameBoard
-              playerCards={aiGame.playerCards}
-              opponentCards={aiGame.opponentCards}
-              playedCards={aiGame.playedCards}
-              gameStarted={true}
-              isPlayerTurn={aiGame.currentTurn === "player"}
-              playableCards={aiGame.playableCards}
-              onCardClick={(cardIndex) => {
-                const card = getCardByIndex(cardIndex);
-                if (card) {
-                  handleCardClick(card.id);
-                }
-              }}
-              onPlayCard={handlePlayCard}
-              hoveredCard={hoveredCard}
-              selectedCard={getSelectedCardIndex()}
-              onCardHover={handleCardHover}
-              currentTurn={aiGame.currentTurn}
-              playerWithHand={aiGame.playerWithHand}
-              className="h-full w-full"
-            />
-          </div>
-
-          {/* Bottom Action Bar Mobile */}
-          <div className="border-border bg-card/80 flex h-16 items-center justify-between border-t px-4 backdrop-blur-sm">
-            <div className="flex items-center gap-3">
-              <div
-                className={`h-3 w-3 rounded-full ${
-                  aiGame.currentTurn === "player"
-                    ? "bg-primary animate-pulse"
-                    : "bg-destructive"
-                }`}
-              ></div>
-              <span className="text-foreground text-sm font-medium">
-                {aiGame.currentTurn === "player"
-                  ? "🎯 Votre tour"
-                  : aiGame.isAIThinking
-                    ? "🤔 IA réfléchit..."
-                    : "⏳ Tour de l'IA"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              {selectedCard && aiGame.currentTurn === "player" && (
-                <LibButton
-                  onClick={handlePlayCard}
-                  className="bg-primary hover:bg-primary/90 rounded-lg px-6 py-2 font-bold shadow-lg"
-                >
-                  ▶️ Jouer
-                </LibButton>
-              )}
-
-              <LibButton
-                variant="ghost"
-                size="sm"
-                onClick={handleNewGame}
-                className="p-2"
-                title="Nouvelle partie"
-              >
-                <IconRefresh className="size-5" />
-              </LibButton>
-            </div>
-          </div>
-
-          {/* Modals Mobile */}
-          <VictoryModal
-            isVisible={showVictoryModal}
-            isVictory={(aiGame.phase as string) === "victory"}
-            playerKoras={aiGame.playerKoras}
-            opponentKoras={aiGame.opponentKoras}
-            betAmount={aiGame.currentBet}
-            korasWon={(() => {
-              const recentLogs = aiGame.gameLog.slice(-10);
-              for (const log of recentLogs) {
-                const message = log.message;
-                const gainRegex =
-                  /(?:Vous gagnez|Adversaire gagne) (\d+) koras/;
-                const gainMatch = gainRegex.exec(message);
-                if (gainMatch?.[1] && message.includes("Vous gagnez")) {
-                  return parseInt(gainMatch[1]);
-                }
-              }
-              return aiGame.currentBet;
-            })()}
-            gameLog={aiGame.gameLog}
-            onPlayAgain={() => {
-              setShowVictoryModal(false);
-              handleNewGame();
-            }}
-            onClose={() => {
-              setShowVictoryModal(false);
-              handleBackToMenu();
-            }}
-            onEnterReview={() => {
-              setShowVictoryModal(false);
-              setShowReviewSheet(true);
-            }}
-          />
-
-          <GameReviewSheet
-            open={showReviewSheet}
-            onOpenChange={setShowReviewSheet}
-          />
-        </div>
-      );
-    }
-
-    // Interface Menu Mobile
-    return (
-      <PageContainer className="min-h-screen px-0!">
-        <div className="mb-8 pt-4 text-center">
-          <h1 className="text-primary mb-3 text-3xl font-bold tracking-tight">
-            🃏 Kora Battle
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Choisissez votre mode de jeu
-          </p>
-        </div>
-
-        <div className="mx-auto max-w-sm space-y-4">
-          {selectedGameMode === "ai" && (
-            <Card className="border-primary/30 from-primary/10 to-primary/20 bg-gradient-to-br backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-primary text-lg">
-                    🤖 Configuration IA
-                  </CardTitle>
-                  <LibButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleBackToMenu}
-                  >
-                    ← Retour
-                  </LibButton>
-                </div>
-                <CardDescription>
-                  Choisissez le niveau de difficulté
-                </CardDescription>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  {(["easy", "medium", "hard"] as const).map((difficulty) => (
-                    <LibButton
-                      key={difficulty}
-                      variant={
-                        aiDifficulty === difficulty ? "default" : "outline"
-                      }
-                      className={`w-full justify-start py-6 text-left ${
-                        aiDifficulty === difficulty
-                          ? "border-primary bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "border-primary/30 hover:bg-primary/20"
-                      }`}
-                      onClick={() => setAiDifficulty(difficulty)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="text-xl">
-                          {difficulty === "easy" && "🟢"}
-                          {difficulty === "medium" && "🟡"}
-                          {difficulty === "hard" && "🔴"}
-                        </span>
-                        <div>
-                          <div className="font-semibold capitalize">
-                            {difficulty}
-                          </div>
-                          <div className="text-xs opacity-70">
-                            {difficulty === "easy" && "Parfait pour débuter"}
-                            {difficulty === "medium" && "Équilibré et amusant"}
-                            {difficulty === "hard" && "Pour les experts"}
-                          </div>
-                        </div>
-                      </div>
-                    </LibButton>
-                  ))}
-                </div>
-
-                <LibButton
-                  onClick={handleGameStart}
-                  className="bg-primary hover:bg-primary/90 w-full rounded-xl py-4 text-lg font-bold shadow-lg"
-                >
-                  🚀 Commencer la partie
-                </LibButton>
-              </CardContent>
-            </Card>
-          )}
-
-          {!selectedGameMode &&
-            gameOptions.map((option) => {
-              const IconComponent = option.icon;
-              return (
-                <Card
-                  key={option.id}
-                  className={`cursor-pointer border-2 transition-all duration-300 ${
-                    !option.available
-                      ? "border-border cursor-not-allowed opacity-50"
-                      : "border-border hover:border-primary/50 hover:shadow-xl"
-                  }`}
-                  onClick={() =>
-                    option.available && handleModeSelect(option.id)
-                  }
-                >
-                  <CardContent className="p-6">
-                    <div className="mb-4 flex items-center gap-4">
-                      <div
-                        className={`rounded-xl bg-gradient-to-br p-3 ${option.color}`}
-                      >
-                        <IconComponent className="size-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-foreground mb-1 text-lg font-bold">
-                          {option.title}
-                          {!option.available && (
-                            <span className="text-muted-foreground ml-2 text-xs">
-                              (Bientôt)
-                            </span>
-                          )}
-                        </h3>
-                        <p className="text-muted-foreground text-sm">
-                          {option.description}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="text-muted-foreground mb-4 flex items-center justify-between text-xs">
-                      <span>Difficulté: {option.difficulty}</span>
-                      <span>{option.players}</span>
-                    </div>
-
-                    <LibButton
-                      className={`w-full py-3 font-medium ${
-                        option.available
-                          ? "bg-secondary hover:bg-secondary/80"
-                          : "cursor-not-allowed opacity-50"
-                      }`}
-                      disabled={!option.available}
-                    >
-                      {option.available ? "Sélectionner" : "Indisponible"}
-                    </LibButton>
-                  </CardContent>
-                </Card>
-              );
-            })}
-        </div>
-
-        <div className="fixed right-4 bottom-4 left-4 flex justify-center">
-          <div className="border-border bg-card/50 rounded-lg border px-4 py-2 backdrop-blur-sm">
-            <SoundControls />
-          </div>
-        </div>
-      </PageContainer>
-    );
-  }
-
   // INTERFACE DESKTOP (ORIGINALE RESTAURÉE)
   return (
-    <PageContainer className="relative flex h-screen flex-col gap-6 overflow-hidden! lg:flex-row">
+    <PageContainer className="relative flex h-full flex-col gap-6 px-0 lg:flex-row">
       {/* Plateau de jeu - Largeur adaptative */}
       <GameBoard
         playerCards={aiGame.playerCards}
@@ -481,8 +182,8 @@ export default function PlayPage() {
       <Card
         className={`h-full pt-0 transition-all duration-700 ease-in-out ${
           aiGame.phase === "playing"
-            ? "lg:pointer-events-none lg:w-0 lg:overflow-hidden lg:opacity-0"
-            : "lg:w-2/6 lg:opacity-100"
+            ? "pointer-events-none w-0 overflow-hidden opacity-0"
+            : "w-2/6 opacity-100"
         }`}
       >
         <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !py-4">
@@ -531,21 +232,29 @@ export default function PlayPage() {
 
           {/* Options de difficulté pour l'IA */}
           {selectedGameMode === "ai" && aiGame.phase === "waiting" && (
-            <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-purple-600/10">
-              <CardContent className="p-4">
-                <div className="mb-3 flex items-center justify-between">
-                  <h4 className="font-semibold text-purple-700 dark:text-purple-300">
-                    Difficulté de l&apos;IA
-                  </h4>
-                  <LibButton
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedGameMode(null)}
-                    className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
-                  >
-                    ← Retour
-                  </LibButton>
-                </div>
+            <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-purple-600/10 !p-4">
+              <CardHeader className="flex flex-row items-start justify-between">
+                <LibTitle as="h3" className="flex w-full items-center gap-3">
+                  <div className="bg-secondary/20 rounded-lg p-2">
+                    <IconRobot className="text-secondary size-6" />
+                  </div>
+                  <div>
+                    <span className="text-lg font-semibold">
+                      Difficulté de l&apos;IA
+                    </span>
+                  </div>
+                </LibTitle>
+                <LibButton
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedGameMode(null)}
+                  className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
+                >
+                  ← Retour
+                </LibButton>
+              </CardHeader>
+
+              <CardContent className="p-0">
                 <div className="space-y-2">
                   {(["easy", "medium", "hard"] as const).map((difficulty) => (
                     <LibButton
@@ -680,13 +389,6 @@ export default function PlayPage() {
           </div>
         </div>
       )}
-
-      {/* Contrôles audio en bas à gauche - Desktop seulement */}
-      <div className="fixed bottom-4 left-4 z-50">
-        <div className="rounded-lg border border-white/20 bg-black/80 px-2 py-1 shadow-xl backdrop-blur-sm">
-          <SoundControls className="[&_button]:text-white/70 [&_button:hover]:text-white [&_span]:text-white/70" />
-        </div>
-      </div>
 
       {/* Modal de victoire/défaite - Pour les deux interfaces */}
       <VictoryModal

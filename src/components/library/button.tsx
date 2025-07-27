@@ -36,7 +36,7 @@ export function LibButton({
 
   const handleMouseEnter = () => {
     // Jouer le son de hover
-    void playSound("hover", { volume: 0.3 });
+    void playSound("hover", { volume: 0.05 });
   };
   if (href) {
     return (
