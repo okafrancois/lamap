@@ -6,6 +6,8 @@ import { Geist } from "next/font/google";
 import { TRPCReactProvider } from "@/trpc/react";
 import { NextAuthSessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "sonner";
+import { auth } from "@/server/auth";
+import { UserProvider } from "@/components/layout/user-provider";
 
 export const metadata: Metadata = {
   title: "LaMap241",
@@ -18,15 +20,23 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const session = await auth();
+
+  const initialData = session?.user
+    ? {
+        user: session.user,
+      }
+    : null;
+
   return (
     <html lang="fr" className={`${geist.variable}`}>
       <body>
         <NextAuthSessionProvider>
           <TRPCReactProvider>
-            {children}
+            <UserProvider initialData={initialData}>{children}</UserProvider>
             <Toaster position="bottom-right" richColors />
           </TRPCReactProvider>
         </NextAuthSessionProvider>

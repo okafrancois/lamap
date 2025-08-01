@@ -1,16 +1,27 @@
 import { type Card, type Suit, type Rank } from "common/deck";
-import { AIPlayer } from "./ai-player";
 
-// Types spécifiques au game engine
-export type Player = "player" | "opponent";
-export type GameStatus = "waiting" | "playing" | "ended" | "victory" | "defeat";
+// Types améliorés pour le game engine
+export type PlayerType = "user" | "ai";
+export type GameStatus = "waiting" | "playing" | "ended";
 export type KoraType = "none" | "simple" | "double" | "triple";
 export type AIDifficulty = "easy" | "medium" | "hard";
 export type GameMode = "ai" | "online" | "local";
 
+export interface PlayerEntity {
+  id: string;
+  type: PlayerType;
+  isConnected: boolean;
+  name?: string;
+  avatar?: string;
+  hand?: Card[];
+  koras: number;
+  aiDifficulty?: AIDifficulty;
+  isThinking?: boolean;
+}
+
 export interface PlayedCard {
   card: Card;
-  player: Player;
+  playerId: string;
   round: number;
   timestamp: number;
 }
@@ -24,95 +35,66 @@ export interface GameAction {
 }
 
 export interface GameState {
-  // État général
   gameId: string;
   status: GameStatus;
+  maxRounds: number;
   currentRound: number;
-  playerWithHand: Player;
-  firstPlayer: Player;
-
-  // Cartes avec IDs déterministes
-  playerCards: Card[];
-  opponentCards: Card[];
+  hasHandId: string | null;
+  playerTurnId: string | null;
+  players: PlayerEntity[];
   playedCards: PlayedCard[];
-
-  // Dernière carte jouée
-  lastPlayedCard: Card | null;
-  lastPlayedBy: Player | null;
-
-  // Scores et exploits
-  playerKoras: number;
-  opponentKoras: number;
+  winnerId: string | null;
   currentBet: number;
-  koraStreak: { player: Player; count: number; rounds: number[] };
-
-  // Seed pour reproductibilité
-  seed: string;
-
-  // Version de l'état pour synchronisation
-  version: number;
-
-  // Mode God pour debug
-  godMode: boolean;
-
-  // Configuration IA et mode de jeu
-  gameMode: GameMode;
-  aiDifficulty: AIDifficulty;
-  isAIThinking: boolean;
-
-  // Messages et logs avec timestamps
+  endReason: string | null;
   gameLog: Array<{ message: string; timestamp: number }>;
+  seed: string;
+  version: number;
 }
 
 export interface GameActions {
   // Actions principales
   startNewGame: () => void;
-  playCard: (cardId: string, player: Player) => boolean;
+  playCard: (cardId: string, playerId: string) => boolean;
 
   // Actions de debug/god mode
   toggleGodMode: () => void;
-  forcePlayerHand: (player: Player) => void;
-  setPlayerCards: (cards: Card[], player: Player) => void;
+  forcePlayerHand: (playerId: string) => void;
+  setPlayerCards: (cards: Card[], playerId: string) => void;
 
   // Utilitaires
-  getPlayableCards: (player: Player) => Card[];
-  canPlayCard: (cardId: string, player: Player) => boolean;
+  getPlayableCards: (playerId: string) => Card[];
+  canPlayCard: (cardId: string, playerId: string) => boolean;
   getGameSummary: () => string;
 }
 
 export class KoraGameEngine {
   private state: GameState;
   private listeners: ((state: GameState) => void)[] = [];
-  private aiPlayer: AIPlayer;
 
-  constructor() {
-    this.state = this.getInitialState();
-    this.aiPlayer = new AIPlayer(this.state.aiDifficulty);
+  constructor(bet: number, maxRounds: number, players: PlayerEntity[]) {
+    this.state = this.getInitialState(bet, maxRounds, players);
   }
 
-  private getInitialState(): GameState {
+  private getInitialState(
+    bet = 10,
+    maxRounds = 5,
+    players: PlayerEntity[] = [],
+  ): GameState {
     const seed = Date.now().toString();
     return {
       gameId: `game-${seed}`,
       seed,
       version: 0,
       status: "waiting",
-      currentRound: 0,
-      playerWithHand: "player",
-      firstPlayer: "player",
-      playerCards: [],
-      opponentCards: [],
+      currentRound: 1,
+      maxRounds,
+      hasHandId: null,
+      playerTurnId: null,
+      players,
       playedCards: [],
-      lastPlayedCard: null,
-      lastPlayedBy: null,
-      playerKoras: 100,
-      opponentKoras: 100,
-      currentBet: 10,
-      koraStreak: { player: "player", count: 0, rounds: [] },
-      godMode: false,
-      gameMode: "ai",
-      aiDifficulty: "medium",
-      isAIThinking: false,
+      currentBet: bet,
+      winnerId: null,
+      endReason: null,
       gameLog: [],
     };
   }
@@ -121,15 +103,13 @@ export class KoraGameEngine {
 
   private createDeck(): Card[] {
     const suits: Suit[] = ["hearts", "diamonds", "clubs", "spades"];
-    // Selon les règles : exclure As, 2, Q, K, J de toutes les familles
     const ranks: Rank[] = ["3", "4", "5", "6", "7", "8", "9", "10"];
     const deck: Card[] = [];
 
     suits.forEach((suit) => {
       ranks.forEach((rank) => {
-        // Exclure spécifiquement le 10 de pique
         if (suit === "spades" && rank === "10") {
-          return; // Skip cette carte
+          return;
         }
 
         deck.push({
@@ -161,7 +141,7 @@ export class KoraGameEngine {
   private getCardValue(rank: Rank): number {
     switch (rank) {
       case "10":
-        return 10; // 10 est la carte la plus forte dans ce jeu
+        return 10;
       case "9":
         return 9;
       case "8":
@@ -175,7 +155,7 @@ export class KoraGameEngine {
       case "4":
         return 4;
       case "3":
-        return 3; // 3 est la carte la plus faible (mais importante pour les Koras)
+        return 3;
       default:
         return parseInt(rank);
     }
@@ -185,125 +165,69 @@ export class KoraGameEngine {
     return cards.reduce((sum, card) => sum + this.getCardValue(card.rank), 0);
   }
 
-  private distributeCards(): { playerCards: Card[]; opponentCards: Card[] } {
+  private distributeCards(): { firstPlayer: Card[]; secondPlayer: Card[] } {
     const deck = this.createDeck();
-    const playerCards = deck.slice(0, 5);
-    const opponentCards = deck.slice(5, 10);
+    const firstPlayer = deck.slice(0, 5);
+    const secondPlayer = deck.slice(5, 10);
 
-    return { playerCards, opponentCards };
+    return { firstPlayer, secondPlayer };
+  }
+
+  private getStartingPlayer() {
+    const firstPlayer = this.state.players[0]!;
+    const secondPlayer = this.state.players[1]!;
+
+    return Math.random() < 0.5 ? firstPlayer.id : secondPlayer.id;
   }
 
   // ========== LOGIQUE DE JEU PRINCIPALE ==========
 
   public startNewGame(): void {
-    this.log("🎮 Nouvelle partie commencée !");
-
     // Distribution des cartes
-    const { playerCards, opponentCards } = this.distributeCards();
-
-    // Calcul des sommes pour victoire automatique
-    const playerSum = this.calculateHandSum(playerCards);
-    const opponentSum = this.calculateHandSum(opponentCards);
-
-    this.log(`Somme joueur: ${playerSum}, Somme adversaire: ${opponentSum}`);
-
-    // Seule victoire spéciale à la distribution : somme < 21 (gérée ci-dessous)
-
-    // Vérification victoire automatique (somme < 21)
-    if (playerSum < 21 && opponentSum >= 21) {
-      this.state = {
-        ...this.getInitialState(),
-        status: "victory",
-        playerCards,
-        opponentCards,
-      };
-      this.handleAutomaticVictory("player", "Somme < 21");
-      this.notifyListeners();
-      return;
-    }
-
-    if (opponentSum < 21 && playerSum >= 21) {
-      this.state = {
-        ...this.getInitialState(),
-        status: "defeat",
-        playerCards,
-        opponentCards,
-      };
-      this.handleAutomaticVictory("opponent", "Somme < 21");
-      this.notifyListeners();
-      return;
-    }
-
-    if (playerSum < 21 && opponentSum < 21) {
-      // Les deux ont < 21, celui avec la plus petite somme gagne
-      const winner = playerSum < opponentSum ? "player" : "opponent";
-      this.state = {
-        ...this.getInitialState(),
-        status: winner === "player" ? "victory" : "defeat",
-        playerCards,
-        opponentCards,
-      };
-      this.handleAutomaticVictory(
-        winner,
-        `Somme la plus faible: ${winner === "player" ? playerSum : opponentSum}`,
-      );
-      this.notifyListeners();
-      return;
-    }
-
-    // Partie normale - déterminer qui commence
-    const firstPlayer: Player = Math.random() < 0.5 ? "player" : "opponent";
+    const { firstPlayer, secondPlayer } = this.distributeCards();
+    const startingPlayerId = this.getStartingPlayer();
 
     this.state = {
       ...this.getInitialState(),
+      players: this.state.players.map((player) => ({
+        ...player,
+        hand: player.id === startingPlayerId ? firstPlayer : secondPlayer,
+      })),
       status: "playing",
       currentRound: 1,
-      playerWithHand: firstPlayer,
-      firstPlayer,
-      playerCards,
-      opponentCards,
+      hasHandId: startingPlayerId,
+      playerTurnId: startingPlayerId,
     };
-    this.log(
-      `🎲 ${firstPlayer === "player" ? "Vous commencez" : "L'adversaire commence"} !`,
-    );
 
     // Mettre à jour les cartes jouables
     this.updatePlayableCards();
     this.notifyListeners();
   }
 
-  public playCard(cardId: string, player: Player): boolean {
+  public playCard(cardId: string, player: PlayerEntity): boolean {
     if (this.state.status !== "playing") {
-      this.log("❌ Impossible de jouer : la partie n'est pas en cours");
       return false;
     }
 
     // Vérifier si c'est le tour du joueur
-    const isPlayerTurn = this.isPlayerTurn(player);
-    if (!isPlayerTurn && !this.state.godMode) {
-      this.log("❌ Ce n'est pas votre tour !");
+    if (!this.isPlayerTurn(player)) {
       return false;
     }
 
     // Trouver la carte
-    const playerCards =
-      player === "player" ? this.state.playerCards : this.state.opponentCards;
-    const cardIndex = playerCards.findIndex((c) => c.id === cardId);
+    const cardIndex = player.hand?.findIndex((c) => c.id === cardId);
 
     if (cardIndex === -1) {
-      this.log("❌ Carte non trouvée !");
       return false;
     }
 
-    const card = playerCards[cardIndex];
+    const card = player.hand![cardIndex!];
     if (!card) {
-      this.log("❌ Carte introuvable !");
       return false;
     }
 
     // Vérifier si la carte est jouable
-    if (!card.jouable && !this.state.godMode) {
-      this.log("❌ Cette carte n'est pas jouable !");
+    if (!card.jouable) {
       return false;
     }
 
@@ -312,7 +236,7 @@ export class KoraGameEngine {
       ...this.state.playedCards,
       {
         card,
-        player,
+        playerId: player.id,
         round: this.state.currentRound,
         timestamp: Date.now(),
       },
@@ -320,27 +244,17 @@ export class KoraGameEngine {
 
     // Retirer la carte de la main du joueur
     const newPlayerCards =
-      player === "player"
-        ? this.state.playerCards.filter((c) => c.id !== cardId)
-        : this.state.playerCards;
-
-    const newOpponentCards =
-      player === "opponent"
-        ? this.state.opponentCards.filter((c) => c.id !== cardId)
-        : this.state.opponentCards;
+      player.id === this.state.hasHandId
+        ? this.state.players.find((p) => p.id !== player.id)?.hand
+        : player.hand;
 
     this.state = {
       ...this.state,
-      playerCards: newPlayerCards,
-      opponentCards: newOpponentCards,
+      players: this.state.players.map((p) =>
+        p.id === player.id ? { ...p, hand: newPlayerCards } : p,
+      ),
       playedCards: newPlayedCards,
-      lastPlayedCard: card,
-      lastPlayedBy: player,
     };
-
-    this.log(
-      `🃏 ${player === "player" ? "Vous jouez" : "Adversaire joue"} : ${card.rank}${this.getSuitSymbol(card.suit)}`,
-    );
 
     // Vérifier si le tour est terminé (2 cartes jouées)
     const currentRoundCards = newPlayedCards.filter(
@@ -356,85 +270,110 @@ export class KoraGameEngine {
 
     this.updatePlayableCards();
     this.notifyListeners();
+
+    // Déclencher automatiquement l'IA si c'est son tour et qu'elle est de type AI
+    void this.triggerAIIfNeeded();
+
     return true;
   }
 
+  // Nouvelle méthode pour déclencher l'IA automatiquement
+  private async triggerAIIfNeeded(): Promise<void> {
+    if (
+      this.state.players.find((p) => p.type === "ai") &&
+      this.state.status === "playing"
+    ) {
+      const currentRoundCards = this.state.playedCards.filter(
+        (p) => p.round === this.state.currentRound,
+      );
+
+      const isAITurn = (() => {
+        if (currentRoundCards.length === 0) {
+          return this.state.hasHandId === this.state.players[1]!.id;
+        } else if (currentRoundCards.length === 1) {
+          const firstPlayer = currentRoundCards[0]!.playerId;
+          return firstPlayer !== this.state.players[1]!.id;
+        } else {
+          return false;
+        }
+      })();
+
+      if (
+        isAITurn &&
+        !this.state.players.find((p) => p.type === "ai")!.isThinking
+      ) {
+        setTimeout(() => {
+          void this.triggerAITurn(
+            this.state.players.find((p) => p.type === "ai")!,
+          );
+        }, 100);
+      }
+    }
+  }
+
   private resolveRound(
-    roundCards: { card: Card; player: Player; round: number }[],
+    roundCards: { card: Card; playerId: string; round: number }[],
   ): void {
     if (roundCards.length < 2) return;
     const [firstCard, secondCard] = roundCards;
     if (!firstCard || !secondCard) return;
 
     // Déterminer qui gagne le tour
-    let winner: Player;
+    let winnerId: string;
 
     if (firstCard.card.suit === secondCard.card.suit) {
       // Même famille : comparer les valeurs
       const firstValue = this.getCardValue(firstCard.card.rank);
       const secondValue = this.getCardValue(secondCard.card.rank);
 
-      winner = secondValue > firstValue ? secondCard.player : firstCard.player;
-      this.log(
-        `⚔️ ${secondValue > firstValue ? "Adversaire" : "Premier joueur"} gagne le tour ! (${secondValue} vs ${firstValue})`,
-      );
+      winnerId =
+        secondValue > firstValue ? secondCard.playerId : firstCard.playerId;
     } else {
       // Familles différentes : celui qui avait la main garde la main
-      winner = this.state.playerWithHand;
-      this.log(
-        `⚔️ Familles différentes : ${winner === "player" ? "Vous gardez" : "Adversaire garde"} la main !`,
-      );
+      winnerId = this.state.hasHandId!;
     }
 
     // Vérifier les exploits Kora (3 au tour 5)
     if (this.state.currentRound === 5) {
-      this.checkKoraExploits(roundCards, winner);
+      this.checkKoraExploits(roundCards, winnerId);
     }
 
     // Mettre à jour l'état
-    this.state.playerWithHand = winner;
+    this.state.hasHandId = winnerId;
 
     // Passer au tour suivant ou terminer la partie
     if (
       this.state.currentRound >= 5 ||
-      this.state.playerCards.length === 0 ||
-      this.state.opponentCards.length === 0
+      this.state.players.find((p) => p.id === winnerId)?.hand?.length === 0
     ) {
-      this.endGame(winner);
+      this.endGame(winnerId);
     } else {
       this.state.currentRound++;
-      this.log(
-        `🔄 Tour ${this.state.currentRound} - ${winner === "player" ? "Vous avez" : "Adversaire a"} la main`,
-      );
     }
   }
 
   private checkKoraExploits(
-    roundCards: { card: Card; player: Player; round: number }[],
-    winner: Player,
+    roundCards: { card: Card; playerId: string; round: number }[],
+    winnerId: string,
   ): void {
-    const winnerCard = roundCards.find((rc) => rc.player === winner)?.card;
+    const winnerCard = roundCards.find((rc) => rc.playerId === winnerId)?.card;
 
     if (winnerCard && winnerCard.rank === "3") {
       // Kora simple au tour 5
-      this.log("🏆 KORA ! Victoire avec un 3 au tour final !");
 
       // Vérifier les exploits multiples (33, 333)
       const playerPlayedCards = this.state.playedCards
-        .filter((pc) => pc.player === winner)
+        .filter((pc) => pc.playerId === winnerId)
         .map((pc) => pc.card.rank);
 
       const consecutiveThrees = this.countConsecutiveThrees(playerPlayedCards);
 
       if (consecutiveThrees >= 3) {
-        this.log("🎯 TRIPLE KORA (333) ! Mise quadruplée !");
-        this.applyKoraMultiplier(winner, 4);
+        this.applyKoraMultiplier(winnerId, 4);
       } else if (consecutiveThrees >= 2) {
-        this.log("🎯 DOUBLE KORA (33 Export) ! Mise triplée !");
-        this.applyKoraMultiplier(winner, 3);
+        this.applyKoraMultiplier(winnerId, 3);
       } else {
-        this.log("🎯 KORA Simple ! Mise doublée !");
-        this.applyKoraMultiplier(winner, 2);
+        this.applyKoraMultiplier(winnerId, 2);
       }
     }
   }
@@ -455,77 +394,60 @@ export class KoraGameEngine {
     return maxConsecutive;
   }
 
-  private applyKoraMultiplier(winner: Player, multiplier: number): void {
+  private applyKoraMultiplier(winnerId: string, multiplier: number): void {
     const betAmount = this.state.currentBet;
     const korasWon = betAmount * multiplier;
 
-    if (winner === "player") {
-      this.state.playerKoras += korasWon;
-      this.state.opponentKoras -= betAmount; // L'adversaire perd la mise de base
+    if (winnerId === this.state.hasHandId) {
+      this.state.players.find((p) => p.id === winnerId)!.koras += korasWon;
+      this.state.players.find((p) => p.id !== winnerId)!.koras -= betAmount; // L'adversaire perd la mise de base
     } else {
-      this.state.opponentKoras += korasWon;
-      this.state.playerKoras -= betAmount;
+      this.state.players.find((p) => p.id === winnerId)!.koras += korasWon;
+      this.state.players.find((p) => p.id !== winnerId)!.koras -= betAmount;
     }
-
-    this.log(
-      `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${korasWon} koras (x${multiplier}) !`,
-    );
   }
 
-  private endGame(winner: Player): void {
-    this.state.status = winner === "player" ? "victory" : "defeat";
-    this.log(
-      `🎉 Fin de partie ! ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} !`,
-    );
+  private endGame(winnerId: string): void {
+    this.state.status = "ended";
+    this.state.winnerId = winnerId;
 
     // Gérer les gains/pertes de koras pour une partie normale
     const betAmount = this.state.currentBet;
 
-    if (winner === "player") {
-      this.state.playerKoras += betAmount;
-      this.state.opponentKoras -= betAmount;
+    if (winnerId === this.state.hasHandId) {
+      this.state.players.find((p) => p.id === winnerId)!.koras += betAmount;
+      this.state.players.find((p) => p.id !== winnerId)!.koras -= betAmount;
     } else {
-      this.state.opponentKoras += betAmount;
-      this.state.playerKoras -= betAmount;
+      this.state.players.find((p) => p.id !== winnerId)!.koras += betAmount;
+      this.state.players.find((p) => p.id === winnerId)!.koras -= betAmount;
     }
-
-    this.log(
-      `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${betAmount} koras`,
-    );
   }
 
   // ========== GESTION DES CARTES JOUABLES ==========
 
   private updatePlayableCards(): void {
-    // Mettre à jour les cartes jouables pour le joueur
-    this.state.playerCards = this.state.playerCards.map((card) => ({
-      ...card,
-      jouable: this.canPlayCard(card.id, "player"),
-    }));
-
-    // Mettre à jour les cartes jouables pour l'adversaire
-    this.state.opponentCards = this.state.opponentCards.map((card) => ({
-      ...card,
-      jouable: this.canPlayCard(card.id, "opponent"),
-    }));
+    this.state.players.forEach((player) => {
+      player.hand = player.hand?.map((card) => ({
+        ...card,
+        jouable: this.canPlayCard(card.id, player),
+      }));
+    });
   }
 
-  public canPlayCard(cardId: string, player: Player): boolean {
+  public canPlayCard(cardId: string, player: PlayerEntity): boolean {
     if (this.state.status !== "playing") return false;
-    if (!this.isPlayerTurn(player) && !this.state.godMode) return false;
+    if (!this.isPlayerTurn(player)) return false;
 
-    const playerCards =
-      player === "player" ? this.state.playerCards : this.state.opponentCards;
-    const card = playerCards.find((c) => c.id === cardId);
+    const card = player.hand?.find((c) => c.id === cardId);
     if (!card) return false;
 
     // Si le joueur a la main, toutes ses cartes sont jouables
-    if (this.state.playerWithHand === player) {
+    if (this.state.hasHandId === player.id) {
       return true;
     }
 
     // Si pas de carte jouée ce tour, toutes les cartes sont jouables
-    if (!this.state.lastPlayedCard || !this.state.lastPlayedBy) {
+    if (!this.state.playedCards.length) {
       return true;
     }
 
@@ -543,7 +465,7 @@ export class KoraGameEngine {
 
     // Vérifier si le joueur a des cartes de la même famille
     const requiredSuit = opponentCard.suit;
-    const hasRequiredSuit = playerCards.some((c) => c.suit === requiredSuit);
+    const hasRequiredSuit = player.hand?.some((c) => c.suit === requiredSuit);
 
     if (hasRequiredSuit) {
       // Doit jouer la même famille
@@ -554,26 +476,24 @@ export class KoraGameEngine {
     }
   }
 
-  public getPlayableCards(player: Player): Card[] {
-    const playerCards =
-      player === "player" ? this.state.playerCards : this.state.opponentCards;
-    return playerCards.filter((card) => card.jouable);
+  public getPlayableCards(player: PlayerEntity): Card[] {
+    return player.hand?.filter((card) => card.jouable) ?? [];
   }
 
   // ========== UTILITAIRES ==========
 
-  private isPlayerTurn(player: Player): boolean {
+  private isPlayerTurn(player: PlayerEntity): boolean {
     const currentRoundCards = this.state.playedCards.filter(
       (p) => p.round === this.state.currentRound,
     );
 
     if (currentRoundCards.length === 0) {
       // Aucune carte jouée ce tour : c'est à celui qui a la main
-      return this.state.playerWithHand === player;
+      return this.state.hasHandId === player.id;
     } else if (currentRoundCards.length === 1) {
       // Une carte jouée : c'est à l'autre joueur
-      const firstPlayer = currentRoundCards[0]!.player;
-      return firstPlayer !== player;
+      const firstPlayer = currentRoundCards[0]!.playerId;
+      return firstPlayer !== player.id;
     } else {
       // Deux cartes jouées : tour terminé
       return false;
@@ -605,40 +525,6 @@ export class KoraGameEngine {
     const logEntry = { message, timestamp };
     this.state.gameLog.push(logEntry);
     console.log(`[${new Date(timestamp).toLocaleTimeString()}] ${message}`);
-  }
-
-  // ========== MODE GOD POUR DEBUG ==========
-
-  public toggleGodMode(): void {
-    this.state.godMode = !this.state.godMode;
-    this.log(`🔧 Mode God ${this.state.godMode ? "ACTIVÉ" : "DÉSACTIVÉ"}`);
-    this.notifyListeners();
-  }
-
-  public forcePlayerHand(player: Player): void {
-    if (!this.state.godMode) return;
-    this.state.playerWithHand = player;
-    this.updatePlayableCards();
-    this.log(
-      `🔧 [God Mode] ${player === "player" ? "Joueur" : "Adversaire"} a maintenant la main`,
-    );
-    this.notifyListeners();
-  }
-
-  public setPlayerCards(cards: Card[], player: Player): void {
-    if (!this.state.godMode) return;
-
-    if (player === "player") {
-      this.state.playerCards = cards;
-    } else {
-      this.state.opponentCards = cards;
-    }
-
-    this.updatePlayableCards();
-    this.log(
-      `🔧 [God Mode] Cartes de ${player === "player" ? "joueur" : "adversaire"} modifiées`,
-    );
-    this.notifyListeners();
   }
 
   // ========== VALIDATION DES ACTIONS ==========
@@ -678,27 +564,23 @@ export class KoraGameEngine {
       return { valid: false, error: "Joueur invalide" };
     }
 
-    const typedPlayer = player as Player;
+    const typedPlayer = this.state.players.find((p) => p.id === player);
 
     if (this.state.status !== "playing") {
       return { valid: false, error: "La partie n'est pas en cours" };
     }
 
-    if (!this.isPlayerTurn(typedPlayer) && !this.state.godMode) {
+    if (!this.isPlayerTurn(typedPlayer!)) {
       return { valid: false, error: "Ce n'est pas le tour de ce joueur" };
     }
 
-    const playerCards =
-      typedPlayer === "player"
-        ? this.state.playerCards
-        : this.state.opponentCards;
-    const card = playerCards.find((c) => c.id === cardId);
+    const card = typedPlayer?.hand?.find((c) => c.id === cardId);
 
     if (!card) {
       return { valid: false, error: "Carte non trouvée" };
     }
 
-    if (!this.canPlayCard(cardId, typedPlayer)) {
+    if (!this.canPlayCard(cardId, typedPlayer!)) {
       return { valid: false, error: "Cette carte n'est pas jouable" };
     }
 
@@ -736,52 +618,39 @@ export class KoraGameEngine {
 ═══════════════════════════
 Status: ${state.status}
 Tour: ${state.currentRound}/5
-Main: ${state.playerWithHand === "player" ? "Joueur" : "Adversaire"}
-Cartes Joueur: ${state.playerCards.length}
-Cartes Adversaire: ${state.opponentCards.length}
-Koras Joueur: ${state.playerKoras}
-Koras Adversaire: ${state.opponentKoras}
-Mode God: ${state.godMode ? "✅" : "❌"}
+Main: ${state.hasHandId === state.players[0]!.id ? "Joueur" : "Adversaire"}
+Cartes Joueur: ${state.players[0]!.hand?.length}
+Cartes Adversaire: ${state.players[1]!.hand?.length}
+Koras Joueur: ${state.players[0]!.koras}
+Koras Adversaire: ${state.players[1]!.koras}
 ═══════════════════════════
     `.trim();
   }
 
   // ========== CAS SPÉCIAUX ET VICTOIRES AUTOMATIQUES ==========
 
-  private handleAutomaticVictory(winner: Player, reason: string): void {
+  private handleAutomaticVictory(winnerId: string, reason: string): void {
     // Victoire automatique donne la mise de base
     const betAmount = this.state.currentBet;
 
-    if (winner === "player") {
-      this.state.playerKoras += betAmount;
-      this.state.opponentKoras -= betAmount;
+    if (winnerId === this.state.hasHandId) {
+      this.state.players.find((p) => p.id === winnerId)!.koras += betAmount;
+      this.state.players.find((p) => p.id !== winnerId)!.koras -= betAmount;
       this.log(`🏆 Victoire automatique ! ${reason}`);
     } else {
-      this.state.opponentKoras += betAmount;
-      this.state.playerKoras -= betAmount;
+      this.state.players.find((p) => p.id !== winnerId)!.koras += betAmount;
+      this.state.players.find((p) => p.id === winnerId)!.koras -= betAmount;
       this.log(`💀 Défaite automatique ! ${reason}`);
     }
-
-    this.log(
-      `💰 ${winner === "player" ? "Vous gagnez" : "Adversaire gagne"} ${betAmount} koras`,
-    );
-  }
-
-  // ========== GESTION DE L'IA ==========
-
-  public setGameMode(mode: GameMode): void {
-    this.state.gameMode = mode;
-    this.notifyListeners();
   }
 
   public setAIDifficulty(difficulty: AIDifficulty): void {
-    this.state.aiDifficulty = difficulty;
-    this.aiPlayer.setDifficulty(difficulty);
+    this.state.players.find((p) => p.type === "ai")!.aiDifficulty = difficulty;
     this.notifyListeners();
   }
 
-  public async triggerAITurn(): Promise<void> {
-    if (this.state.gameMode !== "ai" || this.state.status !== "playing") {
+  public async triggerAITurn(aiPlayer: PlayerEntity): Promise<void> {
+    if (this.state.status !== "playing") {
       return;
     }
 
@@ -792,45 +661,75 @@ Mode God: ${state.godMode ? "✅" : "❌"}
 
     const isAITurn = (() => {
       if (currentRoundCards.length === 0) {
-        return this.state.playerWithHand === "opponent";
+        return this.state.hasHandId === aiPlayer.id;
       } else if (currentRoundCards.length === 1) {
-        const firstPlayer = currentRoundCards[0]!.player;
-        return firstPlayer !== "opponent";
+        const firstPlayer = currentRoundCards[0]!.playerId;
+        return firstPlayer !== aiPlayer.id;
       } else {
         return false; // Deux cartes jouées, tour terminé
       }
     })();
 
-    if (!isAITurn || this.state.isAIThinking) {
+    if (
+      !isAITurn ||
+      this.state.players.find((p) => p.type === "ai")!.isThinking
+    ) {
       return;
     }
 
     // Marquer l'IA comme en réflexion
-    this.state.isAIThinking = true;
+    this.state.players.find((p) => p.type === "ai")!.isThinking = true;
     this.notifyListeners();
 
     // Délai de réflexion basé sur la difficulté
     const thinkingTime =
-      this.state.aiDifficulty === "easy"
+      this.state.players.find((p) => p.type === "ai")!.aiDifficulty === "easy"
         ? 500
-        : this.state.aiDifficulty === "medium"
+        : this.state.players.find((p) => p.type === "ai")!.aiDifficulty ===
+            "medium"
           ? 1000
           : 1500;
 
     await new Promise((resolve) => setTimeout(resolve, thinkingTime));
 
-    // L'IA choisit sa carte
-    const chosenCard = this.aiPlayer.chooseCard(this.state);
+    // L'IA choisit sa carte en utilisant la logique du AIPlayer
+    let chosenCard: string | null = null;
+
+    // Importer et utiliser AIPlayer
+    try {
+      const { AIPlayer } = await import("./ai-player");
+      const aiInstance = new AIPlayer(aiPlayer.aiDifficulty || "medium");
+      const selectedCard = aiInstance.chooseCard(this.getState());
+      chosenCard = selectedCard?.id || null;
+    } catch (error) {
+      console.warn("Erreur lors du chargement de l'IA:", error);
+    }
+
+    // Fallback: choisir une carte jouable aléatoire
+    if (!chosenCard && aiPlayer.hand) {
+      const playableCards = aiPlayer.hand.filter((card) => card.jouable);
+      if (playableCards.length > 0) {
+        const randomIndex = Math.floor(Math.random() * playableCards.length);
+        chosenCard = playableCards[randomIndex]!.id;
+      }
+    }
 
     if (chosenCard) {
-      this.playCard(chosenCard.id, "opponent");
+      this.playCard(chosenCard, aiPlayer);
     }
 
     // Marquer l'IA comme ayant fini de réfléchir
-    this.state.isAIThinking = false;
+    this.state.players.find((p) => p.type === "ai")!.isThinking = false;
     this.notifyListeners();
   }
 }
 
 // Instance singleton du game engine
-export const gameEngine = new KoraGameEngine();
+export const startKoraGameEngine = (
+  bet: number,
+  maxRounds: number,
+  players: PlayerEntity[],
+) => {
+  const gameEngine = new KoraGameEngine(bet, maxRounds, players);
+  return gameEngine;
+};
