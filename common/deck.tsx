@@ -1356,11 +1356,6 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
                     height={108}
                     className="shadow-lg"
                   />
-                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 transform">
-                    <div className="rounded bg-black/50 px-2 py-1 text-center text-xs text-white">
-                      IA
-                    </div>
-                  </div>
                 </div>
               ))}
             </div>

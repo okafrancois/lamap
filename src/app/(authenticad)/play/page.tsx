@@ -41,6 +41,7 @@ export default function PlayPage() {
           gameState={gameState}
           currentUserId={userData.user.username}
           onCardClick={(cardIndex) => {
+            console.log("cardIndex", cardIndex);
             const currentPlayer = gameState?.players.find(
               (p) => p.username === userData.user.username,
             );
