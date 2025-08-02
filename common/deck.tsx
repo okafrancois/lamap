@@ -1309,11 +1309,7 @@ interface PlayedCardsProps {
 
 export function PlayedCards({ cards, className }: PlayedCardsProps) {
   const userData = useUserDataContext();
-  // Afficher toutes les cartes jouées
-  const currentRound =
-    cards.length > 0 ? Math.max(...cards.map((c) => c.round)) : 0;
 
-  // Séparer toutes les cartes par joueur (pas seulement le tour actuel)
   const opponentCards = cards.filter(
     (card) => card.playerUsername !== userData?.user.username,
   );
@@ -1371,22 +1367,14 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
                     height={108}
                     className="shadow-lg"
                   />
-                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 transform">
-                    <div className="rounded bg-black/50 px-2 py-1 text-center text-xs text-white">
-                      Vous
-                    </div>
+
+                  <div className="absolute -top-4 right-1/2 translate-x-1/2 rounded bg-amber-500/70 px-1 text-xs text-amber-100">
+                    {index + 1}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </div>
-      )}
-
-      {/* Afficher le numéro du tour actuel */}
-      {currentRound > 0 && (
-        <div className="absolute -top-4 -right-0 rounded bg-amber-500/70 px-1 text-xs text-amber-100">
-          {currentRound}
         </div>
       )}
     </div>

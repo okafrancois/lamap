@@ -22,7 +22,6 @@ import {
 } from "@tabler/icons-react";
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
-import { useEffect } from "react";
 
 export default function PlayPage() {
   const controller = useGameController();
@@ -32,10 +31,6 @@ export default function PlayPage() {
   if (!userData) {
     return <div>Vous devez être connecté pour jouer</div>;
   }
-
-  useEffect(() => {
-    console.log("gameState", gameState);
-  }, [gameState]);
 
   return (
     <PageContainer fluid={true} className="relative flex h-full">
