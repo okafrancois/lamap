@@ -45,7 +45,7 @@ export function PlayerStatus({
           {isCurrentTurn && (
             <span className="ml-1 animate-pulse text-xs sm:ml-2">
               <span className="hidden sm:inline">
-                {isOpponent ? "À votre tour" : "À son tour"}
+                {isOpponent ? "À son tour " : "À votre tour"}
               </span>
               <span className="sm:hidden">🎯</span>
             </span>

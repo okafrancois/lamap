@@ -485,6 +485,7 @@ export class KoraGameEngine {
   // ========== GESTION DES CARTES JOUABLES ==========
 
   private updatePlayableCards(): void {
+    this.updatePlayerTurn();
     this.state.players.forEach((player) => {
       player.hand = player.hand?.map((card) => ({
         ...card,
@@ -559,8 +560,25 @@ export class KoraGameEngine {
     }
   }
 
-  private switchTurn(): void {
-    // Cette méthode n'est plus utilisée - la logique de tour est dans updatePlayerTurn()
+  private updatePlayerTurn(): void {
+    const currentRoundCards = this.state.playedCards.filter(
+      (p) => p.round === this.state.currentRound,
+    );
+
+    if (currentRoundCards.length === 0) {
+      // Aucune carte jouée ce tour : c'est à celui qui a la main
+      this.state.playerTurnUsername = this.state.hasHandUsername;
+    } else if (currentRoundCards.length === 1) {
+      // Une carte jouée : c'est à l'autre joueur
+      const firstPlayerUsername = currentRoundCards[0]!.playerUsername;
+      const otherPlayer = this.state.players.find(
+        (p) => p.username !== firstPlayerUsername,
+      );
+      this.state.playerTurnUsername = otherPlayer?.username ?? null;
+    } else {
+      // Deux cartes jouées : tour terminé, préparer le prochain
+      this.state.playerTurnUsername = null;
+    }
   }
 
   private getSuitSymbol(suit: Suit): string {
