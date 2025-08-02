@@ -39,6 +39,8 @@ export function PlayerArea({
         shortName={isOpponent ? "Adversaire" : "Vous"}
         hasHand={gameState.hasHandUsername === player.username}
         gameStarted={gameState.status === "playing"}
+        gameEnded={gameState.status === "ended"}
+        isWinner={gameState.winnerUsername === player.username}
       />
 
       <PlayerDeck

@@ -7,6 +7,8 @@ interface PlayerStatusProps {
   gameStarted?: boolean;
   className?: string;
   isOpponent?: boolean;
+  gameEnded?: boolean;
+  isWinner?: boolean;
 }
 
 export function PlayerStatus({
@@ -18,6 +20,8 @@ export function PlayerStatus({
   gameStarted = false,
   className = "",
   isOpponent = false,
+  gameEnded = false,
+  isWinner = false,
 }: PlayerStatusProps) {
   const turnColor = isCurrentTurn
     ? "border-green-500/30 bg-gradient-to-r from-green-500/20 to-green-600/20 shadow-lg"
@@ -57,6 +61,20 @@ export function PlayerStatus({
           <div className="ml-1 animate-pulse rounded-full bg-yellow-500 px-1 py-0.5 text-xs font-bold text-yellow-900 shadow-lg shadow-yellow-500/50 sm:ml-2 sm:px-2 sm:py-1">
             <span className="hidden sm:inline">👑 LA MAIN</span>
             <span className="sm:hidden">👑</span>
+          </div>
+        )}
+
+        {gameEnded && isWinner && !isOpponent && (
+          <div className="ml-1 animate-pulse rounded-full bg-green-500 px-1 py-0.5 text-xs font-bold text-green-900 shadow-lg shadow-green-500/50 sm:ml-2 sm:px-2 sm:py-1">
+            <span className="hidden sm:inline">🏆 gagné</span>
+            <span className="sm:hidden">🏆</span>
+          </div>
+        )}
+
+        {gameEnded && !isWinner && !isOpponent && (
+          <div className="ml-1 animate-pulse rounded-full bg-red-500 px-1 py-0.5 text-xs font-bold text-red-900 shadow-lg shadow-red-500/50 sm:ml-2 sm:px-2 sm:py-1">
+            <span className="hidden sm:inline">🏆 perdu</span>
+            <span className="sm:hidden">🏆</span>
           </div>
         )}
       </div>
