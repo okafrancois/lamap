@@ -1369,7 +1369,7 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
                   />
 
                   <div className="absolute -top-4 right-1/2 translate-x-1/2 rounded bg-amber-500/70 px-1 text-xs text-amber-100">
-                    {index + 1}
+                    {playedCard.round}
                   </div>
                 </div>
               ))}
