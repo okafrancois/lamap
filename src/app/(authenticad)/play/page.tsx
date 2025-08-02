@@ -367,7 +367,7 @@ export default function PlayPage() {
         }
         victoryType={
           controller.engine.gameState
-            ? controller.engine.getVictoryType()
+            ? controller.engine.getVictoryType(userData.user.username)
             : {
                 type: "normal",
                 title: "Partie terminée",
@@ -389,7 +389,6 @@ export default function PlayPage() {
         }}
         onClose={() => {
           ui.actions.hideVictory();
-          controller.selectGameMode(null);
         }}
         onEnterReview={() => {
           ui.actions.hideVictory();

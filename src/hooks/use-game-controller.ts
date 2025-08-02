@@ -192,10 +192,10 @@ export function useGameController() {
   // Effet pour montrer le modal de victoire
   useEffect(() => {
     const state = koraEngine.gameState;
-    if (state?.status === "ended") {
+    if (state?.status === "ended" && !ui.showVictoryModal) {
       ui.actions.showVictory();
     }
-  }, [koraEngine.gameState, ui.actions]);
+  }, [koraEngine.gameState, ui.actions, ui.showVictoryModal]);
 
   return {
     // État du jeu direct

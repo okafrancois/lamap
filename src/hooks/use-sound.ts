@@ -2,6 +2,8 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 
+export const SOUND_VOLUME = 0.5;
+
 export type SoundType =
   // Navigation
   | "click"
@@ -13,6 +15,7 @@ export type SoundType =
   | "card_flip"
   | "card_play"
   | "card_select"
+  | "card_hover"
   | "game_start"
   | "game_end"
   | "turn_change"
@@ -51,6 +54,7 @@ const SOUND_FILES: Record<SoundType, string> = {
   card_flip: "/sounds/game/card-flip.mp3",
   card_play: "/sounds/game/card-play.mp3",
   card_select: "/sounds/game/card-select.mp3",
+  card_hover: "/sounds/navigation/hover.mp3",
   game_start: "/sounds/game/game-start.mp3",
   game_end: "/sounds/game/game-end.mp3",
   turn_change: "/sounds/game/turn-change.mp3",
@@ -67,7 +71,10 @@ const SOUND_FILES: Record<SoundType, string> = {
 };
 
 export function useSound(options: UseSoundOptions = {}) {
-  const [settings, setSettings] = useState({ volume: 0.7, enabled: true });
+  const [settings, setSettings] = useState({
+    volume: SOUND_VOLUME,
+    enabled: true,
+  });
 
   // Charger les paramètres depuis localStorage
   useEffect(() => {
@@ -75,7 +82,7 @@ export function useSound(options: UseSoundOptions = {}) {
     const savedEnabled = localStorage.getItem("kora-sound-enabled");
 
     setSettings({
-      volume: savedVolume ? parseInt(savedVolume) / 100 : 0.7,
+      volume: savedVolume ? parseInt(savedVolume) / 100 : SOUND_VOLUME,
       enabled: savedEnabled ? savedEnabled === "true" : true,
     });
   }, []);
@@ -197,9 +204,10 @@ export function useSound(options: UseSoundOptions = {}) {
 
   // Nettoyage au démontage
   useEffect(() => {
+    const cache = audioCache.current;
     return () => {
       stopAllSounds();
-      audioCache.current.clear();
+      cache.clear();
     };
   }, [stopAllSounds]);
 

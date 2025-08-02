@@ -11,6 +11,7 @@ import {
 import { AnimatedCard } from "./animated-card";
 import type { PlayedCard } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
+import { useSound } from "@/hooks/use-sound";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -1225,6 +1226,7 @@ export function PlayerDeck({
   selectedCard,
   onCardHover,
 }: PlayerDeckProps) {
+  const { playSound } = useSound();
   const cardWidth = isOpponent ? 80 : 110;
   const cardHeight = isOpponent ? 112 : 154;
   const cardSpacing = cardWidth + 8;
@@ -1268,6 +1270,7 @@ export function PlayerDeck({
               onMouseLeave={() => onCardHover?.(null)}
               onClick={() => {
                 if (isCardPlayable && onCardClick) {
+                  void playSound("card_select");
                   onCardClick(index);
                 }
               }}
@@ -1282,15 +1285,20 @@ export function PlayerDeck({
                 hidden={hidden}
                 onClick={() => {
                   if (card.jouable && onCardClick) {
+                    void playSound("card_select");
                     onCardClick(index);
                   }
                 }}
                 onPlayClick={() => {
                   if (onPlayCard) {
+                    void playSound("card_play");
                     onPlayCard();
                   }
                 }}
-                onHover={(hovered) => onCardHover?.(hovered ? index : null)}
+                onHover={(hovered) => {
+                  void playSound("card_hover", { volume: 0.2 });
+                  onCardHover?.(hovered ? index : null);
+                }}
                 className="h-full w-full shadow-md"
               />
             </div>

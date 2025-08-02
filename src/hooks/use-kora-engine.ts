@@ -145,10 +145,10 @@ export function useKoraEngine() {
   }, [gameState]);
 
   // Analyses de victoire
-  const getVictoryType = useCallback(() => {
+  const getVictoryType = useCallback((playerUsername?: string) => {
     try {
       const engine = getKoraGameEngine();
-      return engine.getVictoryType();
+      return engine.getVictoryType(playerUsername);
     } catch (error) {
       console.error("Cannot get victory type: engine not initialized", error);
       return {

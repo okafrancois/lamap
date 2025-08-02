@@ -713,7 +713,7 @@ Koras Adversaire: ${state.players[1]!.koras}
 
   // ========== ANALYSE DES VICTOIRES SPÉCIALES ==========
 
-  public getVictoryType(): {
+  public getVictoryType(playerUsername?: string): {
     type:
       | "normal"
       | "auto_sum"
@@ -727,6 +727,7 @@ Koras Adversaire: ${state.players[1]!.koras}
     special: boolean;
   } {
     const recentLogs = this.state.gameLog.slice(-10);
+    const isPlayerWinner = this.state.winnerUsername === playerUsername;
 
     for (const log of recentLogs) {
       const message = log.message;
@@ -735,7 +736,9 @@ Koras Adversaire: ${state.players[1]!.koras}
         return {
           type: "triple_kora",
           title: "TRIPLE KORA ! 🎯",
-          description: "Victoire avec 3 cartes 3 consécutives",
+          description: isPlayerWinner
+            ? "Victoire avec 3 cartes 3 consécutives"
+            : "Défaite - L'adversaire a joué 3 cartes 3 consécutives",
           multiplier: "x4",
           special: true,
         };
@@ -744,7 +747,9 @@ Koras Adversaire: ${state.players[1]!.koras}
         return {
           type: "double_kora",
           title: "DOUBLE KORA ! 🔥",
-          description: "Victoire avec 2 cartes 3 consécutives",
+          description: isPlayerWinner
+            ? "Victoire avec 2 cartes 3 consécutives"
+            : "Défaite - L'adversaire a joué 2 cartes 3 consécutives",
           multiplier: "x3",
           special: true,
         };
@@ -753,7 +758,9 @@ Koras Adversaire: ${state.players[1]!.koras}
         return {
           type: "simple_kora",
           title: "KORA ! 🏆",
-          description: "Victoire avec un 3 au tour final",
+          description: isPlayerWinner
+            ? "Victoire avec un 3 au tour final"
+            : "Défaite - L'adversaire a joué un 3 au tour final",
           multiplier: "x2",
           special: true,
         };
@@ -764,7 +771,9 @@ Koras Adversaire: ${state.players[1]!.koras}
           return {
             type: "auto_sum",
             title: "Victoire Automatique ! ⚡",
-            description: "Somme des cartes inférieure à 21",
+            description: isPlayerWinner
+              ? "Somme des cartes inférieure à 21"
+              : "Défaite - L'adversaire a une somme < 21",
             multiplier: "x1",
             special: true,
           };
@@ -773,7 +782,9 @@ Koras Adversaire: ${state.players[1]!.koras}
           return {
             type: "auto_lowest",
             title: "Victoire Automatique ! 📊",
-            description: "Plus petite somme (les deux < 21)",
+            description: isPlayerWinner
+              ? "Plus petite somme (les deux < 21)"
+              : "Défaite - L'adversaire a la plus petite somme",
             multiplier: "x1",
             special: true,
           };
@@ -783,8 +794,8 @@ Koras Adversaire: ${state.players[1]!.koras}
 
     return {
       type: "normal",
-      title: this.state.winnerUsername ? "Victoire ! 🎉" : "Défaite ! 💀",
-      description: this.state.winnerUsername
+      title: isPlayerWinner ? "Victoire ! 🎉" : "Défaite ! 💀",
+      description: isPlayerWinner
         ? "Vous avez la main au tour final"
         : "L'adversaire a la main au tour final",
       multiplier: "x1",
@@ -794,7 +805,7 @@ Koras Adversaire: ${state.players[1]!.koras}
 
   public getKorasWonThisGame(): number {
     const betAmount = this.state.currentBet;
-    const victoryType = this.getVictoryType();
+    const victoryType = this.getVictoryType(); // Pas besoin de playerUsername ici, juste pour les types
 
     if (!this.state.winnerUsername) return 0;
 
