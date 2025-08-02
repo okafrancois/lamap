@@ -543,21 +543,8 @@ export class KoraGameEngine {
   // ========== UTILITAIRES ==========
 
   private isPlayerTurn(player: PlayerEntity): boolean {
-    const currentRoundCards = this.state.playedCards.filter(
-      (p) => p.round === this.state.currentRound,
-    );
-
-    if (currentRoundCards.length === 0) {
-      // Aucune carte jouée ce tour : c'est à celui qui a la main
-      return this.state.hasHandUsername === player.username;
-    } else if (currentRoundCards.length === 1) {
-      // Une carte jouée : c'est à l'autre joueur
-      const firstPlayer = currentRoundCards[0]!.playerUsername;
-      return firstPlayer !== player.username;
-    } else {
-      // Deux cartes jouées : tour terminé
-      return false;
-    }
+    // Utiliser directement playerTurnUsername qui est mis à jour par updatePlayerTurn()
+    return this.state.playerTurnUsername === player.username;
   }
 
   private updatePlayerTurn(): void {

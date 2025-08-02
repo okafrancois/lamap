@@ -65,7 +65,7 @@ export class AIPlayer {
     if (!humanPlayer) return;
 
     const playerPlayedCards = gameState.playedCards
-      .filter((pc) => pc.playerId === humanPlayer.id)
+      .filter((pc) => pc.playerUsername === humanPlayer.username)
       .map((pc) => pc.card);
 
     this.memory.playedCards = playerPlayedCards;
@@ -122,7 +122,7 @@ export class AIPlayer {
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
     if (!aiPlayer) return this.chooseBestCard(gameState, playableCards);
 
-    const hasHand = gameState.hasHandId === aiPlayer.id;
+    const hasHand = gameState.hasHandUsername === aiPlayer.username;
 
     if (hasHand) {
       return this.chooseWhenHavingHand(gameState, playableCards);
@@ -162,11 +162,10 @@ export class AIPlayer {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (!aiPlayer) return null;
 
-      const hasHand = gameState.hasHandId === aiPlayer.id;
+      const hasHand = gameState.hasHandUsername === aiPlayer.username;
 
       if (hasHand) {
         const safestThree = this.chooseSafestThree(gameState, threes);
-        console.log("🎯 AI: Tentative de KORA au tour final !");
         return safestThree;
       } else {
         const currentRoundCards = gameState.playedCards.filter(
@@ -267,9 +266,6 @@ export class AIPlayer {
       }
     });
 
-    console.log(
-      `🔮 AI prédit: ${bestCandidate.rank}${this.getSuitSymbol(bestCandidate.suit)} (confiance: ${Math.round(bestScore * 100)}%)`,
-    );
     return bestCandidate;
   }
 
@@ -279,7 +275,11 @@ export class AIPlayer {
     predictedCard: Card | null,
   ): Card | null {
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
-    if (!aiPlayer || !predictedCard || gameState.hasHandId === aiPlayer.id) {
+    if (
+      !aiPlayer ||
+      !predictedCard ||
+      gameState.hasHandUsername === aiPlayer.username
+    ) {
       return null;
     }
 
@@ -314,7 +314,8 @@ export class AIPlayer {
     playableCards: Card[],
   ): Card | null {
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
-    if (!aiPlayer || gameState.hasHandId !== aiPlayer.id) return null;
+    if (!aiPlayer || gameState.hasHandUsername !== aiPlayer.username)
+      return null;
 
     const playerEstimatedCards = this.estimatePlayerCards(gameState);
     const weakSuits = this.findPlayerWeakSuits(playerEstimatedCards);
@@ -377,7 +378,7 @@ export class AIPlayer {
     // Estimer le nombre de cartes restantes du joueur humain
     const humanPlayer = gameState.players.find((p) => p.type === "user");
     const humanPlayedCount = gameState.playedCards.filter(
-      (pc) => pc.playerId === humanPlayer?.id,
+      (pc) => pc.playerUsername === humanPlayer?.username,
     ).length;
     const estimatedPlayerCardCount = 5 - humanPlayedCount;
 
