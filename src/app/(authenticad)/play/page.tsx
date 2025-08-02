@@ -42,7 +42,7 @@ export default function PlayPage() {
           currentUserId={userData.user.username}
           onCardClick={(cardIndex) => {
             const currentPlayer = gameState?.players.find(
-              (p) => p.id === userData.user.username,
+              (p) => p.username === userData.user.username,
             );
             const cardId = currentPlayer?.hand?.[cardIndex]?.id;
             if (cardId) {
@@ -70,7 +70,7 @@ export default function PlayPage() {
                   {gameState?.currentRound}
                 </div>
                 <span className="text-muted-foreground">
-                  {gameState?.playerTurnId === userData.user.username
+                  {gameState?.playerTurnUsername === userData.user.username
                     ? "Votre tour"
                     : gameState?.players.find((p) => p.type === "ai")
                           ?.isThinking
@@ -82,10 +82,10 @@ export default function PlayPage() {
                 <span className="text-xs">
                   {(() => {
                     const currentPlayer = gameState?.players.find(
-                      (p) => p.id === userData.user.username,
+                      (p) => p.username === userData.user.username,
                     );
                     const opponentPlayer = gameState?.players.find(
-                      (p) => p.id !== userData.user.username,
+                      (p) => p.username !== userData.user.username,
                     );
                     return `${currentPlayer?.koras ?? 0} vs ${opponentPlayer?.koras ?? 0}`;
                   })()}
@@ -353,13 +353,13 @@ export default function PlayPage() {
       {/* Modal de victoire/défaite */}
       <VictoryModal
         isVisible={ui.showVictoryModal}
-        isVictory={gameState?.winnerId === userData.user.username}
+        isVictory={gameState?.winnerUsername === userData.user.username}
         playerKoras={
-          gameState?.players.find((p) => p.id === userData.user.username)
+          gameState?.players.find((p) => p.username === userData.user.username)
             ?.koras ?? 0
         }
         opponentKoras={
-          gameState?.players.find((p) => p.id !== userData.user.username)
+          gameState?.players.find((p) => p.username !== userData.user.username)
             ?.koras ?? 0
         }
         betAmount={gameState?.currentBet ?? 0}

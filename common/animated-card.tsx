@@ -9,13 +9,11 @@ interface AnimatedCardProps {
   width?: number;
   height?: number;
   isOpponent?: boolean;
-  isPlayable?: boolean;
   isHovered?: boolean;
   isSelected?: boolean;
   isFlipping?: boolean;
   isPlaying?: boolean;
   hidden?: boolean;
-  revealOpponent?: boolean;
   onClick?: () => void;
   onPlayClick?: () => void;
   onHover?: (hovered: boolean) => void;
@@ -27,13 +25,11 @@ export function AnimatedCard({
   width = 100,
   height = 140,
   isOpponent = false,
-  isPlayable = true,
   isHovered = false,
   isSelected = false,
   isFlipping = false,
   isPlaying = false,
   hidden = false,
-  revealOpponent = false,
   onClick,
   onPlayClick,
   onHover,
@@ -44,8 +40,8 @@ export function AnimatedCard({
       className={cn("relative transition-all duration-300", {
         "-translate-y-2 scale-105": isSelected,
         "-translate-y-4 scale-110 opacity-0": isPlaying,
-        "cursor-pointer hover:scale-105": isPlayable && onClick,
-        "cursor-not-allowed": !isPlayable,
+        "cursor-pointer hover:scale-105": card.jouable && onClick,
+        "cursor-not-allowed": !card.jouable,
       })}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
@@ -60,12 +56,12 @@ export function AnimatedCard({
         <PlayButton
           isVisible={isSelected && !!onPlayClick}
           onClick={() => onPlayClick?.()}
-          isPlayable={isPlayable}
+          isPlayable={card.jouable}
         />
       )}
 
       {/* Carte */}
-      {hidden || (isOpponent && !revealOpponent) ? (
+      {hidden || isOpponent ? (
         <CardBack width={width} height={height} className={className} />
       ) : (
         <div>
@@ -75,7 +71,7 @@ export function AnimatedCard({
             width={width}
             height={height}
             className={className}
-            isPlayable={isPlayable}
+            isPlayable={card.jouable}
             isHovered={isHovered}
             isFlipping={isFlipping}
             isPlaying={isPlaying}

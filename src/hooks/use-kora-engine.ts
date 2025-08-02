@@ -58,7 +58,7 @@ export function useKoraEngine() {
     (cardId: string, playerId: string) => {
       try {
         const engine = getKoraGameEngine();
-        const player = gameState?.players.find((p) => p.id === playerId);
+        const player = gameState?.players.find((p) => p.username === playerId);
         if (player) {
           return engine.playCard(cardId, player);
         }
@@ -76,7 +76,7 @@ export function useKoraEngine() {
     (playerId: string): Card[] => {
       try {
         const engine = getKoraGameEngine();
-        const player = gameState?.players.find((p) => p.id === playerId);
+        const player = gameState?.players.find((p) => p.username === playerId);
         if (player) {
           return engine.getPlayableCards(player);
         }
@@ -96,7 +96,7 @@ export function useKoraEngine() {
     (cardId: string, playerId: string): boolean => {
       try {
         const engine = getKoraGameEngine();
-        const player = gameState?.players.find((p) => p.id === playerId);
+        const player = gameState?.players.find((p) => p.username === playerId);
         if (player) {
           return engine.canPlayCard(cardId, player);
         }

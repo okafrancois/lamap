@@ -8,15 +8,10 @@ import type { PlayedCard } from "@/engine/kora-game-engine";
 
 interface GameTableProps {
   playedCards: PlayedCard[];
-  currentUserId?: string;
   className?: string;
 }
 
-export function GameTable({
-  playedCards,
-  currentUserId,
-  className = "",
-}: GameTableProps) {
+export function GameTable({ playedCards, className = "" }: GameTableProps) {
   return (
     <div
       className={`relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 sm:px-4 ${className}`}
@@ -53,7 +48,7 @@ export function GameTable({
 
           {/* Zone des cartes au centre */}
           <div className="flex h-full items-center justify-center">
-            <PlayedCards cards={playedCards} currentUserId={currentUserId} />
+            <PlayedCards cards={playedCards} />
           </div>
 
           {/* Texture de feutre */}

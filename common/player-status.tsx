@@ -6,6 +6,7 @@ interface PlayerStatusProps {
   hasHand?: boolean;
   gameStarted?: boolean;
   className?: string;
+  isOpponent?: boolean;
 }
 
 export function PlayerStatus({
@@ -16,6 +17,7 @@ export function PlayerStatus({
   hasHand = false,
   gameStarted = false,
   className = "",
+  isOpponent = false,
 }: PlayerStatusProps) {
   const turnColor = isCurrentTurn
     ? "border-green-500/30 bg-gradient-to-r from-green-500/20 to-green-600/20 shadow-lg"
@@ -42,7 +44,9 @@ export function PlayerStatus({
           {cardCount})
           {isCurrentTurn && (
             <span className="ml-1 animate-pulse text-xs sm:ml-2">
-              <span className="hidden sm:inline">🎯 À votre tour</span>
+              <span className="hidden sm:inline">
+                {isOpponent ? "À votre tour" : "À son tour"}
+              </span>
               <span className="sm:hidden">🎯</span>
             </span>
           )}

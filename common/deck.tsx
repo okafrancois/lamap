@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react";
 import { AnimatedCard } from "./animated-card";
 import type { PlayedCard } from "@/engine/kora-game-engine";
+import { useUserDataContext } from "@/components/layout/user-provider";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -1204,7 +1205,6 @@ interface PlayerDeckProps {
   isOpponent?: boolean;
   className?: string;
   hidden?: boolean;
-  revealOpponentCards?: boolean;
   isPlayerTurn?: boolean;
   playableCards?: number[];
   onCardClick?: (cardIndex: number) => void;
@@ -1219,7 +1219,6 @@ export function PlayerDeck({
   isOpponent = false,
   className,
   hidden = false,
-  revealOpponentCards = false,
   isPlayerTurn = false,
   playableCards = [],
   onCardClick,
@@ -1282,13 +1281,11 @@ export function PlayerDeck({
                 width={cardWidth}
                 height={cardHeight}
                 isOpponent={isOpponent}
-                isPlayable={isCardPlayable}
                 isHovered={isCardHovered}
                 isSelected={isCardSelected}
                 hidden={hidden}
-                revealOpponent={revealOpponentCards}
                 onClick={() => {
-                  if (isCardPlayable && onCardClick) {
+                  if (card.jouable && onCardClick) {
                     onCardClick(index);
                   }
                 }}
@@ -1311,15 +1308,11 @@ export function PlayerDeck({
 // Composant pour les cartes en jeu (pile centrale)
 interface PlayedCardsProps {
   cards: PlayedCard[];
-  currentUserId?: string;
   className?: string;
 }
 
-export function PlayedCards({
-  cards,
-  currentUserId,
-  className,
-}: PlayedCardsProps) {
+export function PlayedCards({ cards, className }: PlayedCardsProps) {
+  const userData = useUserDataContext();
   // Afficher seulement les cartes du tour actuel
   const currentRound =
     cards.length > 0 ? Math.max(...cards.map((c) => c.round)) : 0;
@@ -1327,10 +1320,10 @@ export function PlayedCards({
 
   // Séparer les cartes par joueur
   const opponentCards = currentRoundCards.filter(
-    (card) => card.playerId !== currentUserId,
+    (card) => card.playerUsername !== userData?.user.username,
   );
   const playerCards = currentRoundCards.filter(
-    (card) => card.playerId === currentUserId,
+    (card) => card.playerUsername === userData?.user.username,
   );
 
   return (

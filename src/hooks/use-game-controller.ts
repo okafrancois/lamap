@@ -29,17 +29,17 @@ export function useGameController() {
     ) => {
       const players: PlayerEntity[] = [
         {
-          id: userId,
+          username: userId,
           type: "user",
           isConnected: true,
           name: userName,
-          koras: 100, // Koras de départ
+          koras: 100,
         },
       ];
 
       if (mode === "ai") {
         players.push({
-          id: "ai-opponent",
+          username: "ai-opponent",
           type: "ai",
           isConnected: true,
           name: "IA",
@@ -48,7 +48,7 @@ export function useGameController() {
         });
       } else {
         players.push({
-          id: "ai-opponent",
+          username: "ai-opponent",
           type: "ai",
           isConnected: true,
           name: "IA",
@@ -103,7 +103,7 @@ export function useGameController() {
     );
     if (!userPlayer) return;
 
-    const success = koraEngine.playCard(selectedCardId, userPlayer.id);
+    const success = koraEngine.playCard(selectedCardId, userPlayer.username);
     if (success) {
       setSelectedCardId(null);
     }
@@ -168,22 +168,16 @@ export function useGameController() {
     [ui.actions, koraEngine],
   );
 
-  // Obtenir l'utilisateur connecté
-  const getCurrentUserId = useCallback((): string => {
-    return userData?.user?.username ?? "user-1";
-  }, [userData]);
-
   // Effet pour déclencher automatiquement l'IA
   useEffect(() => {
     const state = koraEngine.gameState;
     if (!state) return;
 
-    const currentUserId = getCurrentUserId();
     const aiPlayer = state.players.find((p) => p.type === "ai");
 
     if (
       state.status === "playing" &&
-      state.playerTurnId === aiPlayer?.id &&
+      state.playerTurnUsername === aiPlayer?.username &&
       !aiPlayer.isThinking
     ) {
       // Petit délai pour l'UX
@@ -193,7 +187,7 @@ export function useGameController() {
 
       return () => clearTimeout(timer);
     }
-  }, [koraEngine.gameState, koraEngine, getCurrentUserId]);
+  }, [koraEngine.gameState, koraEngine]);
 
   // Effet pour montrer le modal de victoire
   useEffect(() => {
@@ -206,7 +200,7 @@ export function useGameController() {
   return {
     // État du jeu direct
     gameState: koraEngine.gameState,
-    currentUserId: getCurrentUserId(),
+    currentUserId: userData?.user.username,
 
     // Interface utilisateur
     ui,

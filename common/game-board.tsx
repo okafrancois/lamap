@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import { BackgroundDecorations } from "./background-decorations";
 import { GameTable } from "./game-table";
-import { OpponentArea, PlayerArea } from "./player-area";
+import { PlayerArea } from "./player-area";
 import type { GameState } from "@/engine/kora-game-engine";
 
 interface GameBoardProps {
@@ -36,22 +36,10 @@ export function GameBoard({
   currentUserId,
   className,
   onCardClick,
-  onOpponentCardClick,
   onPlayCard,
   hoveredCard,
   selectedCard,
   onCardHover,
-  godMode = false,
-
-  // Props multijoueur avec valeurs par défaut
-  gameId,
-  connectionStatus = "connected",
-
-  // Callbacks multijoueur (optionnels)
-  onPlayerJoin,
-  onPlayerLeave,
-  onGameStateSync,
-  onConnectionChange,
 }: GameBoardProps) {
   // Si pas de gameState, afficher un plateau vide
   if (!gameState) {
@@ -100,25 +88,13 @@ export function GameBoard({
   }
 
   // Extraire les données du GameState
-  const currentPlayer = gameState.players.find((p) => p.id === currentUserId);
-  const opponentPlayer = gameState.players.find((p) => p.id !== currentUserId);
+  const currentPlayer = gameState.players.find(
+    (p) => p.username === currentUserId,
+  );
+  const opponentPlayer = gameState.players.find(
+    (p) => p.username !== currentUserId,
+  );
 
-  const gameStarted = gameState.status === "playing";
-  const isPlayerTurn = gameState.playerTurnId === currentUserId;
-  const currentTurn =
-    gameState.playerTurnId === currentUserId ? "player" : "opponent";
-  const playerWithHand =
-    gameState.hasHandId === currentUserId ? "player" : "opponent";
-
-  // Calculer les cartes jouables (indices)
-  const playableCards: number[] = [];
-  if (currentPlayer?.hand) {
-    currentPlayer.hand.forEach((card, index) => {
-      if (card.jouable) {
-        playableCards.push(index);
-      }
-    });
-  }
   return (
     <div
       className={cn(
@@ -130,40 +106,33 @@ export function GameBoard({
       {/* Décorations d'arrière-plan */}
       <BackgroundDecorations />
 
-      {/* Zone adversaire */}
-      <OpponentArea
-        cards={opponentPlayer?.hand ?? []}
-        currentTurn={currentTurn}
-        gameStarted={gameStarted}
-        hasHand={playerWithHand === "opponent"}
-        godMode={godMode}
-        onOpponentCardClick={onOpponentCardClick}
-        playableCards={playableCards}
-        gameId={gameId}
-        connectionStatus={connectionStatus}
-        round={gameState.currentRound}
-        maxRounds={gameState.maxRounds}
-      />
+      {opponentPlayer && (
+        <PlayerArea
+          player={opponentPlayer}
+          gameState={gameState}
+          onCardClick={onCardClick}
+          onPlayCard={onPlayCard}
+          hoveredCard={hoveredCard}
+          selectedCard={selectedCard}
+          onCardHover={onCardHover}
+        />
+      )}
 
       {/* Zone de jeu centrale */}
-      <GameTable
-        playedCards={gameState.playedCards}
-        currentUserId={currentUserId}
-      />
+      <GameTable playedCards={gameState.playedCards} />
 
       {/* Zone joueur */}
-      <PlayerArea
-        cards={currentPlayer?.hand ?? []}
-        isPlayerTurn={isPlayerTurn}
-        gameStarted={gameStarted}
-        hasHand={playerWithHand === "player"}
-        onCardClick={onCardClick}
-        onPlayCard={onPlayCard}
-        hoveredCard={hoveredCard}
-        selectedCard={selectedCard}
-        onCardHover={onCardHover}
-        playableCards={playableCards}
-      />
+      {currentPlayer && (
+        <PlayerArea
+          player={currentPlayer}
+          gameState={gameState}
+          onCardClick={onCardClick}
+          onPlayCard={onPlayCard}
+          hoveredCard={hoveredCard}
+          selectedCard={selectedCard}
+          onCardHover={onCardHover}
+        />
+      )}
     </div>
   );
 }
