@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useKoraEngine } from "./use-kora-engine";
 import { useGameUI } from "@/hooks/use-game-ui";
+import { useGameSounds } from "@/hooks/use-game-sounds";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import {
   type PlayerEntity,
@@ -17,6 +18,9 @@ export function useGameController() {
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
+
+  // Gérer les sons du jeu
+  useGameSounds(koraEngine.gameState);
 
   // Configurer le callback de victoire
   useEffect(() => {

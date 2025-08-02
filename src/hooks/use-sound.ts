@@ -55,14 +55,14 @@ const SOUND_FILES: Record<SoundType, string> = {
   card_play: "/sounds/ui/swipe.mp3",
   card_select: "/sounds/game/card-select.mp3",
   card_hover: "/sounds/navigation/hover.mp3",
-  game_start: "/sounds/game/game-start.mp3",
-  game_end: "/sounds/game/game-end.mp3",
+  game_start: "/sounds/ui/loading.mp3",
+  game_end: "/sounds/ui/confirmation.mp3",
   turn_change: "/sounds/game/turn-change.mp3",
   ai_thinking: "/sounds/game/ai-thinking.mp3",
-  shuffle_cards: "/sounds/game/shuffle.mp3",
+  shuffle_cards: "/sounds/ui/swipe.mp3",
 
   // Special cases
-  victory: "/sounds/ui/win.mp3",
+  victory: "/sounds/ui/win-simple.mp3",
   defeat: "/sounds/ui/boom.mp3",
   kora_simple: "/sounds/ui/win-money.mp3",
   kora_double: "/sounds/ui/win-applause.mp3",
