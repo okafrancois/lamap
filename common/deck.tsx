@@ -1206,7 +1206,6 @@ interface PlayerDeckProps {
   className?: string;
   hidden?: boolean;
   isPlayerTurn?: boolean;
-  playableCards?: number[];
   onCardClick?: (cardIndex: number) => void;
   onPlayCard?: () => void;
   hoveredCard?: number | null;
@@ -1220,7 +1219,6 @@ export function PlayerDeck({
   className,
   hidden = false,
   isPlayerTurn = false,
-  playableCards = [],
   onCardClick,
   onPlayCard,
   hoveredCard,
@@ -1248,8 +1246,7 @@ export function PlayerDeck({
           const translateX = startOffset + index * cardSpacing;
 
           // États des cartes
-          const isCardPlayable =
-            !isOpponent && isPlayerTurn && playableCards.includes(index);
+          const isCardPlayable = !isOpponent && isPlayerTurn && card.jouable;
           const isCardHovered = hoveredCard === index;
           const isCardSelected = selectedCard === index;
           const hasCardAction = !isOpponent && onCardClick;
@@ -1271,6 +1268,7 @@ export function PlayerDeck({
               onMouseEnter={() => onCardHover?.(index)}
               onMouseLeave={() => onCardHover?.(null)}
               onClick={() => {
+                console.log("isCardPlayable", isCardPlayable);
                 if (isCardPlayable && onCardClick) {
                   onCardClick(index);
                 }

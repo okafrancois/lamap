@@ -36,7 +36,7 @@ export function PlayerArea({
         isCurrentTurn={gameState.playerTurnUsername === player.username}
         cardCount={player.hand?.length ?? 0}
         playerName={player.username}
-        shortName={isOpponent ? "Vous" : "Adversaire"}
+        shortName={isOpponent ? "Adversaire" : "Vous"}
         hasHand={gameState.hasHandUsername === player.username}
         gameStarted={gameState.status === "playing"}
       />
