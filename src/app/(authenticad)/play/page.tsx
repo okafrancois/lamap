@@ -299,7 +299,10 @@ export default function PlayPage() {
                     🚀 Rejouer (même mode)
                   </LibButton>
                   <LibButton
-                    onClick={() => controller.selectGameMode(null)}
+                    onClick={() => {
+                      ui.actions.setSelectedGameMode(null);
+                      controller.newGame();
+                    }}
                     variant="outline"
                     className="w-full"
                     icon={<IconCards className="size-4" />}

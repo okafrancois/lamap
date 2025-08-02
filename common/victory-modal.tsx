@@ -73,6 +73,7 @@ export function VictoryModal({
               break;
             case "auto_sum":
             case "auto_lowest":
+            case "auto_sevens":
               void playSound("auto_victory");
               break;
             default:
@@ -91,7 +92,7 @@ export function VictoryModal({
     <Sheet open={isVisible} onOpenChange={onClose}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className={"min-h-[100vh] w-[400px] sm:w-[500px]"}
+        className={"min-h-[100vh] w-full sm:max-w-[30vw]"}
       >
         <SheetHeader>
           <SheetTitle

@@ -1296,7 +1296,7 @@ export function PlayerDeck({
                   }
                 }}
                 onHover={(hovered) => {
-                  void playSound("card_hover", { volume: 0.2 });
+                  void playSound("card_hover", { volume: 0.05 });
                   onCardHover?.(hovered ? index : null);
                 }}
                 className="h-full w-full shadow-md"

@@ -205,6 +205,50 @@ export class KoraGameEngine {
       playerTurnUsername: startingPlayerId,
     };
 
+    // Vérifier les victoires automatiques spéciales (3 cartes de 7)
+    const firstPlayerSevens = firstPlayer.filter(
+      (card) => card.rank === "7",
+    ).length;
+    const secondPlayerSevens = secondPlayer.filter(
+      (card) => card.rank === "7",
+    ).length;
+
+    if (firstPlayerSevens >= 3 || secondPlayerSevens >= 3) {
+      if (firstPlayerSevens >= 3 && secondPlayerSevens >= 3) {
+        // Les deux joueurs ont au moins 3 cartes de 7, celui avec le plus gagne
+        const winnerId =
+          firstPlayerSevens > secondPlayerSevens
+            ? startingPlayerId
+            : firstPlayerSevens < secondPlayerSevens
+              ? this.state.players.find((p) => p.username !== startingPlayerId)!
+                  .username
+              : startingPlayerId; // Égalité : le premier joueur gagne
+        this.handleAutomaticVictory(
+          winnerId,
+          `Victoire avec ${Math.max(firstPlayerSevens, secondPlayerSevens)} cartes de 7`,
+        );
+        this.endGame(winnerId);
+        return;
+      } else if (firstPlayerSevens >= 3) {
+        this.handleAutomaticVictory(
+          startingPlayerId,
+          `Victoire avec ${firstPlayerSevens} cartes de 7`,
+        );
+        this.endGame(startingPlayerId);
+        return;
+      } else {
+        const winnerId = this.state.players.find(
+          (p) => p.username !== startingPlayerId,
+        )!.username;
+        this.handleAutomaticVictory(
+          winnerId,
+          `Victoire avec ${secondPlayerSevens} cartes de 7`,
+        );
+        this.endGame(winnerId);
+        return;
+      }
+    }
+
     // Vérifier les victoires automatiques (somme < 21)
     const firstPlayerSum = this.calculateHandSum(firstPlayer);
     const secondPlayerSum = this.calculateHandSum(secondPlayer);
@@ -730,6 +774,7 @@ Koras Adversaire: ${state.players[1]!.koras}
       | "normal"
       | "auto_sum"
       | "auto_lowest"
+      | "auto_sevens"
       | "simple_kora"
       | "double_kora"
       | "triple_kora";
@@ -779,6 +824,17 @@ Koras Adversaire: ${state.players[1]!.koras}
       }
 
       if (message.includes("Victoire automatique")) {
+        if (message.includes("cartes de 7")) {
+          return {
+            type: "auto_sevens",
+            title: "Victoire des 7 ! 🎰",
+            description: isPlayerWinner
+              ? "Victoire avec au moins 3 cartes de 7"
+              : "Défaite - L'adversaire a au moins 3 cartes de 7",
+            multiplier: "x1",
+            special: true,
+          };
+        }
         if (message.includes("Somme < 21")) {
           return {
             type: "auto_sum",
@@ -854,7 +910,7 @@ Koras Adversaire: ${state.players[1]!.koras}
     ];
 
     const messages = isPlayerWinner ? victoryMessages : defeatMessages;
-    return messages[Math.floor(Math.random() * messages.length)];
+    return messages[Math.floor(Math.random() * messages.length)]!;
   }
 
   public setAIDifficulty(difficulty: AIDifficulty): void {

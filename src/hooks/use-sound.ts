@@ -2,7 +2,7 @@
 
 import { useRef, useCallback, useEffect, useState } from "react";
 
-export const SOUND_VOLUME = 0.5;
+export const SOUND_VOLUME = 0.4;
 
 export type SoundType =
   // Navigation
@@ -44,15 +44,15 @@ interface UseSoundOptions {
 // Mappage des types de sons vers leurs fichiers
 const SOUND_FILES: Record<SoundType, string> = {
   // Navigation
-  click: "/sounds/navigation/click.mp3",
+  click: "/sounds/ui/click.mp3",
   hover: "/sounds/navigation/hover.mp3",
   page_transition: "/sounds/navigation/transition.mp3",
   modal_open: "/sounds/navigation/modal-open.mp3",
   modal_close: "/sounds/navigation/modal-close.mp3",
 
   // Game actions
-  card_flip: "/sounds/game/card-flip.mp3",
-  card_play: "/sounds/game/card-play.mp3",
+  card_flip: "/sounds/ui/swipe.mp3",
+  card_play: "/sounds/ui/swipe.mp3",
   card_select: "/sounds/game/card-select.mp3",
   card_hover: "/sounds/navigation/hover.mp3",
   game_start: "/sounds/game/game-start.mp3",
@@ -62,12 +62,12 @@ const SOUND_FILES: Record<SoundType, string> = {
   shuffle_cards: "/sounds/game/shuffle.mp3",
 
   // Special cases
-  victory: "/sounds/special/victory.mp3",
-  defeat: "/sounds/special/defeat.mp3",
-  kora_simple: "/sounds/special/kora-simple.mp3",
-  kora_double: "/sounds/special/kora-double.mp3",
-  kora_triple: "/sounds/special/kora-triple.mp3",
-  auto_victory: "/sounds/special/auto-victory.mp3",
+  victory: "/sounds/ui/win.mp3",
+  defeat: "/sounds/ui/boom.mp3",
+  kora_simple: "/sounds/ui/win-money.mp3",
+  kora_double: "/sounds/ui/win-applause.mp3",
+  kora_triple: "/sounds/ui/win-applause.mp3",
+  auto_victory: "/sounds/ui/shining.mp3",
 };
 
 export function useSound(options: UseSoundOptions = {}) {

@@ -20,7 +20,9 @@ Gagner la main au **tour 5** pour remporter la partie et les **koras** (points) 
 ### Phase 1 : Initialisation
 
 1. **Distribution** : Chaque joueur reçoit 5 cartes aléatoires
-2. **Vérification** : Si la somme des cartes d'un joueur < 21 → **Victoire automatique**
+2. **Vérifications automatiques** :
+   - Si un joueur a **au moins 3 cartes de 7** → **Victoire automatique**
+   - Si la somme des cartes d'un joueur < 21 → **Victoire automatique**
 3. **Premier joueur** : Déterminé aléatoirement
 4. **Mise** : Les joueurs misent leurs koras (optionnel pour cette version)
 
@@ -58,7 +60,7 @@ Tour 2: Joueur B a la main
 La partie se termine quand :
 
 - **5 tours** sont joués → Gagnant = celui qui a la main
-- **Victoire automatique** → Somme < 21
+- **Victoire automatique** → Au moins 3 cartes de 7 ou somme < 21
 - **Cartes épuisées** → Gagnant = celui qui a la main
 
 ## 🏆 Cas Spéciaux - Kora et Exploits
