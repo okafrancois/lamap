@@ -17,6 +17,13 @@ export function useGameController() {
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
+
+  // Configurer le callback de victoire
+  useEffect(() => {
+    koraEngine.setOnVictoryCallback(() => {
+      ui.actions.showVictory();
+    });
+  }, [koraEngine, ui.actions]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // Initialiser le jeu avec des joueurs selon le mode choisi
@@ -189,13 +196,7 @@ export function useGameController() {
     }
   }, [koraEngine.gameState, koraEngine]);
 
-  // Effet pour montrer le modal de victoire
-  useEffect(() => {
-    const state = koraEngine.gameState;
-    if (state?.status === "ended" && !ui.showVictoryModal) {
-      ui.actions.showVictory();
-    }
-  }, [koraEngine.gameState, ui.actions, ui.showVictoryModal]);
+  // Logique de victoire gérée directement dans le game engine
 
   return {
     // État du jeu direct

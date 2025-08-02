@@ -71,6 +71,7 @@ export interface GameActions {
 export class KoraGameEngine {
   private state: GameState;
   private listeners: ((state: GameState) => void)[] = [];
+  private onVictoryCallback?: () => void;
 
   constructor(bet: number, maxRounds: number, players: PlayerEntity[]) {
     this.state = this.getInitialState(bet, maxRounds, players);
@@ -480,6 +481,13 @@ export class KoraGameEngine {
       this.state.players.find((p) => p.username === winnerId)!.koras -=
         betAmount;
     }
+
+    this.notifyListeners();
+
+    // Déclencher le callback de victoire si défini
+    if (this.onVictoryCallback) {
+      setTimeout(() => this.onVictoryCallback?.(), 100);
+    }
   }
 
   // ========== GESTION DES CARTES JOUABLES ==========
@@ -668,6 +676,10 @@ export class KoraGameEngine {
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
     };
+  }
+
+  public setOnVictoryCallback(callback: () => void): void {
+    this.onVictoryCallback = callback;
   }
 
   private notifyListeners(): void {

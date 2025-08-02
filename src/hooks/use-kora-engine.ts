@@ -208,6 +208,19 @@ export function useKoraEngine() {
     getVictoryType,
     getKorasWonThisGame,
     getVictoryMessage,
+
+    // Callbacks
+    setOnVictoryCallback: (callback: () => void) => {
+      try {
+        const engine = getKoraGameEngine();
+        engine.setOnVictoryCallback(callback);
+      } catch (error) {
+        console.error(
+          "Cannot set victory callback: engine not initialized",
+          error,
+        );
+      }
+    },
   };
 }
 
