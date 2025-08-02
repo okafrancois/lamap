@@ -7,9 +7,9 @@ import { useUserDataContext } from "@/components/layout/user-provider";
 import {
   type PlayerEntity,
   type AIDifficulty,
-  type PlayedCard,
 } from "@/engine/kora-game-engine";
 import { type Card } from "common/deck";
+import { toast } from "sonner";
 
 export type GameMode = "ai" | "online" | "friend";
 
@@ -47,13 +47,13 @@ export function useGameController() {
           aiDifficulty: aiDifficulty ?? "medium",
         });
       } else {
-        // Pour l'instant, ajouter un joueur placeholder
         players.push({
-          id: "human-opponent",
-          type: "user",
+          id: "ai-opponent",
+          type: "ai",
           isConnected: true,
-          name: "Adversaire",
+          name: "IA",
           koras: 100,
+          aiDifficulty: aiDifficulty ?? "medium",
         });
       }
 
@@ -69,11 +69,17 @@ export function useGameController() {
   // Démarrer une nouvelle partie
   const startGame = useCallback(
     (mode: GameMode) => {
-      // Utiliser les données de l'utilisateur connecté ou des valeurs par défaut
-      const userId = userData?.user?.id ?? "user-1";
-      const userName = userData?.user?.name ?? "Joueur";
+      if (!userData?.user) {
+        toast.error("Vous devez être connecté pour jouer");
+        return;
+      }
 
-      initializeGame(mode, userId, userName, ui.aiDifficulty);
+      initializeGame(
+        mode,
+        userData.user.username,
+        userData.user.name ?? userData.user.username,
+        ui.aiDifficulty,
+      );
       koraEngine.startNewGame();
     },
     [initializeGame, koraEngine, ui.aiDifficulty, userData],
@@ -162,112 +168,45 @@ export function useGameController() {
     [ui.actions, koraEngine],
   );
 
-  // Convertir l'état du moteur en format compatible avec l'UI
-  const getGameState = useCallback((): {
-    phase: "waiting" | "playing" | "victory" | "defeat";
-    currentTurn: "player" | "opponent";
-    playerCards: Card[];
-    opponentCards: Card[];
-    playedCards: PlayedCard[];
-    playableCards: number[];
-    currentRound: number;
-    playerKoras: number;
-    opponentKoras: number;
-    playerWithHand: "player" | "opponent";
-    currentBet: number;
-    gameLog: { message: string; timestamp: number }[];
-    isAIThinking: boolean;
-  } => {
+  // Obtenir l'utilisateur connecté
+  const getCurrentUserId = useCallback((): string => {
+    return userData?.user?.username ?? "user-1";
+  }, [userData]);
+
+  // Effet pour déclencher automatiquement l'IA
+  useEffect(() => {
     const state = koraEngine.gameState;
-    if (!state) {
-      return {
-        phase: "waiting" as "waiting" | "playing" | "victory" | "defeat",
-        currentTurn: "player" as "player" | "opponent",
-        playerCards: [] as Card[],
-        opponentCards: [] as Card[],
-        playedCards: [],
-        playableCards: [] as number[],
-        currentRound: 1,
-        playerKoras: 100,
-        opponentKoras: 100,
-        playerWithHand: "player" as "player" | "opponent",
-        currentBet: 10,
-        gameLog: [],
-        isAIThinking: false,
-      };
+    if (!state) return;
+
+    const currentUserId = getCurrentUserId();
+    const aiPlayer = state.players.find((p) => p.type === "ai");
+
+    if (
+      state.status === "playing" &&
+      state.playerTurnId === aiPlayer?.id &&
+      !aiPlayer.isThinking
+    ) {
+      // Petit délai pour l'UX
+      const timer = setTimeout(() => {
+        void koraEngine.triggerAITurn();
+      }, 1000);
+
+      return () => clearTimeout(timer);
     }
-
-    const userPlayer = state.players.find((p) => p.type === "user");
-    const opponentPlayer = state.players.find((p) => p.type !== "user");
-
-    // Déterminer qui doit jouer
-    const currentRoundCards = state.playedCards.filter(
-      (p) => p.round === state.currentRound,
-    );
-
-    let currentTurn: "player" | "opponent" = "player";
-    if (currentRoundCards.length === 0) {
-      // Aucune carte jouée ce tour : c'est à celui qui a la main
-      currentTurn = state.hasHandId === userPlayer?.id ? "player" : "opponent";
-    } else if (currentRoundCards.length === 1) {
-      // Une carte jouée : c'est à l'autre joueur
-      const firstPlayerId = currentRoundCards[0]?.playerId;
-      currentTurn = firstPlayerId === userPlayer?.id ? "opponent" : "player";
-    }
-
-    // Calculer les cartes jouables (indices)
-    const playableCards: number[] = [];
-    if (userPlayer?.hand) {
-      userPlayer.hand.forEach((card, index) => {
-        if (card.jouable) {
-          playableCards.push(index);
-        }
-      });
-    }
-
-    // Déterminer la phase
-    let phase: "waiting" | "playing" | "victory" | "defeat" = "waiting";
-    if (state.status === "playing") {
-      phase = "playing";
-    } else if (state.status === "ended") {
-      if (state.winnerId === userPlayer?.id) {
-        phase = "victory";
-      } else {
-        phase = "defeat";
-      }
-    }
-
-    return {
-      phase,
-      currentTurn,
-      playerCards: userPlayer?.hand ?? [],
-      opponentCards: opponentPlayer?.hand ?? [],
-      playedCards: state.playedCards,
-      playableCards,
-      currentRound: state.currentRound,
-      playerKoras: userPlayer?.koras ?? 0,
-      opponentKoras: opponentPlayer?.koras ?? 0,
-      playerWithHand:
-        state.hasHandId === userPlayer?.id
-          ? ("player" as const)
-          : ("opponent" as const),
-      currentBet: state.currentBet,
-      gameLog: state.gameLog,
-      isAIThinking: opponentPlayer?.isThinking ?? false,
-    };
-  }, [koraEngine.gameState]);
+  }, [koraEngine.gameState, koraEngine, getCurrentUserId]);
 
   // Effet pour montrer le modal de victoire
   useEffect(() => {
-    const game = getGameState();
-    if (game.phase === "victory" || game.phase === "defeat") {
+    const state = koraEngine.gameState;
+    if (state?.status === "ended") {
       ui.actions.showVictory();
     }
-  }, [getGameState, ui.actions]);
+  }, [koraEngine.gameState, ui.actions]);
 
   return {
-    // État du jeu
-    game: getGameState(),
+    // État du jeu direct
+    gameState: koraEngine.gameState,
+    currentUserId: getCurrentUserId(),
 
     // Interface utilisateur
     ui,

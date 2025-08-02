@@ -24,7 +24,7 @@ import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 
 export default function PlayPage() {
   const controller = useGameController();
-  const { game, ui } = controller;
+  const { gameState, currentUserId, ui } = controller;
 
   return (
     <PageContainer fluid={true} className="relative flex h-full">
@@ -33,16 +33,13 @@ export default function PlayPage() {
         {/* Plateau de jeu mobile - Pleine largeur */}
         <div className="flex-1 overflow-hidden">
           <GameBoard
-            playerCards={game.playerCards}
-            opponentCards={game.opponentCards}
-            playedCards={game.playedCards}
-            gameStarted={game.phase === "playing"}
-            isPlayerTurn={
-              game.currentTurn === "player" && game.phase === "playing"
-            }
-            playableCards={game.playableCards}
+            gameState={gameState}
+            currentUserId={currentUserId}
             onCardClick={(cardIndex) => {
-              const cardId = game.playerCards[cardIndex]?.id;
+              const currentPlayer = gameState?.players.find(
+                (p) => p.id === currentUserId,
+              );
+              const cardId = currentPlayer?.hand?.[cardIndex]?.id;
               if (cardId) {
                 controller.selectCard(cardId);
               }
@@ -51,31 +48,38 @@ export default function PlayPage() {
             hoveredCard={ui.hoveredCard}
             selectedCard={controller.getSelectedCardIndex()}
             onCardHover={controller.hoverCard}
-            currentTurn={game.currentTurn}
-            playerWithHand={game.playerWithHand}
             className="h-full p-2"
           />
         </div>
 
         {/* Contrôles mobiles compacts en bas */}
-        {game.phase === "playing" && (
+        {gameState?.status === "playing" && (
           <div className="bg-background/95 border-t p-3 backdrop-blur-sm">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <div className="flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 text-xs font-bold text-white">
-                  {game.currentRound}
+                  {gameState?.currentRound}
                 </div>
                 <span className="text-muted-foreground">
-                  {game.currentTurn === "player"
+                  {gameState?.playerTurnId === currentUserId
                     ? "Votre tour"
-                    : game.isAIThinking
+                    : gameState?.players.find((p) => p.type === "ai")
+                          ?.isThinking
                       ? "IA réfléchit..."
                       : "Tour de l'IA"}
                 </span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs">
-                  {game.playerKoras} vs {game.opponentKoras}
+                  {(() => {
+                    const currentPlayer = gameState?.players.find(
+                      (p) => p.id === currentUserId,
+                    );
+                    const opponentPlayer = gameState?.players.find(
+                      (p) => p.id !== currentUserId,
+                    );
+                    return `${currentPlayer?.koras ?? 0} vs ${opponentPlayer?.koras ?? 0}`;
+                  })()}
                 </span>
                 <LibButton
                   variant="ghost"
@@ -91,7 +95,7 @@ export default function PlayPage() {
         )}
 
         {/* Menu de sélection de mode pour mobile */}
-        {game.phase === "waiting" && (
+        {(!gameState || gameState.status === "waiting") && (
           <div className="bg-background/95 border-t p-4 backdrop-blur-sm">
             <div className="space-y-3">
               <h3 className="text-center font-semibold">
@@ -150,11 +154,7 @@ export default function PlayPage() {
                           key={option.id}
                           variant="outline"
                           className="flex items-center justify-start gap-3 p-3"
-                          onClick={() =>
-                            controller.selectGameMode(
-                              option.id as "ai" | "online" | "friend",
-                            )
-                          }
+                          onClick={() => controller.selectGameMode(option.id)}
                         >
                           <div
                             className={`rounded-lg bg-gradient-to-br p-1 ${option.color} text-white`}
@@ -182,16 +182,13 @@ export default function PlayPage() {
       <div className="hidden h-full w-full gap-4 lg:flex">
         {/* Plateau de jeu - Largeur adaptative */}
         <GameBoard
-          playerCards={game.playerCards}
-          opponentCards={game.opponentCards}
-          playedCards={game.playedCards}
-          gameStarted={game.phase === "playing"}
-          isPlayerTurn={
-            game.currentTurn === "player" && game.phase === "playing"
-          }
-          playableCards={game.playableCards}
+          gameState={gameState}
+          currentUserId={currentUserId}
           onCardClick={(cardIndex) => {
-            const cardId = game.playerCards[cardIndex]?.id;
+            const currentPlayer = gameState?.players.find(
+              (p) => p.id === currentUserId,
+            );
+            const cardId = currentPlayer?.hand?.[cardIndex]?.id;
             if (cardId) {
               controller.selectCard(cardId);
             }
@@ -200,14 +197,12 @@ export default function PlayPage() {
           hoveredCard={ui.hoveredCard}
           selectedCard={controller.getSelectedCardIndex()}
           onCardHover={controller.hoverCard}
-          currentTurn={game.currentTurn}
-          playerWithHand={game.playerWithHand}
           className={`overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
-            game.phase === "playing" ? "lg:w-full" : "lg:w-4/6"
+            gameState?.status === "playing" ? "lg:w-full" : "lg:w-4/6"
           }`}
         />
 
-        {game.phase !== "playing" && (
+        {(!gameState || gameState.status !== "playing") && (
           <Card
             className={`h-full w-2/6 pt-0 transition-all duration-700 ease-in-out`}
           >
@@ -227,92 +222,111 @@ export default function PlayPage() {
 
             <CardContent className="max-h-full space-y-4 overflow-y-scroll">
               {/* État de la partie - Simplifié */}
-              {(game.phase as any) === "playing" && (
-                <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
-                  <CardContent className="space-y-3 p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-fit rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
-                        <IconCards className="size-5 text-white" />
+              {gameState &&
+                (gameState.status as "waiting" | "playing" | "ended") ===
+                  "playing" && (
+                  <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+                    <CardContent className="space-y-3 p-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-fit rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
+                          <IconCards className="size-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-cyan-700 dark:text-cyan-300">
+                            Partie en cours
+                          </h3>
+                          <p className="text-muted-foreground text-xs">
+                            Tour {gameState?.currentRound}/
+                            {gameState?.maxRounds} -
+                            {gameState?.playerTurnId === currentUserId
+                              ? " Votre tour"
+                              : gameState?.players.find((p) => p.type === "ai")
+                                    ?.isThinking
+                                ? " IA réfléchit..."
+                                : " Tour de l&apos;IA"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-semibold text-cyan-700 dark:text-cyan-300">
-                          Partie en cours
-                        </h3>
-                        <p className="text-muted-foreground text-xs">
-                          Tour {game.currentRound}/5 -
-                          {game.currentTurn === "player"
-                            ? " Votre tour"
-                            : game.isAIThinking
-                              ? " IA réfléchit..."
-                              : " Tour de l&apos;IA"}
-                        </p>
-                      </div>
-                    </div>
 
-                    <div className="flex justify-between text-xs">
-                      <span>Vos Koras: {game.playerKoras}</span>
-                      <span>IA: {game.opponentKoras}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                      <div className="flex justify-between text-xs">
+                        {(() => {
+                          const currentPlayer = gameState?.players.find(
+                            (p) => p.id === currentUserId,
+                          );
+                          const opponentPlayer = gameState?.players.find(
+                            (p) => p.id !== currentUserId,
+                          );
+                          return (
+                            <>
+                              <span>
+                                Vos Koras: {currentPlayer?.koras ?? 0}
+                              </span>
+                              <span>IA: {opponentPlayer?.koras ?? 0}</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
               {/* Options de difficulté pour l'IA */}
-              {ui.selectedGameMode === "ai" && game.phase === "waiting" && (
-                <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-purple-600/10 !p-4">
-                  <CardHeader className="flex flex-row items-start justify-between">
-                    <LibTitle
-                      as="h3"
-                      className="flex w-full items-center gap-3"
-                    >
-                      <div className="bg-secondary/20 rounded-lg p-2">
-                        <IconCards className="text-secondary size-6" />
-                      </div>
-                      <div>
-                        <span className="text-lg font-semibold">
-                          Difficulté de l&apos;IA
-                        </span>
-                      </div>
-                    </LibTitle>
-                    <LibButton
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => controller.selectGameMode(null)}
-                      className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
-                    >
-                      ← Retour
-                    </LibButton>
-                  </CardHeader>
+              {ui.selectedGameMode === "ai" &&
+                (!gameState || gameState.status === "waiting") && (
+                  <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/10 to-purple-600/10 !p-4">
+                    <CardHeader className="flex flex-row items-start justify-between">
+                      <LibTitle
+                        as="h3"
+                        className="flex w-full items-center gap-3"
+                      >
+                        <div className="bg-secondary/20 rounded-lg p-2">
+                          <IconCards className="text-secondary size-6" />
+                        </div>
+                        <div>
+                          <span className="text-lg font-semibold">
+                            Difficulté de l&apos;IA
+                          </span>
+                        </div>
+                      </LibTitle>
+                      <LibButton
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => controller.selectGameMode(null)}
+                        className="text-purple-600 hover:text-purple-700 dark:text-purple-400"
+                      >
+                        ← Retour
+                      </LibButton>
+                    </CardHeader>
 
-                  <CardContent className="p-0">
-                    <div className="space-y-2">
-                      {AI_DIFFICULTIES.map((difficulty) => (
-                        <LibButton
-                          key={difficulty.id}
-                          variant={
-                            ui.aiDifficulty === difficulty.id
-                              ? "default"
-                              : "outline"
-                          }
-                          className="w-full justify-start"
-                          onClick={() =>
-                            controller.setAIDifficulty(difficulty.id)
-                          }
-                        >
-                          {difficulty.label}
-                        </LibButton>
-                      ))}
-                    </div>
-                    <LibButton
-                      className="mt-3 w-full bg-purple-600 hover:bg-purple-700"
-                      onClick={() => controller.startGame("ai")}
-                      icon={<IconPlayerPlay className="size-4" />}
-                    >
-                      🚀 Commencer la partie
-                    </LibButton>
-                  </CardContent>
-                </Card>
-              )}
+                    <CardContent className="p-0">
+                      <div className="space-y-2">
+                        {AI_DIFFICULTIES.map((difficulty) => (
+                          <LibButton
+                            key={difficulty.id}
+                            variant={
+                              ui.aiDifficulty === difficulty.id
+                                ? "default"
+                                : "outline"
+                            }
+                            className="w-full justify-start"
+                            onClick={() =>
+                              controller.setAIDifficulty(difficulty.id)
+                            }
+                          >
+                            {difficulty.label}
+                          </LibButton>
+                        ))}
+                      </div>
+                      <LibButton
+                        className="mt-3 w-full bg-purple-600 hover:bg-purple-700"
+                        onClick={() => controller.startGame("ai")}
+                        icon={<IconPlayerPlay className="size-4" />}
+                      >
+                        🚀 Commencer la partie
+                      </LibButton>
+                    </CardContent>
+                  </Card>
+                )}
 
               {/* Modes de jeu - Masqués si un mode est sélectionné */}
               {!ui.selectedGameMode &&
@@ -331,10 +345,7 @@ export default function PlayPage() {
                             : "border-border hover:border-primary/50 hover:shadow-lg"
                       }`}
                       onClick={() =>
-                        option.available &&
-                        controller.selectGameMode(
-                          option.id as "ai" | "online" | "friend",
-                        )
+                        option.available && controller.selectGameMode(option.id)
                       }
                     >
                       <CardHeader className="p-0">
@@ -380,13 +391,9 @@ export default function PlayPage() {
                             e.stopPropagation();
                             if (option.available) {
                               if (isSelected) {
-                                controller.startGame(
-                                  option.id as "ai" | "online" | "friend",
-                                );
+                                controller.startGame(option.id);
                               } else {
-                                controller.selectGameMode(
-                                  option.id as "ai" | "online" | "friend",
-                                );
+                                controller.selectGameMode(option.id);
                               }
                             }
                           }}
@@ -411,12 +418,20 @@ export default function PlayPage() {
       {/* Modal de victoire/défaite */}
       <VictoryModal
         isVisible={ui.showVictoryModal}
-        isVictory={game.phase === "victory"}
-        playerKoras={game.playerKoras}
-        opponentKoras={game.opponentKoras}
-        betAmount={game.currentBet}
-        korasWon={controller.engine.getKorasWonThisGame?.() ?? 0}
-        gameLog={game.gameLog}
+        isVictory={gameState?.winnerId === currentUserId}
+        playerKoras={
+          gameState?.players.find((p) => p.id === currentUserId)?.koras ?? 0
+        }
+        opponentKoras={
+          gameState?.players.find((p) => p.id !== currentUserId)?.koras ?? 0
+        }
+        betAmount={gameState?.currentBet ?? 0}
+        korasWon={
+          controller.engine.gameState
+            ? controller.engine.getKorasWonThisGame()
+            : 0
+        }
+        gameLog={gameState?.gameLog ?? []}
         onPlayAgain={() => {
           ui.actions.hideVictory();
           controller.newGame();

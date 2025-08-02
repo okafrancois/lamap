@@ -289,10 +289,7 @@ export class KoraGameEngine {
     ];
 
     // Retirer la carte de la main du joueur
-    const newPlayerCards =
-      player.id === this.state.hasHandId
-        ? this.state.players.find((p) => p.id !== player.id)?.hand
-        : player.hand;
+    const newPlayerCards = player.hand?.filter((c) => c.id !== cardId);
 
     this.state = {
       ...this.state,
