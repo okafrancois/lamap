@@ -35,7 +35,7 @@ export default function PlayPage() {
   return (
     <PageContainer fluid={true} className="relative flex h-full">
       {/* Interface Desktop - Layout horizontal original */}
-      <div className="hidden h-full w-full gap-4 lg:flex">
+      <div className="flex h-full w-full flex-col lg:flex-row lg:gap-4">
         {/* Plateau de jeu - Largeur adaptative */}
         <GameBoard
           gameState={gameState}
@@ -54,13 +54,10 @@ export default function PlayPage() {
           hoveredCard={ui.hoveredCard}
           selectedCard={controller.getSelectedCardIndex()}
           onCardHover={controller.hoverCard}
-          className={`overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
+          className={`overflow-hidden p-0 transition-all duration-700 ease-in-out lg:rounded-lg ${
             gameState?.status === "playing" ? "lg:w-full" : "lg:w-4/6"
           }`}
         />
-
-        {/* Plateau de jeu mobile - Pleine largeur */}
-        <div className="flex-1 overflow-hidden lg:hidden"></div>
 
         {/* Contrôles mobiles compacts en bas */}
         {gameState?.status === "playing" && (
@@ -189,7 +186,7 @@ export default function PlayPage() {
 
         {(!gameState || gameState.status !== "playing") && (
           <Card
-            className={`h-full w-2/6 pt-0 transition-all duration-700 ease-in-out`}
+            className={`hidden h-full w-2/6 pt-0 transition-all duration-700 ease-in-out lg:block`}
           >
             <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !p-3">
               <LibTitle as="h3" className="flex w-full items-center gap-3">
