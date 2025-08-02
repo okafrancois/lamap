@@ -181,7 +181,6 @@ export class AIPlayer {
           );
 
           if (winningThree) {
-            console.log("🎯 AI: KORA en réponse avec un 3 gagnant !");
             return winningThree;
           }
         }
@@ -191,7 +190,6 @@ export class AIPlayer {
     if (gameState.currentRound >= 3 && threes.length > 0) {
       const protectedThree = this.findProtectedThree(gameState, threes);
       if (protectedThree) {
-        console.log("🎯 AI: Préparation Kora - garde un 3 pour plus tard");
         return null;
       }
     }
@@ -297,7 +295,6 @@ export class AIPlayer {
       );
 
       if (justBetterCards.length > 0) {
-        console.log("🛡️ AI: Stratégie défensive - carte juste supérieure");
         return justBetterCards.reduce((min, card) =>
           this.getCardValue(card.rank) < this.getCardValue(min.rank)
             ? card
@@ -326,7 +323,6 @@ export class AIPlayer {
       );
 
       if (controlCards.length > 0) {
-        console.log("🎯 AI: Force le joueur sur une famille faible");
         return controlCards.reduce((best, card) =>
           this.getCardValue(card.rank) > this.getCardValue(best.rank)
             ? card

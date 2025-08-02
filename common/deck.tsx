@@ -1246,17 +1246,16 @@ export function PlayerDeck({
           const translateX = startOffset + index * cardSpacing;
 
           // États des cartes
-          const isCardPlayable = !isOpponent && isPlayerTurn && card.jouable;
+          const isCardPlayable = isPlayerTurn && card.jouable;
           const isCardHovered = hoveredCard === index;
           const isCardSelected = selectedCard === index;
-          const hasCardAction = !isOpponent && onCardClick;
 
           return (
             <div
               key={index}
               className={cn("absolute transition-all duration-300", {
-                "cursor-pointer": hasCardAction && isCardPlayable,
-                "cursor-not-allowed": hasCardAction && !isCardPlayable,
+                "cursor-pointer": isCardPlayable,
+                "cursor-not-allowed": !isCardPlayable,
                 "hover:scale-105 active:scale-95": isCardPlayable,
                 "z-50": isCardHovered,
                 "touch-manipulation": true,
@@ -1268,7 +1267,6 @@ export function PlayerDeck({
               onMouseEnter={() => onCardHover?.(index)}
               onMouseLeave={() => onCardHover?.(null)}
               onClick={() => {
-                console.log("isCardPlayable", isCardPlayable);
                 if (isCardPlayable && onCardClick) {
                   onCardClick(index);
                 }
@@ -1311,16 +1309,15 @@ interface PlayedCardsProps {
 
 export function PlayedCards({ cards, className }: PlayedCardsProps) {
   const userData = useUserDataContext();
-  // Afficher seulement les cartes du tour actuel
+  // Afficher toutes les cartes jouées
   const currentRound =
     cards.length > 0 ? Math.max(...cards.map((c) => c.round)) : 0;
-  const currentRoundCards = cards.filter((c) => c.round === currentRound);
 
-  // Séparer les cartes par joueur
-  const opponentCards = currentRoundCards.filter(
+  // Séparer toutes les cartes par joueur (pas seulement le tour actuel)
+  const opponentCards = cards.filter(
     (card) => card.playerUsername !== userData?.user.username,
   );
-  const playerCards = currentRoundCards.filter(
+  const playerCards = cards.filter(
     (card) => card.playerUsername === userData?.user.username,
   );
 
@@ -1331,7 +1328,7 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
         className,
       )}
     >
-      {currentRoundCards.length === 0 ? (
+      {cards.length === 0 ? (
         <div className="flex items-center justify-center text-center">
           <div className="rounded-full border-2 border-amber-300/40 bg-amber-200/10 p-4">
             <div className="text-xs text-amber-100/80">Aucune carte jouée</div>
@@ -1388,8 +1385,8 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
 
       {/* Afficher le numéro du tour actuel */}
       {currentRound > 0 && (
-        <div className="absolute top-2 right-2 rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-100">
-          Tour {currentRound}
+        <div className="absolute -top-4 -right-0 rounded bg-amber-500/70 px-1 text-xs text-amber-100">
+          {currentRound}
         </div>
       )}
     </div>
