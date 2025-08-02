@@ -16,11 +16,13 @@ import {
 } from "recharts";
 import { IconTrendingUp, IconChartLine } from "@tabler/icons-react";
 import { useGameStats } from "@/hooks/use-game-stats";
+import { useUserDataContext } from "@/components/layout/user-provider";
 import { format, subDays, isAfter } from "date-fns";
 import { fr } from "date-fns/locale";
 
 export function PerformanceChart() {
   const { history, isLoading } = useGameStats();
+  const userData = useUserDataContext();
 
   if (isLoading) {
     return (
@@ -62,7 +64,10 @@ export function PerformanceChart() {
 
     if (dayData) {
       dayData.games++;
-      if (game.isWinner) {
+      // Vérifier si le joueur actuel a gagné
+      const isPlayerWinner = game.winnerPlayerId === userData?.user.id;
+
+      if (isPlayerWinner) {
         dayData.wins++;
         dayData.korasBalance += game.currentBet;
       } else {

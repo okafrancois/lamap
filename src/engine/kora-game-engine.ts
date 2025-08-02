@@ -1,6 +1,5 @@
 import { type Card, type Suit, type Rank } from "common/deck";
 import { AIPlayer } from "@/engine/ai-player";
-import type { LocalGameAction } from "@/lib/game-sync";
 
 // Types améliorés pour le game engine
 export type PlayerType = "user" | "ai";
@@ -736,6 +735,37 @@ export class KoraGameEngine {
 
   setOnGameUpdateCallback(callback: (gameState: GameState) => void): void {
     this.onGameUpdateCallback = callback;
+  }
+
+  // ========== MÉTHODES UTILITAIRES MULTI-JOUEUR ==========
+
+  /**
+   * Charger un état de jeu complet (pour la reprise de partie multi-joueur)
+   */
+  public loadState(newState: GameState): void {
+    this.state = { ...newState };
+    this.notifyListeners();
+  }
+
+  /**
+   * Obtenir un joueur par son username
+   */
+  public getPlayerByUsername(username: string): PlayerEntity | null {
+    return this.state.players.find((p) => p.username === username) ?? null;
+  }
+
+  /**
+   * Vérifier si un joueur peut jouer (sans username, pour le multi-joueur)
+   */
+  public isPlayerTurnByUsername(username: string): boolean {
+    return this.state.playerTurnUsername === username;
+  }
+
+  /**
+   * Forcer une mise à jour de l'état (pour la synchronisation)
+   */
+  public forceStateUpdate(): void {
+    this.notifyListeners();
   }
 
   private notifyListeners(): void {

@@ -366,6 +366,23 @@ export const multiplayerRouter = createTRPCRouter({
         currentPhase = "ended";
       }
 
+      // Récupérer les événements récents (dernières 5 minutes)
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const events = await ctx.db.gameEvent.findMany({
+        where: {
+          roomId,
+          gameId: room.gameId ?? undefined,
+          timestamp: { gte: fiveMinutesAgo },
+        },
+        include: {
+          player: {
+            select: { id: true, username: true },
+          },
+        },
+        orderBy: { timestamp: "desc" },
+        take: 20, // Limiter à 20 événements récents
+      });
+
       return {
         room: {
           id: room.id,
@@ -393,6 +410,16 @@ export const multiplayerRouter = createTRPCRouter({
               // TODO: Ajouter plus de détails du gameState
             }
           : null,
+        events: events.map((event) => ({
+          id: event.id,
+          roomId: event.roomId,
+          gameId: event.gameId,
+          playerId: event.playerId,
+          playerUsername: event.player.username,
+          type: event.type,
+          payload: event.payload,
+          timestamp: event.timestamp,
+        })),
       };
     }),
 
@@ -470,6 +497,111 @@ export const multiplayerRouter = createTRPCRouter({
       };
     }),
 
-  // TODO: Ajouter d'autres mutations pour le jeu
-  // playCard, endTurn, etc.
+  // ========== ÉVÉNEMENTS DE JEU ==========
+
+  // Envoyer un événement de jeu
+  sendGameEvent: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        gameId: z.string().optional(),
+        type: z.string(),
+        payload: z.any(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const { roomId, gameId, type, payload } = input;
+
+      // Vérifier que l'utilisateur est dans la salle
+      const player = await ctx.db.roomPlayer.findFirst({
+        where: {
+          roomId,
+          userId: ctx.session.user.id,
+        },
+      });
+
+      if (!player) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Vous n'êtes pas dans cette salle",
+        });
+      }
+
+      // Créer l'événement
+      const event = await ctx.db.gameEvent.create({
+        data: {
+          roomId,
+          gameId,
+          playerId: ctx.session.user.id,
+          type,
+          payload,
+        },
+      });
+
+      console.log(
+        `📤 Événement créé: ${type} par ${ctx.session.user.username}`,
+      );
+
+      return {
+        eventId: event.id,
+        success: true,
+      };
+    }),
+
+  // Récupérer les événements récents (utilisé par getRoomUpdates)
+  getGameEvents: protectedProcedure
+    .input(
+      z.object({
+        roomId: z.string(),
+        gameId: z.string().optional(),
+        since: z.date().optional(),
+        limit: z.number().min(1).max(100).default(50),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { roomId, gameId, since, limit } = input;
+
+      // Vérifier que l'utilisateur est dans la salle
+      const player = await ctx.db.roomPlayer.findFirst({
+        where: {
+          roomId,
+          userId: ctx.session.user.id,
+        },
+      });
+
+      if (!player) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Vous n'êtes pas dans cette salle",
+        });
+      }
+
+      const events = await ctx.db.gameEvent.findMany({
+        where: {
+          roomId,
+          gameId: gameId ?? undefined,
+          timestamp: since ? { gte: since } : undefined,
+        },
+        include: {
+          player: {
+            select: { id: true, username: true },
+          },
+        },
+        orderBy: { timestamp: "asc" },
+        take: limit,
+      });
+
+      return events.map((event) => ({
+        id: event.id,
+        roomId: event.roomId,
+        gameId: event.gameId,
+        playerId: event.playerId,
+        playerUsername: event.player.username,
+        type: event.type,
+        payload: event.payload,
+        timestamp: event.timestamp,
+      }));
+    }),
+
+  // TODO: Ajouter d'autres procédures si nécessaire
 });

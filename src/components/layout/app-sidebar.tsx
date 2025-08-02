@@ -11,6 +11,7 @@ import {
   IconListDetails,
   IconSearch,
   IconSettings,
+  IconSwords,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/layout/nav-main";
@@ -33,6 +34,11 @@ const data = {
       title: "Tableau de bord",
       url: "/dashboard",
       icon: IconDashboard,
+    },
+    {
+      title: "Multi-joueur",
+      url: "/multiplayer",
+      icon: IconSwords,
     },
     {
       title: "Historique",

@@ -160,7 +160,7 @@ export const gameRouter = createTRPCRouter({
 
       return {
         success: true,
-        gameId: game.id,
+        gameId: game.gameId,
         synced: true,
       };
     }),
@@ -200,7 +200,7 @@ export const gameRouter = createTRPCRouter({
       // Vérifier si l'action existe déjà (éviter les doublons)
       const existingAction = await ctx.db.gameAction.findFirst({
         where: {
-          gameId: game.id,
+          gameId: game.gameId,
           localId: input.id,
         },
       });
@@ -216,7 +216,7 @@ export const gameRouter = createTRPCRouter({
       // Créer l'action en base
       const dbAction = await ctx.db.gameAction.create({
         data: {
-          gameId: game.id,
+          gameId: game.gameId,
           playerId,
           actionType: input.type,
           payload: input.payload,

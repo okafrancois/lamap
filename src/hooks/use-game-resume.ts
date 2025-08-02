@@ -51,10 +51,13 @@ export function useGameResume() {
           });
         } else if (serverGame.players[1]) {
           players.push({
-            username: serverGame.players[1].username,
+            username: serverGame.players[1].username ?? "player2",
             type: "user",
             isConnected: true,
-            name: serverGame.players[1].name || serverGame.players[1].username,
+            name:
+              serverGame.players[1].name ??
+              serverGame.players[1].username ??
+              "player2",
             koras: 100,
           });
         }

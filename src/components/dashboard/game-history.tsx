@@ -175,7 +175,8 @@ export function GameHistory() {
                         <IconUsers className="h-4 w-4" />
                       )}
                       <span className="text-sm">
-                        vs {game.opponent?.name ?? "IA"}
+                        vs{" "}
+                        {game.player2?.name ?? game.player2?.username ?? "IA"}
                       </span>
                     </div>
                   </div>

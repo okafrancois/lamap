@@ -2,7 +2,17 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import type { LocalGameData } from "@/lib/game-sync";
+import type { GameState } from "@/engine/kora-game-engine";
+
+// Types pour le sync local
+interface LocalGameData {
+  id: string;
+  gameState: GameState;
+  actions: any[];
+  createdAt: number;
+  needsSync: boolean;
+  syncedAt?: number;
+}
 
 export function useGameSync() {
   const saveGameMutation = api.game.saveGame.useMutation();
@@ -117,6 +127,6 @@ export function useGameSync() {
   return {
     syncGame,
     syncAllPendingGames,
-    isLoading: saveGameMutation.isLoading,
+    isLoading: saveGameMutation.isPending,
   };
 }

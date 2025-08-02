@@ -54,11 +54,22 @@ export interface GameEvent {
     | "GAME_START"
     | "GAME_END"
     | "PLAYER_JOIN"
-    | "PLAYER_LEAVE";
+    | "PLAYER_LEAVE"
+    | "GAME_STATE_UPDATE";
   payload: any;
   timestamp: Date;
   processed: boolean;
 }
+
+export type MultiplayerEventPayloads = {
+  CARD_PLAYED: { cardId: string; playerUsername: string };
+  TURN_CHANGE: { playerTurnUsername: string };
+  GAME_START: { gameState: any };
+  GAME_STATE_UPDATE: { gameState: any };
+  PLAYER_JOIN: { player: any };
+  PLAYER_LEAVE: { playerId: string };
+  GAME_END: { winnerUsername: string; reason: string };
+};
 
 export interface PollingConfig {
   waiting: number; // 5000ms - recherche d'adversaire
@@ -67,14 +78,6 @@ export interface PollingConfig {
   opponent_turn: number; // 2000ms - tour adversaire
   ended: false; // Pas de polling
 }
-
-export const POLLING_INTERVALS: PollingConfig = {
-  waiting: 5000,
-  playing: 1000,
-  my_turn: 500,
-  opponent_turn: 2000,
-  ended: false,
-};
 
 // Types pour les mutations tRPC
 export interface CreateRoomInput {
@@ -100,3 +103,13 @@ export interface GetRoomUpdatesInput {
   roomId: string;
   lastVersion?: number;
 }
+
+// ========== CONSTANTES DE POLLING ==========
+
+export const POLLING_INTERVALS: Record<GamePhase, number | false> = {
+  waiting: 5000, // 5 secondes - recherche d'adversaire
+  playing: 1000, // 1 seconde - partie en cours
+  my_turn: 500, // 500ms - c'est mon tour
+  opponent_turn: 2000, // 2 secondes - tour adversaire
+  ended: false, // Pas de polling
+};
