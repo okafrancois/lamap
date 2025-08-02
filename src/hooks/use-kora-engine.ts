@@ -2,169 +2,204 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  gameEngine,
+  getKoraGameEngine,
+  createKoraGameEngine,
   type GameState,
-  type Player,
-  type GameMode,
+  type PlayerEntity,
   type AIDifficulty,
 } from "@/engine/kora-game-engine";
 import { type Card } from "common/deck";
 
-// Conversion entre les anciens types et les nouveaux types du game engine
 export function useKoraEngine() {
-  const [gameState, setGameState] = useState<GameState>(gameEngine.getState());
+  const [gameState, setGameState] = useState<GameState | null>(null);
 
   useEffect(() => {
-    const unsubscribe = gameEngine.subscribe((newState) => {
-      setGameState(newState);
-    });
+    try {
+      const engine = getKoraGameEngine();
+      setGameState(engine.getState());
 
-    return unsubscribe;
+      const unsubscribe = engine.subscribe((newState) => {
+        setGameState(newState);
+      });
+
+      return unsubscribe;
+    } catch {
+      // Le moteur n'est pas encore initialisé
+      console.log("Game engine not initialized yet");
+    }
   }, []);
 
-  // Actions principales
-  const startNewGame = useCallback(() => {
-    gameEngine.startNewGame();
-  }, []);
+  // Initialiser le moteur de jeu
+  const initializeEngine = useCallback(
+    (bet: number, maxRounds: number, players: PlayerEntity[]) => {
+      const engine = createKoraGameEngine(bet, maxRounds, players);
+      setGameState(engine.getState());
 
-  const playCard = useCallback((cardId: string, player: Player = "player") => {
-    return gameEngine.playCard(cardId, player);
-  }, []);
+      const unsubscribe = engine.subscribe((newState) => {
+        setGameState(newState);
+      });
 
-  // Actions de debug/god mode
-  const toggleGodMode = useCallback(() => {
-    gameEngine.toggleGodMode();
-  }, []);
-
-  const forcePlayerHand = useCallback((player: Player) => {
-    gameEngine.forcePlayerHand(player);
-  }, []);
-
-  // Utilitaires
-  const getPlayableCards = useCallback((player: Player) => {
-    return gameEngine.getPlayableCards(player);
-  }, []);
-
-  const canPlayCard = useCallback(
-    (cardId: string, player: Player = "player") => {
-      return gameEngine.canPlayCard(cardId, player);
+      return unsubscribe;
     },
     [],
   );
 
-  const getGameSummary = useCallback(() => {
-    return gameEngine.getGameSummary();
+  // Actions principales
+  const startNewGame = useCallback(() => {
+    try {
+      const engine = getKoraGameEngine();
+      engine.startNewGame();
+    } catch (error) {
+      console.error("Cannot start game: engine not initialized", error);
+    }
   }, []);
 
-  // Convertir les cartes pour l'ancienne interface (compatibilité)
-  const convertCardsForOldInterface = (cards: Card[]) => {
-    return cards.map((card, index) => ({
-      ...card,
-      // Ajouter un index pour compatibilité avec l'ancienne interface
-      index,
-    }));
-  };
-
-  // Interface compatible avec l'ancien système
-  const legacyInterface = {
-    // États pour l'ancienne interface
-    phase:
-      gameState.status === "playing"
-        ? ("playing" as const)
-        : gameState.status === "victory"
-          ? ("victory" as const)
-          : gameState.status === "defeat"
-            ? ("defeat" as const)
-            : ("waiting" as const),
-
-    currentTurn: (() => {
-      // Déterminer qui doit jouer maintenant basé sur la logique du game engine
-      const currentRoundCards = gameState.playedCards.filter(
-        (p) => p.round === gameState.currentRound,
-      );
-
-      if (currentRoundCards.length === 0) {
-        // Aucune carte jouée ce tour : c'est à celui qui a la main
-        return gameState.playerWithHand === "player"
-          ? ("player" as const)
-          : ("opponent" as const);
-      } else if (currentRoundCards.length === 1) {
-        // Une carte jouée : c'est à l'autre joueur
-        const firstPlayer = currentRoundCards[0]!.player;
-        return firstPlayer !== "player"
-          ? ("player" as const)
-          : ("opponent" as const);
-      } else {
-        // Deux cartes jouées : tour terminé, en attente de résolution
-        return gameState.playerWithHand === "player"
-          ? ("player" as const)
-          : ("opponent" as const);
+  const playCard = useCallback(
+    (cardId: string, playerId: string) => {
+      try {
+        const engine = getKoraGameEngine();
+        const player = gameState?.players.find((p) => p.id === playerId);
+        if (player) {
+          return engine.playCard(cardId, player);
+        }
+        return false;
+      } catch (error) {
+        console.error("Cannot play card: engine not initialized", error);
+        return false;
       }
-    })(),
-
-    playerCards: convertCardsForOldInterface(gameState.playerCards),
-    opponentCards: convertCardsForOldInterface(gameState.opponentCards),
-    playedCards: gameState.playedCards, // Garder les PlayedCard[] avec l'info du joueur
-
-    playableCards: gameState.playerCards
-      .map((card, index) => (card.jouable ? index : -1))
-      .filter((index) => index !== -1),
-
-    hoveredCard: null, // Pas utilisé dans le game engine
-    selectedCard: null, // Sera géré par l'interface
-    isAnimating: false, // Pas utilisé dans le game engine
-
-    // Informations supplémentaires du game engine
-    currentRound: gameState.currentRound,
-    playerKoras: gameState.playerKoras,
-    opponentKoras: gameState.opponentKoras,
-    playerWithHand: gameState.playerWithHand,
-    currentBet: gameState.currentBet,
-    godMode: gameState.godMode,
-    gameLog: gameState.gameLog,
-
-    // Actions pour l'ancienne interface
-    startGame: startNewGame,
-    endGame: () => {
-      /* Géré automatiquement par l'engine */
     },
-    setVictory: () => {
-      /* Géré automatiquement par l'engine */
-    },
-    setDefeat: () => {
-      /* Géré automatiquement par l'engine */
-    },
+    [gameState],
+  );
 
-    // Nouvelles actions du game engine
+  // Utilitaires
+  const getPlayableCards = useCallback(
+    (playerId: string): Card[] => {
+      try {
+        const engine = getKoraGameEngine();
+        const player = gameState?.players.find((p) => p.id === playerId);
+        if (player) {
+          return engine.getPlayableCards(player);
+        }
+        return [];
+      } catch (error) {
+        console.error(
+          "Cannot get playable cards: engine not initialized",
+          error,
+        );
+        return [];
+      }
+    },
+    [gameState],
+  );
+
+  const canPlayCard = useCallback(
+    (cardId: string, playerId: string): boolean => {
+      try {
+        const engine = getKoraGameEngine();
+        const player = gameState?.players.find((p) => p.id === playerId);
+        if (player) {
+          return engine.canPlayCard(cardId, player);
+        }
+        return false;
+      } catch (error) {
+        console.error(
+          "Cannot check playable card: engine not initialized",
+          error,
+        );
+        return false;
+      }
+    },
+    [gameState],
+  );
+
+  const getGameSummary = useCallback((): string => {
+    try {
+      const engine = getKoraGameEngine();
+      return engine.getGameSummary();
+    } catch (error) {
+      console.error("Cannot get game summary: engine not initialized", error);
+      return "";
+    }
+  }, []);
+
+  // Gestion IA
+  const setAIDifficulty = useCallback((difficulty: AIDifficulty) => {
+    try {
+      const engine = getKoraGameEngine();
+      engine.setAIDifficulty(difficulty);
+    } catch (error) {
+      console.error("Cannot set AI difficulty: engine not initialized", error);
+    }
+  }, []);
+
+  const triggerAITurn = useCallback(async () => {
+    try {
+      const engine = getKoraGameEngine();
+      const aiPlayer = gameState?.players.find((p) => p.type === "ai");
+      if (aiPlayer) {
+        await engine.triggerAITurn(aiPlayer);
+      }
+    } catch (error) {
+      console.error("Cannot trigger AI turn: engine not initialized", error);
+    }
+  }, [gameState]);
+
+  // Analyses de victoire
+  const getVictoryType = useCallback(() => {
+    try {
+      const engine = getKoraGameEngine();
+      return engine.getVictoryType();
+    } catch (error) {
+      console.error("Cannot get victory type: engine not initialized", error);
+      return {
+        type: "normal" as const,
+        title: "Partie terminée",
+        description: "Résultat non disponible",
+        multiplier: "x1",
+        special: false,
+      };
+    }
+  }, []);
+
+  const getKorasWonThisGame = useCallback((): number => {
+    try {
+      const engine = getKoraGameEngine();
+      return engine.getKorasWonThisGame();
+    } catch (error) {
+      console.error("Cannot get koras won: engine not initialized", error);
+      return 0;
+    }
+  }, []);
+
+  return {
+    // État du jeu
+    gameState,
+
+    // Actions d'initialisation
+    initializeEngine,
+
+    // Actions de jeu
+    startNewGame,
     playCard,
-    toggleGodMode,
-    forcePlayerHand,
+
+    // Utilitaires
     getPlayableCards,
     canPlayCard,
     getGameSummary,
 
     // Gestion IA
-    gameMode: gameState.gameMode,
-    aiDifficulty: gameState.aiDifficulty,
-    isAIThinking: gameState.isAIThinking,
-    setGameMode: useCallback((mode: "ai" | "online" | "local") => {
-      gameEngine.setGameMode(mode);
-    }, []),
-    setAIDifficulty: useCallback((difficulty: "easy" | "medium" | "hard") => {
-      gameEngine.setAIDifficulty(difficulty);
-    }, []),
-    triggerAITurn: useCallback(async () => {
-      await gameEngine.triggerAITurn();
-    }, []),
-  };
+    setAIDifficulty,
+    triggerAITurn,
 
-  return legacyInterface;
+    // Analyses
+    getVictoryType,
+    getKorasWonThisGame,
+  };
 }
 
 // Export des types pour compatibilité
 export type {
   GameState,
-  Player,
-  GameMode,
+  PlayerEntity,
   AIDifficulty,
 } from "@/engine/kora-game-engine";

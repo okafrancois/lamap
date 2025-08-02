@@ -188,7 +188,11 @@ export class KoraGameEngine {
     const startingPlayerId = this.getStartingPlayer();
 
     this.state = {
-      ...this.getInitialState(),
+      ...this.getInitialState(
+        this.state.currentBet,
+        this.state.maxRounds,
+        this.state.players,
+      ),
       players: this.state.players.map((player) => ({
         ...player,
         hand: player.id === startingPlayerId ? firstPlayer : secondPlayer,
@@ -198,6 +202,48 @@ export class KoraGameEngine {
       hasHandId: startingPlayerId,
       playerTurnId: startingPlayerId,
     };
+
+    // Vérifier les victoires automatiques (somme < 21)
+    const firstPlayerSum = this.calculateHandSum(firstPlayer);
+    const secondPlayerSum = this.calculateHandSum(secondPlayer);
+
+    if (firstPlayerSum < 21 || secondPlayerSum < 21) {
+      if (firstPlayerSum < 21 && secondPlayerSum < 21) {
+        // Les deux joueurs ont une somme < 21, celui avec la plus petite gagne
+        const winnerId =
+          firstPlayerSum < secondPlayerSum
+            ? startingPlayerId
+            : this.state.players.find((p) => p.id !== startingPlayerId)!.id;
+        this.handleAutomaticVictory(
+          winnerId,
+          `Somme la plus faible (${Math.min(firstPlayerSum, secondPlayerSum)})`,
+        );
+        this.endGame(winnerId);
+        return;
+      } else if (firstPlayerSum < 21) {
+        this.handleAutomaticVictory(
+          startingPlayerId,
+          `Somme < 21 (${firstPlayerSum})`,
+        );
+        this.endGame(startingPlayerId);
+        return;
+      } else {
+        const winnerId = this.state.players.find(
+          (p) => p.id !== startingPlayerId,
+        )!.id;
+        this.handleAutomaticVictory(
+          winnerId,
+          `Somme < 21 (${secondPlayerSum})`,
+        );
+        this.endGame(winnerId);
+        return;
+      }
+    }
+
+    this.log(
+      `🎮 Nouvelle partie commencée ! Joueur ${startingPlayerId} a la main`,
+    );
+    this.log(`Sommes: J1=${firstPlayerSum}, J2=${secondPlayerSum}`);
 
     // Mettre à jour les cartes jouables
     this.updatePlayableCards();
@@ -369,10 +415,13 @@ export class KoraGameEngine {
       const consecutiveThrees = this.countConsecutiveThrees(playerPlayedCards);
 
       if (consecutiveThrees >= 3) {
+        this.log(`🎯 TRIPLE KORA (333) ! Multiplicateur x4 !`);
         this.applyKoraMultiplier(winnerId, 4);
       } else if (consecutiveThrees >= 2) {
+        this.log(`🔥 DOUBLE KORA (33) ! Multiplicateur x3 !`);
         this.applyKoraMultiplier(winnerId, 3);
       } else {
+        this.log(`🏆 KORA Simple ! Multiplicateur x2 !`);
         this.applyKoraMultiplier(winnerId, 2);
       }
     }
@@ -644,6 +693,105 @@ Koras Adversaire: ${state.players[1]!.koras}
     }
   }
 
+  // ========== ANALYSE DES VICTOIRES SPÉCIALES ==========
+
+  public getVictoryType(): {
+    type:
+      | "normal"
+      | "auto_sum"
+      | "auto_lowest"
+      | "simple_kora"
+      | "double_kora"
+      | "triple_kora";
+    title: string;
+    description: string;
+    multiplier: string;
+    special: boolean;
+  } {
+    const recentLogs = this.state.gameLog.slice(-10);
+
+    for (const log of recentLogs) {
+      const message = log.message;
+
+      if (message.includes("TRIPLE KORA (333)")) {
+        return {
+          type: "triple_kora",
+          title: "TRIPLE KORA ! 🎯",
+          description: "Victoire avec 3 cartes 3 consécutives",
+          multiplier: "x4",
+          special: true,
+        };
+      }
+      if (message.includes("DOUBLE KORA (33)")) {
+        return {
+          type: "double_kora",
+          title: "DOUBLE KORA ! 🔥",
+          description: "Victoire avec 2 cartes 3 consécutives",
+          multiplier: "x3",
+          special: true,
+        };
+      }
+      if (message.includes("KORA Simple")) {
+        return {
+          type: "simple_kora",
+          title: "KORA ! 🏆",
+          description: "Victoire avec un 3 au tour final",
+          multiplier: "x2",
+          special: true,
+        };
+      }
+
+      if (message.includes("Victoire automatique")) {
+        if (message.includes("Somme < 21")) {
+          return {
+            type: "auto_sum",
+            title: "Victoire Automatique ! ⚡",
+            description: "Somme des cartes inférieure à 21",
+            multiplier: "x1",
+            special: true,
+          };
+        }
+        if (message.includes("Somme la plus faible")) {
+          return {
+            type: "auto_lowest",
+            title: "Victoire Automatique ! 📊",
+            description: "Plus petite somme (les deux < 21)",
+            multiplier: "x1",
+            special: true,
+          };
+        }
+      }
+    }
+
+    return {
+      type: "normal",
+      title: this.state.winnerId ? "Victoire ! 🎉" : "Défaite ! 💀",
+      description: this.state.winnerId
+        ? "Vous avez la main au tour final"
+        : "L'adversaire a la main au tour final",
+      multiplier: "x1",
+      special: false,
+    };
+  }
+
+  public getKorasWonThisGame(): number {
+    const betAmount = this.state.currentBet;
+    const victoryType = this.getVictoryType();
+
+    if (!this.state.winnerId) return 0;
+
+    switch (victoryType.type) {
+      case "triple_kora":
+        return betAmount * 4;
+      case "double_kora":
+        return betAmount * 3;
+      case "simple_kora":
+        return betAmount * 2;
+      default:
+        return betAmount;
+    }
+  }
+
   public setAIDifficulty(difficulty: AIDifficulty): void {
     this.state.players.find((p) => p.type === "ai")!.aiDifficulty = difficulty;
     this.notifyListeners();
@@ -698,9 +846,9 @@ Koras Adversaire: ${state.players[1]!.koras}
     // Importer et utiliser AIPlayer
     try {
       const { AIPlayer } = await import("./ai-player");
-      const aiInstance = new AIPlayer(aiPlayer.aiDifficulty || "medium");
+      const aiInstance = new AIPlayer(aiPlayer.aiDifficulty ?? "medium");
       const selectedCard = aiInstance.chooseCard(this.getState());
-      chosenCard = selectedCard?.id || null;
+      chosenCard = selectedCard?.id ?? null;
     } catch (error) {
       console.warn("Erreur lors du chargement de l'IA:", error);
     }
@@ -725,11 +873,22 @@ Koras Adversaire: ${state.players[1]!.koras}
 }
 
 // Instance singleton du game engine
-export const startKoraGameEngine = (
+let gameEngineInstance: KoraGameEngine | null = null;
+
+export const createKoraGameEngine = (
   bet: number,
   maxRounds: number,
   players: PlayerEntity[],
 ) => {
-  const gameEngine = new KoraGameEngine(bet, maxRounds, players);
-  return gameEngine;
+  gameEngineInstance = new KoraGameEngine(bet, maxRounds, players);
+  return gameEngineInstance;
+};
+
+export const getKoraGameEngine = (): KoraGameEngine => {
+  if (!gameEngineInstance) {
+    throw new Error(
+      "Game engine not initialized. Call createKoraGameEngine first.",
+    );
+  }
+  return gameEngineInstance;
 };

@@ -1,9 +1,5 @@
 import { type Card, type Suit, type Rank } from "common/deck";
-import {
-  type Player,
-  type GameState,
-  type PlayedCard,
-} from "./kora-game-engine";
+import { type GameState } from "./kora-game-engine";
 
 interface CardMemory {
   playedCards: Card[];
@@ -37,8 +33,13 @@ export class AIPlayer {
   }
 
   public chooseCard(gameState: GameState): Card | null {
-    const opponentCards = gameState.opponentCards;
-    const playableCards = opponentCards.filter((card) => card.jouable);
+    // Trouver le joueur IA dans l'état du jeu
+    const aiPlayer = gameState.players.find((p) => p.type === "ai");
+    if (!aiPlayer?.hand) {
+      return null;
+    }
+
+    const playableCards = aiPlayer.hand.filter((card) => card.jouable);
 
     if (playableCards.length === 0) {
       return null;
@@ -59,8 +60,12 @@ export class AIPlayer {
   }
 
   private updateMemory(gameState: GameState): void {
+    // Trouver le joueur humain et ses cartes jouées
+    const humanPlayer = gameState.players.find((p) => p.type === "user");
+    if (!humanPlayer) return;
+
     const playerPlayedCards = gameState.playedCards
-      .filter((pc) => pc.player === "player")
+      .filter((pc) => pc.playerId === humanPlayer.id)
       .map((pc) => pc.card);
 
     this.memory.playedCards = playerPlayedCards;
@@ -113,7 +118,13 @@ export class AIPlayer {
       );
     }
 
-    if (gameState.playerWithHand === "opponent") {
+    // Déterminer si l'IA a la main
+    const aiPlayer = gameState.players.find((p) => p.type === "ai");
+    if (!aiPlayer) return this.chooseBestCard(gameState, playableCards);
+
+    const hasHand = gameState.hasHandId === aiPlayer.id;
+
+    if (hasHand) {
       return this.chooseWhenHavingHand(gameState, playableCards);
     } else {
       return this.chooseWhenResponding(gameState, playableCards);
@@ -148,7 +159,12 @@ export class AIPlayer {
     const threes = playableCards.filter((card) => card.rank === "3");
 
     if (gameState.currentRound === 5 && threes.length > 0) {
-      if (gameState.playerWithHand === "opponent") {
+      const aiPlayer = gameState.players.find((p) => p.type === "ai");
+      if (!aiPlayer) return null;
+
+      const hasHand = gameState.hasHandId === aiPlayer.id;
+
+      if (hasHand) {
         const safestThree = this.chooseSafestThree(gameState, threes);
         console.log("🎯 AI: Tentative de KORA au tour final !");
         return safestThree;
@@ -262,7 +278,8 @@ export class AIPlayer {
     playableCards: Card[],
     predictedCard: Card | null,
   ): Card | null {
-    if (!predictedCard || gameState.playerWithHand !== "opponent") {
+    const aiPlayer = gameState.players.find((p) => p.type === "ai");
+    if (!aiPlayer || !predictedCard || gameState.hasHandId === aiPlayer.id) {
       return null;
     }
 
@@ -296,7 +313,8 @@ export class AIPlayer {
     gameState: GameState,
     playableCards: Card[],
   ): Card | null {
-    if (gameState.playerWithHand !== "opponent") return null;
+    const aiPlayer = gameState.players.find((p) => p.type === "ai");
+    if (!aiPlayer || gameState.hasHandId !== aiPlayer.id) return null;
 
     const playerEstimatedCards = this.estimatePlayerCards(gameState);
     const weakSuits = this.findPlayerWeakSuits(playerEstimatedCards);
@@ -346,15 +364,22 @@ export class AIPlayer {
   private estimatePlayerCards(gameState: GameState): ProbabilityCard[] {
     const allCards = this.createFullDeck();
     const playedCardIds = gameState.playedCards.map((pc) => pc.card.id);
-    const opponentCardIds = gameState.opponentCards.map((c) => c.id);
+
+    // Obtenir les cartes de l'IA
+    const aiPlayer = gameState.players.find((p) => p.type === "ai");
+    const aiCardIds = aiPlayer?.hand?.map((c) => c.id) ?? [];
 
     const availableCards = allCards.filter(
       (card) =>
-        !playedCardIds.includes(card.id) && !opponentCardIds.includes(card.id),
+        !playedCardIds.includes(card.id) && !aiCardIds.includes(card.id),
     );
 
-    const estimatedPlayerCardCount =
-      5 - gameState.playedCards.filter((pc) => pc.player === "player").length;
+    // Estimer le nombre de cartes restantes du joueur humain
+    const humanPlayer = gameState.players.find((p) => p.type === "user");
+    const humanPlayedCount = gameState.playedCards.filter(
+      (pc) => pc.playerId === humanPlayer?.id,
+    ).length;
+    const estimatedPlayerCardCount = 5 - humanPlayedCount;
 
     return availableCards.slice(0, estimatedPlayerCardCount).map((card) => ({
       card,

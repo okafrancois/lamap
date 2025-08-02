@@ -1315,70 +1315,54 @@ interface PlayedCardsProps {
 }
 
 export function PlayedCards({ cards, className }: PlayedCardsProps) {
-  // Séparer les cartes selon le joueur qui les a jouées
-  const opponentCards = cards.filter(
-    (playedCard) => playedCard.player === "opponent",
-  );
-  const playerCards = cards.filter(
-    (playedCard) => playedCard.player === "player",
-  );
+  // Afficher seulement les cartes du tour actuel
+  const currentRound =
+    cards.length > 0 ? Math.max(...cards.map((c) => c.round)) : 0;
+  const currentRoundCards = cards.filter((c) => c.round === currentRound);
 
   return (
     <div
       className={cn(
-        "relative flex min-h-[200px] flex-col items-center justify-center gap-1",
+        "relative flex min-h-[200px] flex-col items-center justify-center gap-4",
         className,
       )}
     >
-      {cards.length === 0 ? (
+      {currentRoundCards.length === 0 ? (
         <div className="flex items-center justify-center text-center">
           <div className="rounded-full border-2 border-amber-300/40 bg-amber-200/10 p-4">
             <div className="text-xs text-amber-100/80">Aucune carte jouée</div>
           </div>
         </div>
       ) : (
-        <>
-          {/* Rangée de l'adversaire */}
-          <div className="flex items-center gap-2">
-            {opponentCards.map((playedCard, index) => (
-              <div
-                key={`opponent-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
-                className="transition-transform duration-300"
-              >
-                <PlayingCard
-                  suit={playedCard.card.suit}
-                  rank={playedCard.card.rank}
-                  width={77}
-                  height={108}
-                  className="shadow-lg"
-                />
+        <div className="flex items-center gap-6">
+          {currentRoundCards.map((playedCard, index) => (
+            <div
+              key={`${playedCard.playerId}-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
+              className="relative transition-transform duration-300"
+            >
+              <PlayingCard
+                suit={playedCard.card.suit}
+                rank={playedCard.card.rank}
+                width={77}
+                height={108}
+                className="shadow-lg"
+              />
+              {/* Indicateur du joueur sous la carte */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 transform">
+                <div className="rounded bg-black/50 px-2 py-1 text-center text-xs text-white">
+                  {playedCard.playerId === "user-1" ? "Vous" : "IA"}
+                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-          {/* Séparateur visuel */}
-          {opponentCards.length > 0 && playerCards.length > 0 && (
-            <div className="h-px w-16 bg-amber-300/40"></div>
-          )}
-
-          {/* Rangée du joueur */}
-          <div className="flex items-center gap-2">
-            {playerCards.map((playedCard, index) => (
-              <div
-                key={`player-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
-                className="transition-transform duration-300"
-              >
-                <PlayingCard
-                  suit={playedCard.card.suit}
-                  rank={playedCard.card.rank}
-                  width={77}
-                  height={108}
-                  className="shadow-lg"
-                />
-              </div>
-            ))}
-          </div>
-        </>
+      {/* Afficher le numéro du tour actuel */}
+      {currentRound > 0 && (
+        <div className="absolute top-2 right-2 rounded bg-amber-500/20 px-2 py-1 text-xs text-amber-100">
+          Tour {currentRound}
+        </div>
       )}
     </div>
   );

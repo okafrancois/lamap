@@ -56,16 +56,16 @@ export function VictoryModal({
       if (message.includes("TRIPLE KORA (333)")) {
         return {
           type: "triple_kora",
-          title: "TRIPLE KORA ! 🎯",
+          title: "333 EXPORT ! 🎯",
           description: "Victoire avec 3 cartes 3 consécutives",
           multiplier: "x4",
           special: true,
         };
       }
-      if (message.includes("33 Export")) {
+      if (message.includes("DOUBLE KORA (33)")) {
         return {
           type: "double_kora",
-          title: "DOUBLE KORA ! 🔥",
+          title: "33 EXPORT ! 🔥",
           description: "Victoire avec 2 cartes 3 consécutives",
           multiplier: "x3",
           special: true,
