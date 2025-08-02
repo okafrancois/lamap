@@ -65,6 +65,11 @@ model User {
     gamesAsPlayer2 Game[] @relation("Player2")
     gameActions    GameAction[]
     gameStats      UserGameStats?
+    
+    // Relations multi-joueur
+    hostedRooms    GameRoom[] @relation("RoomHost")
+    roomPlayers    RoomPlayer[] @relation("RoomPlayers")
+    gameEvents     GameEvent[] @relation("PlayerEvents")
 }
 
 model VerificationToken {
@@ -136,6 +141,10 @@ model Game {
     localId           String?    // ID local pour sync
     lastSyncedAt      DateTime   @default(now())
     
+    // Relations multi-joueur
+    room              GameRoom?  @relation("RoomGame")
+    events            GameEvent[] @relation("GameEvents")
+    
     @@index([gameId])
     @@index([player1Id])
     @@index([player2Id])
@@ -192,4 +201,76 @@ model UserGameStats {
     // Métadonnées
     createdAt       DateTime @default(now())
     updatedAt       DateTime @updatedAt
+}
+
+// ========== MODÈLES MULTI-JOUEUR ==========
+
+enum RoomStatus {
+    WAITING
+    PLAYING
+    ENDED
+}
+
+// Salles de jeu multi-joueur
+model GameRoom {
+    id           String     @id @default(cuid())
+    name         String
+    hostId       String
+    host         User       @relation("RoomHost", fields: [hostId], references: [id], onDelete: Cascade)
+    status       RoomStatus @default(WAITING)
+    maxPlayers   Int        @default(2)
+    gameMode     GameMode   @default(ONLINE)
+    bet          Int        @default(10)
+    maxRounds    Int        @default(5)
+    isPrivate    Boolean    @default(false)
+    password     String?
+    gameId       String?    @unique // ID de la partie une fois commencée
+    game         Game?      @relation("RoomGame", fields: [gameId], references: [gameId])
+    
+    // Relations
+    players      RoomPlayer[]
+    events       GameEvent[]
+    
+    // Métadonnées
+    createdAt    DateTime   @default(now())
+    updatedAt    DateTime   @updatedAt
+    version      Int        @default(0) // Pour le polling intelligent
+    
+    @@index([status, createdAt])
+    @@index([hostId])
+}
+
+// Joueurs dans une salle
+model RoomPlayer {
+    id         String   @id @default(cuid())
+    roomId     String
+    room       GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    userId     String
+    user       User     @relation("RoomPlayers", fields: [userId], references: [id], onDelete: Cascade)
+    isReady    Boolean  @default(false)
+    isHost     Boolean  @default(false)
+    joinedAt   DateTime @default(now())
+    
+    @@unique([roomId, userId])
+    @@index([roomId])
+    @@index([userId])
+}
+
+// Événements de jeu pour le polling
+model GameEvent {
+    id        String   @id @default(cuid())
+    roomId    String
+    room      GameRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    gameId    String?
+    game      Game?    @relation("GameEvents", fields: [gameId], references: [gameId], onDelete: Cascade)
+    playerId  String
+    player    User     @relation("PlayerEvents", fields: [playerId], references: [id], onDelete: Cascade)
+    type      String   // CARD_PLAYED, TURN_CHANGE, etc.
+    payload   Json
+    processed Boolean  @default(false)
+    timestamp DateTime @default(now())
+    
+    @@index([roomId, timestamp])
+    @@index([gameId, timestamp])
+    @@index([processed, timestamp])
 }

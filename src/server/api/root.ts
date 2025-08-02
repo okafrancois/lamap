@@ -4,6 +4,7 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 import { gameRouter } from "@/server/api/routers/game";
+import { multiplayerRouter } from "@/server/api/routers/multiplayer";
 import { z } from "zod";
 
 /**
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
       };
     }),
   game: gameRouter,
+  multiplayer: multiplayerRouter,
 });
 
 // export type definition of API
