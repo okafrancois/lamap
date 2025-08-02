@@ -19,7 +19,10 @@ export function PageContainer({
 
   return (
     <div
-      className={cn(`absolute inset-0 container overflow-y-scroll`, className)}
+      className={cn(
+        `absolute inset-0 container overflow-y-scroll py-6`,
+        className,
+      )}
     >
       {children}
     </div>

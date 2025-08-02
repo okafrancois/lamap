@@ -25,7 +25,7 @@ export function useKoraEngine() {
       return unsubscribe;
     } catch {
       // Le moteur n'est pas encore initialisé
-      console.log("Game engine not initialized yet");
+      console.error("Game engine not initialized yet");
     }
   }, []);
 
@@ -217,6 +217,17 @@ export function useKoraEngine() {
       } catch (error) {
         console.error(
           "Cannot set victory callback: engine not initialized",
+          error,
+        );
+      }
+    },
+    setOnGameUpdateCallback: (callback: (gameState: GameState) => void) => {
+      try {
+        const engine = getKoraGameEngine();
+        engine.setOnGameUpdateCallback(callback);
+      } catch (error) {
+        console.error(
+          "Cannot set game update callback: engine not initialized",
           error,
         );
       }

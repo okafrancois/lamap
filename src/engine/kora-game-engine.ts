@@ -1,5 +1,6 @@
 import { type Card, type Suit, type Rank } from "common/deck";
 import { AIPlayer } from "@/engine/ai-player";
+import type { LocalGameAction } from "@/lib/game-sync";
 
 // Types améliorés pour le game engine
 export type PlayerType = "user" | "ai";
@@ -72,6 +73,7 @@ export class KoraGameEngine {
   private state: GameState;
   private listeners: ((state: GameState) => void)[] = [];
   private onVictoryCallback?: () => void;
+  private onGameUpdateCallback?: (gameState: GameState) => void;
 
   constructor(bet: number, maxRounds: number, players: PlayerEntity[]) {
     this.state = this.getInitialState(bet, maxRounds, players);
@@ -295,6 +297,8 @@ export class KoraGameEngine {
     // Mettre à jour les cartes jouables
     this.updatePlayableCards();
     this.notifyListeners();
+
+    // Sauvegarder l'état initial
   }
 
   public playCard(cardId: string, player: PlayerEntity): boolean {
@@ -358,6 +362,8 @@ export class KoraGameEngine {
     // Toujours mettre à jour l'état du tour et les cartes jouables
     this.updatePlayableCards();
     this.notifyListeners();
+
+    // Sauvegarder l'action et l'état
 
     // Déclencher automatiquement l'IA si c'est son tour et qu'elle est de type AI
     void this.triggerAIIfNeeded();
@@ -527,6 +533,8 @@ export class KoraGameEngine {
     }
 
     this.notifyListeners();
+
+    // Sauvegarder la fin de partie
 
     // Déclencher le callback de victoire si défini
     if (this.onVictoryCallback) {
@@ -726,8 +734,17 @@ export class KoraGameEngine {
     this.onVictoryCallback = callback;
   }
 
+  setOnGameUpdateCallback(callback: (gameState: GameState) => void): void {
+    this.onGameUpdateCallback = callback;
+  }
+
   private notifyListeners(): void {
     this.listeners.forEach((listener) => listener(this.getState()));
+
+    // Callback pour sync automatique
+    if (this.onGameUpdateCallback) {
+      this.onGameUpdateCallback(this.getState());
+    }
   }
 
   public getGameSummary(): string {

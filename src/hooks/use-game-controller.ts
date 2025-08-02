@@ -5,6 +5,7 @@ import { useKoraEngine } from "./use-kora-engine";
 import { useGameUI } from "@/hooks/use-game-ui";
 import { useGameSounds } from "@/hooks/use-game-sounds";
 import { useUserDataContext } from "@/components/layout/user-provider";
+import { useGameSync } from "@/hooks/use-game-sync";
 import {
   type PlayerEntity,
   type AIDifficulty,
@@ -18,6 +19,7 @@ export function useGameController() {
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
+  const gameSync = useGameSync();
 
   // Gérer les sons du jeu
   useGameSounds(koraEngine.gameState);
@@ -28,6 +30,25 @@ export function useGameController() {
       ui.actions.showVictory();
     });
   }, [koraEngine, ui.actions]);
+
+  // Configurer le sync automatique
+  useEffect(() => {
+    if (!userData) return;
+
+    koraEngine.setOnGameUpdateCallback((gameState) => {
+      // Créer les données de jeu pour le sync
+      const gameData = {
+        id: `game-${gameState.gameId}`,
+        gameState,
+        actions: [], // TODO: implémenter les actions si nécessaire
+        createdAt: Date.now(),
+        needsSync: true,
+      };
+
+      // Sync immédiat
+      void gameSync.syncGame(gameData);
+    });
+  }, [koraEngine, gameSync, userData]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   // Initialiser le jeu avec des joueurs selon le mode choisi

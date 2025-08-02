@@ -22,6 +22,7 @@ import {
 } from "@tabler/icons-react";
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
+import { ResumeGameCard } from "@/components/game/resume-game-card";
 
 export default function PlayPage() {
   const controller = useGameController();
@@ -126,7 +127,7 @@ export default function PlayPage() {
                 <LibButton
                   variant="outline"
                   size="sm"
-                  onClick={() => controller.selectGameMode(null)}
+                  onClick={() => window.location.reload()}
                   className="h-8 text-xs"
                 >
                   <IconCards className="mr-1 size-3" />
@@ -233,7 +234,7 @@ export default function PlayPage() {
           <Card
             className={`hidden h-full w-2/6 pt-0 transition-all duration-700 ease-in-out lg:block`}
           >
-            <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !p-3">
+            <CardHeader className="from-secondary/10 to-primary/10 mb-4 border-b bg-gradient-to-r !p-3">
               <LibTitle as="h3" className="flex w-full items-center gap-3">
                 <div className="bg-secondary/20 rounded-lg p-2">
                   <IconCards className="text-secondary size-6" />
@@ -300,8 +301,7 @@ export default function PlayPage() {
                   </LibButton>
                   <LibButton
                     onClick={() => {
-                      ui.actions.setSelectedGameMode(null);
-                      controller.newGame();
+                      window.location.reload();
                     }}
                     variant="outline"
                     className="w-full"
@@ -315,6 +315,14 @@ export default function PlayPage() {
 
             {gameState?.status !== "ended" && (
               <CardContent className="max-h-full space-y-4 overflow-y-scroll">
+                {/* Carte pour reprendre les parties en cours */}
+                <ResumeGameCard
+                  onGameResumed={() => {
+                    // Optionnel: actions après reprise de partie
+                    console.log("Partie reprise avec succès");
+                  }}
+                />
+
                 {/* Options de difficulté pour l'IA */}
                 {ui.selectedGameMode === "ai" &&
                   (!gameState || gameState.status === "waiting") && (

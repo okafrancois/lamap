@@ -4,6 +4,7 @@ import * as React from "react";
 import {
   IconCards,
   IconChartBar,
+  IconClock,
   IconDashboard,
   IconFolder,
   IconHelp,
@@ -32,6 +33,11 @@ const data = {
       title: "Tableau de bord",
       url: "/dashboard",
       icon: IconDashboard,
+    },
+    {
+      title: "Historique",
+      url: "/history",
+      icon: IconClock,
     },
   ],
   navSecondary: [

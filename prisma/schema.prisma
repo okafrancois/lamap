@@ -59,6 +59,12 @@ model User {
     role          Role      @default(USER)
     accounts      Account[]
     sessions      Session[]
+    
+    // Relations de jeu
+    gamesAsPlayer1 Game[] @relation("Player1")
+    gamesAsPlayer2 Game[] @relation("Player2")
+    gameActions    GameAction[]
+    gameStats      UserGameStats?
 }
 
 model VerificationToken {
@@ -67,4 +73,123 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+// ========== MODELS DE JEU ==========
+
+enum GameStatus {
+    WAITING    // En attente de joueurs
+    PLAYING    // Partie en cours
+    ENDED      // Partie terminée
+    ABANDONED  // Partie abandonnée
+}
+
+enum GameMode {
+    AI         // Contre IA
+    ONLINE     // En ligne
+    LOCAL      // Local (même appareil)
+}
+
+enum VictoryType {
+    NORMAL          // Victoire normale
+    AUTO_SUM        // Somme < 21
+    AUTO_LOWEST     // Plus petite somme
+    AUTO_SEVENS     // 3+ cartes de 7
+    SIMPLE_KORA     // Kora simple (3 au tour 5)
+    DOUBLE_KORA     // Double kora (33)
+    TRIPLE_KORA     // Triple kora (333)
+}
+
+model Game {
+    gameId            String     @unique @id
+    mode              GameMode
+    status            GameStatus @default(WAITING)
+    
+    // Joueurs
+    player1Id         String
+    player2Id         String?    // Null pour mode IA
+    player1           User       @relation("Player1", fields: [player1Id], references: [id])
+    player2           User?      @relation("Player2", fields: [player2Id], references: [id])
+    
+    // Configuration
+    currentBet        Int        @default(10)
+    maxRounds         Int        @default(5)
+    aiDifficulty      String?    // "easy", "medium", "hard"
+    
+    // État de la partie
+    currentRound      Int        @default(1)
+    hasHandPlayerId   String?    // Qui a la main
+    playerTurnId      String?    // Tour actuel
+    winnerPlayerId    String?    // Gagnant
+    victoryType       VictoryType?
+    endReason         String?
+    
+    // Métadonnées
+    seed              String     // Pour reproductibilité
+    startedAt         DateTime   @default(now())
+    endedAt           DateTime?
+    
+    // Relations
+    actions           GameAction[]
+    
+    // Sync
+    localId           String?    // ID local pour sync
+    lastSyncedAt      DateTime   @default(now())
+    
+    @@index([gameId])
+    @@index([player1Id])
+    @@index([player2Id])
+    @@index([status])
+}
+
+model GameAction {
+    id            String   @id @default(cuid())
+    gameId        String
+    game          Game     @relation(fields: [gameId], references: [gameId], onDelete: Cascade)
+    
+    playerId      String
+    player        User     @relation(fields: [playerId], references: [id])
+    
+    actionType    String   // "PLAY_CARD", "START_GAME", "END_GAME"
+    payload       Json     // Données de l'action
+    round         Int
+    timestamp     DateTime @default(now())
+    
+    // Sync
+    localId       String?  // ID local pour sync
+    processed     Boolean  @default(false)
+    
+    @@index([gameId, timestamp])
+    @@index([playerId])
+}
+
+model UserGameStats {
+    id              String @id @default(cuid())
+    userId          String @unique
+    user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    
+    // Statistiques générales
+    totalGames      Int    @default(0)
+    wins            Int    @default(0)
+    losses          Int    @default(0)
+    
+    // Statistiques par type
+    aiWins          Int    @default(0)
+    onlineWins      Int    @default(0)
+    
+    // Exploits
+    simpleKoras     Int    @default(0)
+    doubleKoras     Int    @default(0)
+    tripleKoras     Int    @default(0)
+    autoVictories   Int    @default(0)
+    sevenVictories  Int    @default(0)
+    
+    // Économie
+    totalKorasWon   Int    @default(0)
+    totalKorasLost  Int    @default(0)
+    currentKoras    Int    @default(100) // Koras actuels
+    
+    // Métadonnées
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
 }

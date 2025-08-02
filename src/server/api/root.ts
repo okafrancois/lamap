@@ -3,6 +3,7 @@ import {
   createTRPCRouter,
   publicProcedure,
 } from "@/server/api/trpc";
+import { gameRouter } from "@/server/api/routers/game";
 import { z } from "zod";
 
 /**
@@ -18,6 +19,7 @@ export const appRouter = createTRPCRouter({
         greeting: `Hello ${input.text}`,
       };
     }),
+  game: gameRouter,
 });
 
 // export type definition of API
