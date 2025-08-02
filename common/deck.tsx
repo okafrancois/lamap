@@ -594,15 +594,15 @@ const PlayingCard: React.FC<CardProps> = ({
             height="8"
             patternUnits="userSpaceOnUse"
           >
-            <rect width="8" height="8" fill="rgba(255,255,255,0.98)" />
-            <circle cx="2" cy="2" r="0.5" fill="rgba(255,255,255,0.9)" />
-            <circle cx="6" cy="6" r="0.5" fill="rgba(255,255,255,0.9)" />
+            <rect width="8" height="8" fill="rgba(255,255,255,1)" />
+            <circle cx="2" cy="2" r="0.5" fill="rgba(255,255,255,1)" />
+            <circle cx="6" cy="6" r="0.5" fill="rgba(255,255,255,1)" />
             <rect
               x="1"
               y="1"
               width="6"
               height="6"
-              fill="rgba(255,255,255,0.95)"
+              fill="rgba(255,255,255,1)"
               rx="1"
             />
           </pattern>
@@ -616,9 +616,9 @@ const PlayingCard: React.FC<CardProps> = ({
             y2="100%"
           >
             <stop offset="0%" stopColor="rgba(255,255,255,1)" />
-            <stop offset="20%" stopColor="rgba(248,250,252,0.98)" />
-            <stop offset="80%" stopColor="rgba(241,245,249,0.95)" />
-            <stop offset="100%" stopColor="rgba(226,232,240,0.9)" />
+            <stop offset="20%" stopColor="rgba(248,250,252,1)" />
+            <stop offset="80%" stopColor="rgba(241,245,249,1)" />
+            <stop offset="100%" stopColor="rgba(226,232,240,1)" />
           </linearGradient>
 
           {/* Pattern décoratif élégant pour les bordures */}
@@ -1311,14 +1311,27 @@ export function PlayerDeck({
 // Composant pour les cartes en jeu (pile centrale)
 interface PlayedCardsProps {
   cards: PlayedCard[];
+  currentUserId?: string;
   className?: string;
 }
 
-export function PlayedCards({ cards, className }: PlayedCardsProps) {
+export function PlayedCards({
+  cards,
+  currentUserId,
+  className,
+}: PlayedCardsProps) {
   // Afficher seulement les cartes du tour actuel
   const currentRound =
     cards.length > 0 ? Math.max(...cards.map((c) => c.round)) : 0;
   const currentRoundCards = cards.filter((c) => c.round === currentRound);
+
+  // Séparer les cartes par joueur
+  const opponentCards = currentRoundCards.filter(
+    (card) => card.playerId !== currentUserId,
+  );
+  const playerCards = currentRoundCards.filter(
+    (card) => card.playerId === currentUserId,
+  );
 
   return (
     <div
@@ -1334,27 +1347,56 @@ export function PlayedCards({ cards, className }: PlayedCardsProps) {
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-6">
-          {currentRoundCards.map((playedCard, index) => (
-            <div
-              key={`${playedCard.playerId}-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
-              className="relative transition-transform duration-300"
-            >
-              <PlayingCard
-                suit={playedCard.card.suit}
-                rank={playedCard.card.rank}
-                width={77}
-                height={108}
-                className="shadow-lg"
-              />
-              {/* Indicateur du joueur sous la carte */}
-              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 transform">
-                <div className="rounded bg-black/50 px-2 py-1 text-center text-xs text-white">
-                  {playedCard.playerId === "user-1" ? "Vous" : "IA"}
+        <div className="flex flex-col items-center gap-2">
+          {/* Cartes de l'adversaire en haut */}
+          {opponentCards.length > 0 && (
+            <div className="flex items-center gap-3">
+              {opponentCards.map((playedCard, index) => (
+                <div
+                  key={`opponent-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
+                  className="relative transition-transform duration-300"
+                >
+                  <PlayingCard
+                    suit={playedCard.card.suit}
+                    rank={playedCard.card.rank}
+                    width={77}
+                    height={108}
+                    className="shadow-lg"
+                  />
+                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 transform">
+                    <div className="rounded bg-black/50 px-2 py-1 text-center text-xs text-white">
+                      IA
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* Cartes du joueur en bas */}
+          {playerCards.length > 0 && (
+            <div className="flex items-center gap-3">
+              {playerCards.map((playedCard, index) => (
+                <div
+                  key={`player-${playedCard.card.suit}-${playedCard.card.rank}-${index}`}
+                  className="relative transition-transform duration-300"
+                >
+                  <PlayingCard
+                    suit={playedCard.card.suit}
+                    rank={playedCard.card.rank}
+                    width={77}
+                    height={108}
+                    className="shadow-lg"
+                  />
+                  <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 transform">
+                    <div className="rounded bg-black/50 px-2 py-1 text-center text-xs text-white">
+                      Vous
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

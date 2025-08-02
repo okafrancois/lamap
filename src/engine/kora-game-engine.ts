@@ -306,11 +306,9 @@ export class KoraGameEngine {
 
     if (currentRoundCards.length === 2) {
       this.resolveRound(currentRoundCards);
-    } else {
-      // Passer le tour à l'autre joueur
-      this.switchTurn();
     }
 
+    // Toujours mettre à jour l'état du tour et les cartes jouables
     this.updatePlayableCards();
     this.notifyListeners();
 
@@ -547,8 +545,7 @@ export class KoraGameEngine {
   }
 
   private switchTurn(): void {
-    // Cette méthode est appelée quand une carte est jouée mais le tour n'est pas fini
-    // La logique du tour est gérée dans isPlayerTurn()
+    // Cette méthode n'est plus utilisée - la logique de tour est dans updatePlayerTurn()
   }
 
   private getSuitSymbol(suit: Suit): string {

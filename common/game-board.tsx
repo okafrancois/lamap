@@ -70,7 +70,7 @@ export function GameBoard({
         <div className="relative z-10 flex-shrink-0 px-2 py-1 sm:p-2">
           <div className="text-center">
             <div className="flex items-center justify-center gap-2">
-              <div className="text-muted-foreground text-sm">Adversaire</div>
+              <div className="text-sm text-white/70">Adversaire</div>
             </div>
           </div>
         </div>
@@ -82,7 +82,9 @@ export function GameBoard({
               <div className="flex h-full items-center justify-center">
                 <div className="text-center text-white/90">
                   <div className="text-lg font-semibold">Prêt à jouer ?</div>
-                  <div className="text-sm text-white/70">Sélectionnez un mode de jeu</div>
+                  <div className="text-sm text-white/70">
+                    Sélectionnez un mode de jeu
+                  </div>
                 </div>
               </div>
             </div>
@@ -91,7 +93,7 @@ export function GameBoard({
 
         {/* Zone joueur vide */}
         <div className="relative min-h-max py-8 text-center">
-          <div className="text-muted-foreground text-sm">Vos cartes</div>
+          <div className="text-sm text-white/70">Vos cartes</div>
         </div>
       </div>
     );
@@ -144,7 +146,10 @@ export function GameBoard({
       />
 
       {/* Zone de jeu centrale */}
-      <GameTable playedCards={gameState.playedCards} />
+      <GameTable
+        playedCards={gameState.playedCards}
+        currentUserId={currentUserId}
+      />
 
       {/* Zone joueur */}
       <PlayerArea

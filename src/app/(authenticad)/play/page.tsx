@@ -21,47 +21,56 @@ import {
   IconStar,
 } from "@tabler/icons-react";
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
+import { useUserDataContext } from "@/components/layout/user-provider";
 
 export default function PlayPage() {
   const controller = useGameController();
-  const { gameState, currentUserId, ui } = controller;
+  const { gameState, ui } = controller;
+  const userData = useUserDataContext();
+
+  if (!userData) {
+    return <div>Vous devez être connecté pour jouer</div>;
+  }
 
   return (
     <PageContainer fluid={true} className="relative flex h-full">
-      {/* Interface Mobile - Layout vertical complet */}
-      <div className="flex h-full w-full flex-col lg:hidden">
+      {/* Interface Desktop - Layout horizontal original */}
+      <div className="hidden h-full w-full gap-4 lg:flex">
+        {/* Plateau de jeu - Largeur adaptative */}
+        <GameBoard
+          gameState={gameState}
+          currentUserId={userData.user.username}
+          onCardClick={(cardIndex) => {
+            const currentPlayer = gameState?.players.find(
+              (p) => p.id === userData.user.username,
+            );
+            const cardId = currentPlayer?.hand?.[cardIndex]?.id;
+            if (cardId) {
+              controller.selectCard(cardId);
+            }
+          }}
+          onPlayCard={controller.playCard}
+          hoveredCard={ui.hoveredCard}
+          selectedCard={controller.getSelectedCardIndex()}
+          onCardHover={controller.hoverCard}
+          className={`overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
+            gameState?.status === "playing" ? "lg:w-full" : "lg:w-4/6"
+          }`}
+        />
+
         {/* Plateau de jeu mobile - Pleine largeur */}
-        <div className="flex-1 overflow-hidden">
-          <GameBoard
-            gameState={gameState}
-            currentUserId={currentUserId}
-            onCardClick={(cardIndex) => {
-              const currentPlayer = gameState?.players.find(
-                (p) => p.id === currentUserId,
-              );
-              const cardId = currentPlayer?.hand?.[cardIndex]?.id;
-              if (cardId) {
-                controller.selectCard(cardId);
-              }
-            }}
-            onPlayCard={controller.playCard}
-            hoveredCard={ui.hoveredCard}
-            selectedCard={controller.getSelectedCardIndex()}
-            onCardHover={controller.hoverCard}
-            className="h-full p-2"
-          />
-        </div>
+        <div className="flex-1 overflow-hidden lg:hidden"></div>
 
         {/* Contrôles mobiles compacts en bas */}
         {gameState?.status === "playing" && (
-          <div className="bg-background/95 border-t p-3 backdrop-blur-sm">
+          <div className="bg-background/95 border-t p-3 backdrop-blur-sm lg:hidden">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <div className="flex size-6 items-center justify-center rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 text-xs font-bold text-white">
                   {gameState?.currentRound}
                 </div>
                 <span className="text-muted-foreground">
-                  {gameState?.playerTurnId === currentUserId
+                  {gameState?.playerTurnId === userData.user.username
                     ? "Votre tour"
                     : gameState?.players.find((p) => p.type === "ai")
                           ?.isThinking
@@ -73,10 +82,10 @@ export default function PlayPage() {
                 <span className="text-xs">
                   {(() => {
                     const currentPlayer = gameState?.players.find(
-                      (p) => p.id === currentUserId,
+                      (p) => p.id === userData.user.username,
                     );
                     const opponentPlayer = gameState?.players.find(
-                      (p) => p.id !== currentUserId,
+                      (p) => p.id !== userData.user.username,
                     );
                     return `${currentPlayer?.koras ?? 0} vs ${opponentPlayer?.koras ?? 0}`;
                   })()}
@@ -96,7 +105,7 @@ export default function PlayPage() {
 
         {/* Menu de sélection de mode pour mobile */}
         {(!gameState || gameState.status === "waiting") && (
-          <div className="bg-background/95 border-t p-4 backdrop-blur-sm">
+          <div className="bg-background/95 ilborder-t p-4 backdrop-blur-sm lg:hidden">
             <div className="space-y-3">
               <h3 className="text-center font-semibold">
                 Choisir un mode de jeu
@@ -176,31 +185,6 @@ export default function PlayPage() {
             </div>
           </div>
         )}
-      </div>
-
-      {/* Interface Desktop - Layout horizontal original */}
-      <div className="hidden h-full w-full gap-4 lg:flex">
-        {/* Plateau de jeu - Largeur adaptative */}
-        <GameBoard
-          gameState={gameState}
-          currentUserId={currentUserId}
-          onCardClick={(cardIndex) => {
-            const currentPlayer = gameState?.players.find(
-              (p) => p.id === currentUserId,
-            );
-            const cardId = currentPlayer?.hand?.[cardIndex]?.id;
-            if (cardId) {
-              controller.selectCard(cardId);
-            }
-          }}
-          onPlayCard={controller.playCard}
-          hoveredCard={ui.hoveredCard}
-          selectedCard={controller.getSelectedCardIndex()}
-          onCardHover={controller.hoverCard}
-          className={`overflow-hidden rounded-lg p-0 transition-all duration-700 ease-in-out ${
-            gameState?.status === "playing" ? "lg:w-full" : "lg:w-4/6"
-          }`}
-        />
 
         {(!gameState || gameState.status !== "playing") && (
           <Card
@@ -221,55 +205,6 @@ export default function PlayPage() {
             </CardHeader>
 
             <CardContent className="max-h-full space-y-4 overflow-y-scroll">
-              {/* État de la partie - Simplifié */}
-              {gameState &&
-                (gameState.status as "waiting" | "playing" | "ended") ===
-                  "playing" && (
-                  <Card className="border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
-                    <CardContent className="space-y-3 p-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-fit rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 p-2">
-                          <IconCards className="size-5 text-white" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-cyan-700 dark:text-cyan-300">
-                            Partie en cours
-                          </h3>
-                          <p className="text-muted-foreground text-xs">
-                            Tour {gameState?.currentRound}/
-                            {gameState?.maxRounds} -
-                            {gameState?.playerTurnId === currentUserId
-                              ? " Votre tour"
-                              : gameState?.players.find((p) => p.type === "ai")
-                                    ?.isThinking
-                                ? " IA réfléchit..."
-                                : " Tour de l&apos;IA"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-between text-xs">
-                        {(() => {
-                          const currentPlayer = gameState?.players.find(
-                            (p) => p.id === currentUserId,
-                          );
-                          const opponentPlayer = gameState?.players.find(
-                            (p) => p.id !== currentUserId,
-                          );
-                          return (
-                            <>
-                              <span>
-                                Vos Koras: {currentPlayer?.koras ?? 0}
-                              </span>
-                              <span>IA: {opponentPlayer?.koras ?? 0}</span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
               {/* Options de difficulté pour l'IA */}
               {ui.selectedGameMode === "ai" &&
                 (!gameState || gameState.status === "waiting") && (
@@ -418,12 +353,14 @@ export default function PlayPage() {
       {/* Modal de victoire/défaite */}
       <VictoryModal
         isVisible={ui.showVictoryModal}
-        isVictory={gameState?.winnerId === currentUserId}
+        isVictory={gameState?.winnerId === userData.user.username}
         playerKoras={
-          gameState?.players.find((p) => p.id === currentUserId)?.koras ?? 0
+          gameState?.players.find((p) => p.id === userData.user.username)
+            ?.koras ?? 0
         }
         opponentKoras={
-          gameState?.players.find((p) => p.id !== currentUserId)?.koras ?? 0
+          gameState?.players.find((p) => p.id !== userData.user.username)
+            ?.koras ?? 0
         }
         betAmount={gameState?.currentBet ?? 0}
         korasWon={
