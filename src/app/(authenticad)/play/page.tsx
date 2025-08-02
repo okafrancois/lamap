@@ -365,7 +365,24 @@ export default function PlayPage() {
             ? controller.engine.getKorasWonThisGame()
             : 0
         }
-        gameLog={gameState?.gameLog ?? []}
+        victoryType={
+          controller.engine.gameState
+            ? controller.engine.getVictoryType()
+            : {
+                type: "normal",
+                title: "Partie terminée",
+                description: "Résultat non disponible",
+                multiplier: "x1",
+                special: false,
+              }
+        }
+        victoryMessage={
+          controller.engine.gameState
+            ? controller.engine.getVictoryMessage(
+                gameState?.winnerUsername === userData.user.username,
+              )
+            : ""
+        }
         onPlayAgain={() => {
           ui.actions.hideVictory();
           controller.newGame();

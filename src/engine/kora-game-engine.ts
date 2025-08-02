@@ -810,6 +810,30 @@ Koras Adversaire: ${state.players[1]!.koras}
     }
   }
 
+  public getVictoryMessage(isPlayerWinner: boolean): string {
+    const victoryMessages = [
+      "🎉 C'est toi le ndoss !",
+      "👑 Tu es le grand patron !",
+      "🔥 Tu as cassé le morceau !",
+      "⚡ Tu es trop fort ndoss !",
+      "🎯 Champion absolut !",
+      "🔥 Je wanda seulement !",
+      "🎯 Tu as le long sense",
+    ];
+
+    const defeatMessages = [
+      "😅 Tu es un bindi cette fois !",
+      "🤦 Pas de chance bindi !",
+      "😵 L'IA t'a eu, bindi !",
+      "🎭 Retry bindi, tu peux mieux !",
+      "💪 Allez bindi, on se relève !",
+      "🎭 Quel boa !",
+    ];
+
+    const messages = isPlayerWinner ? victoryMessages : defeatMessages;
+    return messages[Math.floor(Math.random() * messages.length)];
+  }
+
   public setAIDifficulty(difficulty: AIDifficulty): void {
     this.state.players.find((p) => p.type === "ai")!.aiDifficulty = difficulty;
     this.notifyListeners();

@@ -171,6 +171,19 @@ export function useKoraEngine() {
     }
   }, []);
 
+  const getVictoryMessage = useCallback((isPlayerWinner: boolean): string => {
+    try {
+      const engine = getKoraGameEngine();
+      return engine.getVictoryMessage(isPlayerWinner);
+    } catch (error) {
+      console.error(
+        "Cannot get victory message: engine not initialized",
+        error,
+      );
+      return "";
+    }
+  }, []);
+
   return {
     // État du jeu
     gameState,
@@ -194,6 +207,7 @@ export function useKoraEngine() {
     // Analyses
     getVictoryType,
     getKorasWonThisGame,
+    getVictoryMessage,
   };
 }
 

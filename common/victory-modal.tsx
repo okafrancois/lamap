@@ -9,7 +9,7 @@ import {
   IconPlayerPlay,
 } from "@tabler/icons-react";
 import { useSound } from "@/hooks/use-sound";
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useMobile } from "@/hooks/use-mobile";
 import {
   Sheet,
@@ -25,7 +25,14 @@ interface VictoryModalProps {
   opponentKoras: number;
   betAmount: number;
   korasWon: number;
-  gameLog?: Array<{ message: string; timestamp: number }>;
+  victoryType: {
+    type: string;
+    title: string;
+    description: string;
+    multiplier: string;
+    special: boolean;
+  };
+  victoryMessage: string;
   onPlayAgain: () => void;
   onClose: () => void;
   onViewHistory?: () => void;
@@ -39,82 +46,14 @@ export function VictoryModal({
   opponentKoras,
   betAmount,
   korasWon,
-  gameLog = [],
+  victoryType,
+  victoryMessage,
   onPlayAgain,
   onClose,
   onEnterReview,
 }: VictoryModalProps) {
   const { playSound } = useSound();
   const isMobile = useMobile();
-
-  const getVictoryType = useCallback(() => {
-    const recentLogs = gameLog.slice(-10);
-
-    for (const log of recentLogs) {
-      const message = log.message;
-
-      if (message.includes("TRIPLE KORA (333)")) {
-        return {
-          type: "triple_kora",
-          title: "333 EXPORT ! 🎯",
-          description: "Victoire avec 3 cartes 3 consécutives",
-          multiplier: "x4",
-          special: true,
-        };
-      }
-      if (message.includes("DOUBLE KORA (33)")) {
-        return {
-          type: "double_kora",
-          title: "33 EXPORT ! 🔥",
-          description: "Victoire avec 2 cartes 3 consécutives",
-          multiplier: "x3",
-          special: true,
-        };
-      }
-      if (message.includes("KORA Simple")) {
-        return {
-          type: "simple_kora",
-          title: "KORA ! 🏆",
-          description: "Victoire avec un 3 au tour final",
-          multiplier: "x2",
-          special: true,
-        };
-      }
-
-      if (message.includes("Victoire automatique")) {
-        if (message.includes("Somme < 21")) {
-          return {
-            type: "auto_sum",
-            title: "Victoire Automatique ! ⚡",
-            description: "Somme des cartes inférieure à 21",
-            multiplier: "x1",
-            special: true,
-          };
-        }
-        if (message.includes("Somme la plus faible")) {
-          return {
-            type: "auto_lowest",
-            title: "Victoire Automatique ! 📊",
-            description: "Plus petite somme (les deux < 21)",
-            multiplier: "x1",
-            special: true,
-          };
-        }
-      }
-    }
-
-    return {
-      type: "normal",
-      title: isVictory ? "Victoire ! 🎉" : "Défaite ! 💀",
-      description: isVictory
-        ? "Vous avez la main au tour final"
-        : "L'adversaire a la main au tour final",
-      multiplier: "x1",
-      special: false,
-    };
-  }, [gameLog, isVictory]);
-
-  const victoryType = getVictoryType();
 
   useEffect(() => {
     if (isVisible) {
@@ -148,36 +87,11 @@ export function VictoryModal({
 
   if (!isVisible) return null;
 
-  const victoryMessages = [
-    "🎉 C'est toi le ndoss !",
-    "👑 Tu es le grand patron !",
-    "🔥 Tu as cassé le morceau !",
-    "⚡ Tu es trop fort ndoss !",
-    "🎯 Champion absolut !",
-    "🔥 Je wanda seulement !",
-    "🎯 Tu as le long sense",
-  ];
-
-  const defeatMessages = [
-    "😅 Tu es un bindi cette fois !",
-    "🤦 Pas de chance bindi !",
-    "😵 L'IA t'a eu, bindi !",
-    "🎭 Retry bindi, tu peux mieux !",
-    "💪 Allez bindi, on se relève !",
-    "🎭 Quel boa !",
-  ];
-
-  const randomMessage = isVictory
-    ? victoryMessages[Math.floor(Math.random() * victoryMessages.length)]
-    : defeatMessages[Math.floor(Math.random() * defeatMessages.length)];
-
   return (
-    <Sheet open={isVisible} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={isVisible} onOpenChange={onClose}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className={
-          isMobile ? "h-[80vh] rounded-t-xl" : "w-[400px] sm:w-[500px]"
-        }
+        className={"min-h-[100vh] w-[400px] sm:w-[500px]"}
       >
         <SheetHeader>
           <SheetTitle
@@ -210,7 +124,7 @@ export function VictoryModal({
 
           <div className="text-center">
             <p className="text-foreground text-lg font-medium">
-              {victoryType.special ? victoryType.description : randomMessage}
+              {victoryType.special ? victoryType.description : victoryMessage}
             </p>
 
             {victoryType.special &&
