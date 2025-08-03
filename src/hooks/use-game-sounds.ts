@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useSound } from "@/hooks/use-sound";
-import { type GameState, type PlayedCard } from "@/engine/kora-game-engine";
+import { type GameState } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
 
 export function useGameSounds(gameState: GameState | null) {
@@ -63,24 +63,6 @@ export function useGameSounds(gameState: GameState | null) {
 
     if (aiPlayer?.isThinking && !prevAiPlayer?.isThinking) {
       void playSound("ai_thinking");
-    }
-
-    // Détecter fin de partie et jouer les sons de victoire/défaite
-    if (
-      previousState.status !== "ended" &&
-      gameState.status === "ended" &&
-      gameState.winnerUsername
-    ) {
-      const isUserWinner = gameState.winnerUsername === userData.user.username;
-
-      // Délai pour laisser l'animation se terminer
-      setTimeout(() => {
-        if (isUserWinner) {
-          void playSound("victory");
-        } else {
-          void playSound("defeat");
-        }
-      }, 300);
     }
 
     // Mettre à jour la référence

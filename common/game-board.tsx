@@ -133,20 +133,17 @@ export function GameBoard({
       {/* Décorations d'arrière-plan */}
       <BackgroundDecorations />
 
-      {/* Zone adversaire avec cartes et infos de statut */}
-      {opponentPlayer && (
-        <div className="relative z-10 flex-shrink-0">
-          <PlayerArea
-            player={opponentPlayer}
-            gameState={gameState}
-            onCardClick={undefined} // L'adversaire n'est pas cliquable
-            onPlayCard={undefined}
-            hoveredCard={undefined}
-            selectedCard={undefined}
-            onCardHover={undefined}
-          />
-        </div>
-      )}
+      <div className="relative z-10 flex-shrink-0">
+        <PlayerArea
+          player={opponentPlayer}
+          gameState={gameState}
+          onCardClick={undefined} // L'adversaire n'est pas cliquable
+          onPlayCard={undefined}
+          hoveredCard={undefined}
+          selectedCard={undefined}
+          onCardHover={undefined}
+        />
+      </div>
 
       {/* Zone de jeu centrale */}
       <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 sm:px-4">

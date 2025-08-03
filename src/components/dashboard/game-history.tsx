@@ -133,7 +133,7 @@ export function GameHistory() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {history.map((game) => {
+        {history.slice(0, 5).map((game) => {
           const victoryInfo = getVictoryTypeInfo(game.victoryType ?? "NORMAL");
           const isWinner = game.winnerPlayerId === game.player1.username;
 

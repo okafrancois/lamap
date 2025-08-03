@@ -53,7 +53,6 @@ export default function PlayPage() {
   const controller = useGameController(gameId);
   const { gameState, ui } = controller;
   const userData = useUserDataContext();
-  const { ongoingGames, resumeGame } = useGameResume();
 
   // Déterminer l'état actuel
   const currentStatus = gameId
@@ -88,7 +87,7 @@ export default function PlayPage() {
 
   // Retour à la sélection
   const backToSelection = () => {
-    updateURL();
+    router.push("/play");
   };
 
   if (!userData) {
@@ -269,47 +268,6 @@ export default function PlayPage() {
             </CardHeader>
 
             <CardContent className="space-y-4">
-              {/* Parties en cours */}
-              {ongoingGames && ongoingGames.length > 0 && (
-                <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-blue-600/10 p-4">
-                  <CardHeader className="p-0 pb-3">
-                    <LibTitle
-                      as="h3"
-                      className="flex w-full items-center gap-2"
-                    >
-                      <div className="rounded-lg bg-blue-500/20 p-1">
-                        <IconCards className="size-icon text-blue-400" />
-                      </div>
-                      <span className="text-lg font-semibold">
-                        Parties en cours
-                      </span>
-                    </LibTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2 p-0">
-                    {ongoingGames.slice(0, 2).map((game: any) => (
-                      <div
-                        key={game.gameId}
-                        className="flex items-center justify-between rounded bg-blue-500/10 p-2"
-                      >
-                        <div className="text-sm">
-                          <div>vs {game.opponent?.username ?? "IA"}</div>
-                          <div className="text-muted-foreground text-xs">
-                            Tour {game.currentRound}/{game.maxRounds}
-                          </div>
-                        </div>
-                        <LibButton
-                          size="sm"
-                          onClick={() => resumeGame(game.gameId)}
-                          className="h-7 text-xs"
-                        >
-                          Reprendre
-                        </LibButton>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-
               <VsIaGameMode
                 isSelected={ui.selectedGameMode === "ai"}
                 onTrigger={() => controller.selectGameMode("ai")}

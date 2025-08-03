@@ -5,8 +5,8 @@ import type { GameState, PlayerEntity } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
 
 interface BasePlayerAreaProps {
-  player: PlayerEntity;
-  gameState: GameState;
+  player: PlayerEntity | null | undefined;
+  gameState: GameState | null | undefined;
   className?: string;
 }
 
@@ -29,6 +29,37 @@ export function PlayerArea({
   className = "",
 }: PlayerAreaProps) {
   const userData = useUserDataContext();
+
+  if (!gameState || !player) {
+    return (
+      <div className={`relative min-h-max py-8 text-center ${className}`}>
+        <PlayerStatus
+          isCurrentTurn={false}
+          cardCount={0}
+          playerName={"..."}
+          hasHand={false}
+          gameStarted={false}
+          gameEnded={false}
+          isWinner={false}
+          isThinking={false}
+          isOpponent={false}
+        />
+
+        {/* Décorations latérales */}
+        <CircularDecoration
+          className="absolute bottom-1/2 -left-6 translate-y-1/2 opacity-40"
+          size="h-10 w-10"
+          innerSize="h-8 w-8"
+        />
+        <CircularDecoration
+          className="absolute -right-6 bottom-1/2 translate-y-1/2 opacity-40"
+          size="h-10 w-10"
+          innerSize="h-8 w-8"
+        />
+      </div>
+    );
+  }
+
   const isOpponent = player.username !== userData?.user.username;
   return (
     <div className={`relative min-h-max py-8 text-center ${className}`}>
