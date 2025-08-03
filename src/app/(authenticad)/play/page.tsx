@@ -34,7 +34,6 @@ import { useUserDataContext } from "@/components/layout/user-provider";
 import { useState } from "react";
 import type { AIDifficulty } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useGameResume } from "@/hooks/use-game-resume";
 
 interface GameConfig {
   mode: "ai" | "online";
@@ -63,27 +62,15 @@ export default function PlayPage() {
         : "waiting"
     : "selecting";
 
-  // Gestion de l'URL sans rechargement
-  const updateURL = (newGameId?: string) => {
-    const url = newGameId ? `/play?id=${newGameId}` : "/play";
-    router.push(url, { scroll: false });
-  };
-
-  // Wrapper pour la création de partie avec gestion URL
+  // Création de partie avec redirection simple
   const handleCreateGame = (config: GameConfig) => {
     const newGameId = controller.createGame(config);
     if (newGameId) {
-      updateURL(newGameId);
+      router.push(`/play?id=${newGameId}`);
     }
   };
 
-  // Wrapper pour rejoindre une partie avec gestion URL
-  const handleJoinGame = (gameId: string) => {
-    const success = controller.joinGame(gameId);
-    if (success) {
-      updateURL(gameId);
-    }
-  };
+  // Note: handleJoinGame sera utilisé plus tard pour le multijoueur
 
   // Retour à la sélection
   const backToSelection = () => {

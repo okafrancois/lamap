@@ -232,6 +232,11 @@ export function useKoraEngine() {
         );
       }
     },
+
+    // Réinitialiser l'état (pour retour à la sélection)
+    resetEngine: () => {
+      setGameState(null);
+    },
   };
 }
 

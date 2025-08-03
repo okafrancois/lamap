@@ -284,8 +284,13 @@ export function useGameController(gameId: string | null = null) {
   useEffect(() => {
     if (gameId) {
       loadGameState();
+    } else {
+      // Pas de gameId = retour à la sélection, on nettoie tout
+      koraEngine.resetEngine();
+      ui.actions.hideVictory();
+      setSelectedCardId(null);
     }
-  }, [gameId, loadGameState]);
+  }, [gameId, loadGameState, koraEngine, ui.actions]);
 
   // Logique de victoire gérée directement dans le game engine
 
