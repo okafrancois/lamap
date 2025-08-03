@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { TRPCError } from "@trpc/server";
 import type { GameState } from "@/engine/kora-game-engine";
 
 // ========== SCHEMAS DE VALIDATION ==========
@@ -72,6 +73,110 @@ const LocalGameActionSchema = z.object({
 // ========== ROUTER ==========
 
 export const gameRouter = createTRPCRouter({
+  // Créer une partie multijoueur
+  createMultiplayerGame: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().min(1).max(50),
+        bet: z.number().min(1).max(1000),
+        maxRounds: z.number().min(1).max(10),
+        isPrivate: z.boolean().optional().default(false),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const gameId = `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const game = await ctx.db.game.create({
+        data: {
+          gameId,
+          mode: "ONLINE",
+          status: "WAITING",
+          player1Id: ctx.session.user.id,
+          currentBet: input.bet,
+          maxRounds: input.maxRounds,
+          roomName: input.name,
+          isPrivate: input.isPrivate,
+          hostId: ctx.session.user.id,
+          seed: Math.random().toString(36),
+        },
+      });
+
+      return {
+        gameId: game.gameId,
+        name: game.roomName,
+      };
+    }),
+
+  // Lister les parties disponibles
+  getAvailableGames: protectedProcedure.query(async ({ ctx }) => {
+    const games = await ctx.db.game.findMany({
+      where: {
+        mode: "ONLINE",
+        status: "WAITING",
+        isPrivate: false,
+        player2Id: null, // Pas encore pleine
+      },
+      include: {
+        player1: {
+          select: { id: true, username: true },
+        },
+      },
+      orderBy: { startedAt: "desc" },
+      take: 20,
+    });
+
+    return games.map((game) => ({
+      gameId: game.gameId,
+      name: game.roomName || `Partie de ${game.player1.username}`,
+      hostUsername: game.player1.username,
+      currentPlayers: game.player2Id ? 2 : 1,
+      maxPlayers: game.maxPlayers,
+      bet: game.currentBet,
+      maxRounds: game.maxRounds,
+      createdAt: game.startedAt,
+    }));
+  }),
+
+  // Rejoindre une partie
+  joinGame: protectedProcedure
+    .input(z.object({ gameId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const game = await ctx.db.game.findUnique({
+        where: { gameId: input.gameId },
+      });
+
+      if (!game) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Partie introuvable",
+        });
+      }
+
+      if (game.player2Id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Partie déjà pleine",
+        });
+      }
+
+      if (game.player1Id === ctx.session.user.id) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Vous ne pouvez pas rejoindre votre propre partie",
+        });
+      }
+
+      // Ajouter le joueur et démarrer la partie
+      await ctx.db.game.update({
+        where: { gameId: input.gameId },
+        data: {
+          player2Id: ctx.session.user.id,
+          status: "PLAYING",
+        },
+      });
+
+      return { success: true };
+    }),
   // Sauvegarder une partie
   saveGame: protectedProcedure
     .input(LocalGameDataSchema)
@@ -264,11 +369,14 @@ export const gameRouter = createTRPCRouter({
       }
 
       // Vérifier les permissions
-      const isAuthorized =
+      const isPlayerInGame =
         game.player1.username === ctx.session.user.username ||
         game.player2?.username === ctx.session.user.username;
 
-      if (!isAuthorized) {
+      const canJoinGame =
+        game.status === "WAITING" && !game.player2Id && game.mode === "ONLINE";
+
+      if (!isPlayerInGame && !canJoinGame) {
         throw new Error("Non autorisé pour cette partie");
       }
 
@@ -285,6 +393,13 @@ export const gameRouter = createTRPCRouter({
         maxRounds: game.maxRounds,
         aiDifficulty: game.aiDifficulty,
 
+        // Champs multijoueur (ex-room)
+        roomName: game.roomName,
+        player1Id: game.player1Id,
+        player2Id: game.player2Id,
+        player1: game.player1,
+        player2: game.player2,
+
         // État actuel
         currentRound: game.currentRound,
         hasHandPlayerId: game.hasHandPlayerId,
@@ -293,7 +408,7 @@ export const gameRouter = createTRPCRouter({
         endReason: game.endReason,
         seed: game.seed,
 
-        // Joueurs
+        // Joueurs - seulement les vrais joueurs, pas d'IA automatique
         players: [
           {
             id: game.player1.id,
@@ -301,20 +416,29 @@ export const gameRouter = createTRPCRouter({
             name: game.player1.name,
             type: "user",
           },
-          game.player2
-            ? {
-                id: game.player2.id,
-                username: game.player2.username,
-                name: game.player2.name,
-                type: "user",
-              }
-            : {
-                id: "ai",
-                username: "ai-opponent",
-                name: "IA",
-                type: "ai",
-                aiDifficulty: game.aiDifficulty,
-              },
+          // Ajouter player2 seulement s'il existe
+          ...(game.player2
+            ? [
+                {
+                  id: game.player2.id,
+                  username: game.player2.username,
+                  name: game.player2.name,
+                  type: "user",
+                },
+              ]
+            : []),
+          // Ajouter l'IA seulement en mode AI et si pas de player2
+          ...(game.mode === "AI" && !game.player2
+            ? [
+                {
+                  id: "ai",
+                  username: "ai-opponent",
+                  name: "IA",
+                  type: "ai",
+                  aiDifficulty: game.aiDifficulty,
+                },
+              ]
+            : []),
         ],
 
         // Actions

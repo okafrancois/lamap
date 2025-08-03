@@ -34,7 +34,7 @@ import { useUserDataContext } from "@/components/layout/user-provider";
 import { useState } from "react";
 import type { AIDifficulty } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMatchmaking } from "@/hooks/use-matchmaking";
+import { api } from "@/trpc/react";
 
 interface GameConfig {
   mode: "ai" | "online";
@@ -43,8 +43,8 @@ interface GameConfig {
   maxRounds?: number;
 }
 
-interface AvailableRoom {
-  id: string;
+interface AvailableGame {
+  gameId: string;
   name: string;
   hostUsername: string | null;
   currentPlayers: number;
@@ -65,23 +65,50 @@ export default function PlayPage() {
   const { gameState, ui } = controller;
   const userData = useUserDataContext();
 
+  // Query pour obtenir les infos de la partie si on a un gameId
+  const { data: gameInfo } = api.game.getGame.useQuery(
+    { gameId: gameId! },
+    { enabled: !!gameId && gameId.startsWith("game-") },
+  );
+
+  // Mutation pour créer une partie multijoueur
+  const createMultiplayerGame = api.game.createMultiplayerGame.useMutation();
+
   // Déterminer l'état actuel
   const currentStatus = gameId
     ? gameState?.status === "ended"
       ? "finished"
       : gameState?.status === "playing"
         ? "playing"
-        : "waiting"
+        : gameInfo?.status === "waiting" && !gameInfo?.player2Id
+          ? "waiting_for_opponent"
+          : "waiting"
     : "selecting";
 
   // Création de partie avec redirection simple
-  const handleCreateGame = (config: GameConfig) => {
-    const newGameId = controller.createGame(config);
-    if (newGameId) {
-      // Mode IA : redirection immédiate avec gameId
-      router.push(`/play?id=${newGameId}`);
+  const handleCreateGame = async (config: GameConfig) => {
+    if (config.mode === "ai") {
+      const newGameId = controller.createGame(config);
+      if (newGameId) {
+        router.push(`/play?id=${newGameId}`);
+      }
+    } else if (config.mode === "online") {
+      // Pour le multijoueur, créer via l'API directement
+      try {
+        const gameConfig = {
+          name: `Partie de ${userData?.user?.username ?? "Joueur"}`,
+          bet: config.bet ?? 10,
+          maxRounds: config.maxRounds ?? 5,
+          isPrivate: false,
+        };
+
+        const result = await createMultiplayerGame.mutateAsync(gameConfig);
+
+        router.push(`/play?id=${result.gameId}`);
+      } catch (error) {
+        console.error("Erreur création partie:", error);
+      }
     }
-    // Mode online : la redirection sera gérée par useMatchmaking
   };
 
   // Note: handleJoinGame sera utilisé plus tard pour le multijoueur
@@ -157,6 +184,16 @@ export default function PlayPage() {
             controller.newGame();
           }}
           onBackToSelection={backToSelection}
+          isWaitingForOpponent={currentStatus === "waiting_for_opponent"}
+          gameInfo={
+            gameInfo
+              ? {
+                  roomName: gameInfo.roomName ?? undefined,
+                  bet: gameInfo.currentBet,
+                  maxRounds: gameInfo.maxRounds,
+                }
+              : undefined
+          }
           className={`overflow-hidden p-0 transition-all duration-700 ease-in-out lg:rounded-lg ${
             currentStatus === "selecting" ? "lg:w-4/6" : "lg:w-full"
           }`}
@@ -493,8 +530,19 @@ function OnlineGameMode({
   };
 
   const GamesList = () => {
-    const matchmaking = useMatchmaking();
-    const { availableRooms, isLoading } = matchmaking;
+    const { data: availableGames, isLoading } =
+      api.game.getAvailableGames.useQuery();
+    const joinGameMutation = api.game.joinGame.useMutation();
+    const router = useRouter();
+
+    const handleJoinGame = async (gameId: string) => {
+      try {
+        await joinGameMutation.mutateAsync({ gameId });
+        router.push(`/play?id=${gameId}`);
+      } catch (error) {
+        console.error("Erreur join game:", error);
+      }
+    };
 
     return (
       <div className="space-y-3">
@@ -504,21 +552,21 @@ function OnlineGameMode({
             <div className="text-muted-foreground text-center text-sm">
               Chargement...
             </div>
-          ) : availableRooms && availableRooms.length > 0 ? (
-            availableRooms.map((room: AvailableRoom) => (
-              <div key={room.id} className="rounded border p-2 text-sm">
+          ) : availableGames && availableGames.length > 0 ? (
+            availableGames.map((game: AvailableGame) => (
+              <div key={game.gameId} className="rounded border p-2 text-sm">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div>{room.name}</div>
+                    <div>{game.name}</div>
                     <div className="text-muted-foreground text-xs">
-                      Mise: {room.bet} koras • {room.maxRounds} tours •{" "}
-                      {room.currentPlayers}/{room.maxPlayers} joueurs
+                      Mise: {game.bet} koras • {game.maxRounds} tours •{" "}
+                      {game.currentPlayers}/{game.maxPlayers} joueurs
                     </div>
                   </div>
                   <LibButton
                     size="sm"
                     className="h-7 text-xs"
-                    onClick={() => matchmaking.joinRoom({ roomId: room.id })}
+                    onClick={() => handleJoinGame(game.gameId)}
                   >
                     Rejoindre
                   </LibButton>

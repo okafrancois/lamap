@@ -51,6 +51,14 @@ interface GameBoardProps {
   onCloseVictory?: () => void;
   onNewGame?: () => void;
   onBackToSelection?: () => void;
+
+  // Props pour l'état en attente
+  isWaitingForOpponent?: boolean;
+  gameInfo?: {
+    roomName?: string;
+    bet: number;
+    maxRounds: number;
+  };
 }
 
 export function GameBoard({
@@ -67,6 +75,8 @@ export function GameBoard({
   onCloseVictory,
   onNewGame,
   onBackToSelection,
+  isWaitingForOpponent,
+  gameInfo,
 }: GameBoardProps) {
   // Si pas de gameState, afficher un plateau vide avec message d'attente
   if (!gameState) {
@@ -96,10 +106,29 @@ export function GameBoard({
             <div className="relative h-full w-full rounded-2xl border-4 border-amber-400/80 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-900 shadow-2xl">
               <div className="flex h-full items-center justify-center">
                 <div className="text-center text-white/90">
-                  <div className="text-lg font-semibold">Prêt à jouer ?</div>
-                  <div className="text-sm text-white/70">
-                    Sélectionnez un mode de jeu
-                  </div>
+                  {isWaitingForOpponent ? (
+                    <>
+                      <div className="text-lg font-semibold">
+                        En attente d'un adversaire...
+                      </div>
+                      <div className="text-sm text-white/70">
+                        {gameInfo?.roomName || "Partie multijoueur"}
+                      </div>
+                      <div className="mt-2 text-xs text-white/50">
+                        Mise: {gameInfo?.bet} koras • {gameInfo?.maxRounds}{" "}
+                        tours
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-lg font-semibold">
+                        Prêt à jouer ?
+                      </div>
+                      <div className="text-sm text-white/70">
+                        Sélectionnez un mode de jeu
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

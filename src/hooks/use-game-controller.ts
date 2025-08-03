@@ -6,7 +6,7 @@ import { useGameUI } from "@/hooks/use-game-ui";
 import { useGameSounds } from "@/hooks/use-game-sounds";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { useGameSync } from "@/hooks/use-game-sync";
-import { useMatchmaking } from "@/hooks/use-matchmaking";
+// Plus besoin de useMatchmaking, on utilise les routes game directement
 import { api } from "@/trpc/react";
 import {
   type PlayerEntity,
@@ -22,14 +22,17 @@ export function useGameController(gameId: string | null = null) {
   const ui = useGameUI();
   const userData = useUserDataContext();
   const gameSync = useGameSync();
-  const matchmaking = useMatchmaking();
 
-  // Query pour charger les infos de la room si on a un roomId
-  const { data: roomInfo } = api.multiplayer.getRoomUpdates.useQuery(
-    { roomId: gameId!, lastVersion: 0 },
+  // Mutations pour créer/rejoindre des parties
+  const createMultiplayerGame = api.game.createMultiplayerGame.useMutation();
+  const joinGameMutation = api.game.joinGame.useMutation();
+
+  // Query pour charger une partie existante
+  const { data: gameInfo } = api.game.getGame.useQuery(
+    { gameId: gameId! },
     {
-      enabled: !!gameId && gameId.startsWith("cm"),
-      refetchInterval: 2000, // Polling pour les updates
+      enabled: !!gameId && gameId.startsWith("game-"),
+      refetchInterval: 2000, // Polling pour les updates multijoueur
     },
   );
 
@@ -131,54 +134,75 @@ export function useGameController(gameId: string | null = null) {
   );
 
   const loadGameState = useCallback(() => {
-    if (!gameId) return;
+    if (!gameId || !gameInfo) return;
 
-    // Détecter si c'est un roomId (commence par 'cm') ou un gameId (commence par 'game-')
-    if (gameId.startsWith("cm")) {
-      // C'est un roomId - les données seront chargées via la query roomInfo
-      console.log("Chargement de la room:", gameId);
+    console.log("Chargement de la partie:", gameId, "Status:", gameInfo.status);
 
-      // Si on a les infos de la room et qu'elle est en mode PLAYING, initialiser le jeu
-      if (
-        roomInfo &&
-        roomInfo.room.status === "PLAYING" &&
-        roomInfo.gameState
-      ) {
-        console.log("Room en mode PLAYING, initialisation du jeu multijoueur");
+    // Si la partie est en cours (PLAYING), initialiser l'engine
+    if (gameInfo.status === "PLAYING" && gameInfo.player2Id) {
+      console.log("Partie en cours, initialisation du multijoueur");
 
-        // Créer les joueurs pour l'engine
-        const players: PlayerEntity[] = roomInfo.players
-          .filter((player) => player.username) // Filtrer les null
-          .map((player) => ({
-            username: player.username!,
-            type: "user" as const,
-            isConnected: true,
-            name: player.username!,
-            koras: player.koras,
-          }));
+      // Créer les joueurs pour l'engine
+      const players: PlayerEntity[] = [
+        {
+          username: gameInfo.player1?.username ?? "Player1",
+          type: "user" as const,
+          isConnected: true,
+          name: gameInfo.player1?.username ?? "Player1",
+          koras: 100, // TODO: récupérer les vrais koras
+        },
+        {
+          username: gameInfo.player2?.username ?? "Player2",
+          type: "user" as const,
+          isConnected: true,
+          name: gameInfo.player2?.username ?? "Player2",
+          koras: 100, // TODO: récupérer les vrais koras
+        },
+      ];
 
-        // Initialiser l'engine avec les données de la room
-        koraEngine.initializeEngine(
-          roomInfo.room.bet,
-          roomInfo.room.maxRounds,
-          players,
-        );
+      // Initialiser l'engine avec les données de la partie
+      koraEngine.initializeEngine(
+        gameInfo.currentBet,
+        gameInfo.maxRounds,
+        players,
+      );
 
-        // Si on n'a pas encore de gameState, démarrer la partie
-        if (
-          !koraEngine.gameState ||
-          koraEngine.gameState.status === "waiting"
-        ) {
-          koraEngine.startNewGame();
-        }
-      } else if (roomInfo && roomInfo.room.status === "WAITING") {
-        console.log("Room en attente d'autres joueurs...");
+      // Si on n'a pas encore de gameState, démarrer la partie
+      if (!koraEngine.gameState || koraEngine.gameState.status === "waiting") {
+        koraEngine.startNewGame();
       }
-    } else if (gameId.startsWith("game-")) {
-      // C'est un gameId classique - TODO: charger la partie
-      console.log("Chargement de la partie:", gameId);
+    } else if (gameInfo.status === "WAITING" && !gameInfo.player2Id) {
+      console.log("Partie en attente d'un adversaire...");
+      console.log("Debug auto-join:", {
+        currentUser: userData?.user?.username,
+        gameCreator: gameInfo.player1?.username,
+        shouldAutoJoin:
+          userData?.user &&
+          gameInfo.player1?.username !== userData.user.username,
+      });
+
+      // Si on n'est pas le créateur de la partie, rejoindre automatiquement
+      if (
+        userData?.user &&
+        gameInfo.player1?.username !== userData.user.username
+      ) {
+        console.log("🚀 Auto-join de la partie multijoueur...");
+        void joinGameMutation
+          .mutateAsync({ gameId })
+          .then(() => {
+            console.log("✅ Partie rejointe avec succès");
+            // La query se rafraîchira automatiquement
+          })
+          .catch((error) => {
+            console.error("❌ Erreur lors du join:", error);
+          });
+      } else {
+        console.log(
+          "⏳ Pas d'auto-join - utilisateur créateur ou pas connecté",
+        );
+      }
     }
-  }, [gameId, roomInfo, koraEngine]);
+  }, [gameId, gameInfo, koraEngine, userData, joinGameMutation]);
 
   // Créer une nouvelle partie avec configuration complète
   const createGame = useCallback(
@@ -208,25 +232,26 @@ export function useGameController(gameId: string | null = null) {
           koraEngine.startNewGame();
         }, 1000);
       } else if (config.mode === "online") {
-        // Pour le multijoueur, créer une room
-        const roomConfig = {
+        // Pour le multijoueur, créer une partie directement
+        const gameConfig = {
           name: `Partie de ${userData.user.username}`,
           bet: config.bet ?? 10,
           maxRounds: config.maxRounds ?? 5,
           isPrivate: false,
         };
 
-        // Créer la room via matchmaking
-        void matchmaking.createRoom(roomConfig);
+        // Créer la partie via l'API game
+        void createMultiplayerGame.mutateAsync(gameConfig).then((result) => {
+          console.log("Partie multijoueur créée:", result.gameId);
+        });
 
-        // Le newGameId sera l'ID de la room créée
-        // (la redirection sera gérée par le hook matchmaking)
-        return null; // Pas de gameId immédiat pour le multijoueur
+        // Pas de gameId immédiat, la redirection sera gérée dans la page
+        return null;
       }
 
       return newGameId;
     },
-    [userData, initializeGame, koraEngine, matchmaking],
+    [userData, initializeGame, koraEngine, createMultiplayerGame],
   );
 
   // Rejoindre une partie existante
