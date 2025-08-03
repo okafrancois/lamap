@@ -35,8 +35,8 @@ export function useMatchmaking() {
 
         console.log(`✅ Salle créée: ${result.name} (${result.roomId})`);
 
-        // Rediriger vers la salle
-        router.push(`/multiplayer/room/${result.roomId}`);
+        // Rediriger vers la page de jeu unifiée
+        router.push(`/play?id=${result.roomId}`);
 
         return result;
       } catch (error) {
@@ -57,8 +57,8 @@ export function useMatchmaking() {
 
         console.log(`✅ Salle rejointe: ${input.roomId}`);
 
-        // Rediriger vers la salle
-        router.push(`/multiplayer/room/${input.roomId}`);
+        // Rediriger vers la page de jeu unifiée
+        router.push(`/play?id=${input.roomId}`);
 
         return true;
       } catch (error) {

@@ -34,12 +34,24 @@ import { useUserDataContext } from "@/components/layout/user-provider";
 import { useState } from "react";
 import type { AIDifficulty } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useMatchmaking } from "@/hooks/use-matchmaking";
 
 interface GameConfig {
   mode: "ai" | "online";
   difficulty?: "easy" | "medium" | "hard";
   bet?: number;
   maxRounds?: number;
+}
+
+interface AvailableRoom {
+  id: string;
+  name: string;
+  hostUsername: string | null;
+  currentPlayers: number;
+  maxPlayers: number;
+  bet: number;
+  maxRounds: number;
+  createdAt: Date;
 }
 
 export default function PlayPage() {
@@ -66,8 +78,10 @@ export default function PlayPage() {
   const handleCreateGame = (config: GameConfig) => {
     const newGameId = controller.createGame(config);
     if (newGameId) {
+      // Mode IA : redirection immédiate avec gameId
       router.push(`/play?id=${newGameId}`);
     }
+    // Mode online : la redirection sera gérée par useMatchmaking
   };
 
   // Note: handleJoinGame sera utilisé plus tard pour le multijoueur
@@ -479,26 +493,43 @@ function OnlineGameMode({
   };
 
   const GamesList = () => {
+    const matchmaking = useMatchmaking();
+    const { availableRooms, isLoading } = matchmaking;
+
     return (
       <div className="space-y-3">
         <h4 className="font-semibold">Parties disponibles</h4>
         <div className="space-y-2">
-          <div className="rounded border p-2 text-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <div>Partie #1234</div>
-                <div className="text-muted-foreground text-xs">
-                  Mise: 50 koras • 5 tours
+          {isLoading ? (
+            <div className="text-muted-foreground text-center text-sm">
+              Chargement...
+            </div>
+          ) : availableRooms && availableRooms.length > 0 ? (
+            availableRooms.map((room: AvailableRoom) => (
+              <div key={room.id} className="rounded border p-2 text-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div>{room.name}</div>
+                    <div className="text-muted-foreground text-xs">
+                      Mise: {room.bet} koras • {room.maxRounds} tours •{" "}
+                      {room.currentPlayers}/{room.maxPlayers} joueurs
+                    </div>
+                  </div>
+                  <LibButton
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => matchmaking.joinRoom({ roomId: room.id })}
+                  >
+                    Rejoindre
+                  </LibButton>
                 </div>
               </div>
-              <LibButton size="sm" className="h-7 text-xs">
-                Rejoindre
-              </LibButton>
+            ))
+          ) : (
+            <div className="text-muted-foreground text-center text-sm">
+              Pas de parties disponibles
             </div>
-          </div>
-          <div className="text-muted-foreground text-center text-sm">
-            Pas de parties disponibles
-          </div>
+          )}
         </div>
       </div>
     );
