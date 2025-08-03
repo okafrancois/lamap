@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { BackgroundDecorations } from "./background-decorations";
 import { GameTable } from "./game-table";
 import { PlayerArea } from "./player-area";
+import { InGameVictoryModal } from "./in-game-victory-modal";
 import type { GameState } from "@/engine/kora-game-engine";
 
 interface GameBoardProps {
@@ -29,6 +30,27 @@ interface GameBoardProps {
   onConnectionChange?: (
     status: "connected" | "disconnected" | "reconnecting",
   ) => void;
+
+  // Props pour afficher la victoire dans le GameBoard
+  showVictoryModal?: boolean;
+  victoryData?: {
+    isVictory: boolean;
+    playerKoras: number;
+    opponentKoras: number;
+    betAmount: number;
+    korasWon: number;
+    victoryType: {
+      type: string;
+      title: string;
+      description: string;
+      multiplier: string;
+      special: boolean;
+    };
+    victoryMessage: string;
+  };
+  onCloseVictory?: () => void;
+  onNewGame?: () => void;
+  onBackToSelection?: () => void;
 }
 
 export function GameBoard({
@@ -40,8 +62,13 @@ export function GameBoard({
   hoveredCard,
   selectedCard,
   onCardHover,
+  showVictoryModal,
+  victoryData,
+  onCloseVictory,
+  onNewGame,
+  onBackToSelection,
 }: GameBoardProps) {
-  // Si pas de gameState, afficher un plateau vide
+  // Si pas de gameState, afficher un plateau vide avec message d'attente
   if (!gameState) {
     return (
       <div
@@ -106,32 +133,68 @@ export function GameBoard({
       {/* Décorations d'arrière-plan */}
       <BackgroundDecorations />
 
+      {/* Zone adversaire avec cartes et infos de statut */}
       {opponentPlayer && (
-        <PlayerArea
-          player={opponentPlayer}
-          gameState={gameState}
-          onCardClick={onCardClick}
-          onPlayCard={onPlayCard}
-          hoveredCard={hoveredCard}
-          selectedCard={selectedCard}
-          onCardHover={onCardHover}
-        />
+        <div className="relative z-10 flex-shrink-0">
+          <PlayerArea
+            player={opponentPlayer}
+            gameState={gameState}
+            onCardClick={undefined} // L'adversaire n'est pas cliquable
+            onPlayCard={undefined}
+            hoveredCard={undefined}
+            selectedCard={undefined}
+            onCardHover={undefined}
+          />
+        </div>
       )}
 
       {/* Zone de jeu centrale */}
-      <GameTable playedCards={gameState.playedCards} />
+      <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 sm:px-4">
+        <div className="relative aspect-[6/4] max-h-[500px] w-auto max-w-[500px] min-w-[300px] lg:min-w-[400px]">
+          {/* Modal de victoire intégrée dans le plateau */}
+          {showVictoryModal && victoryData && (
+            <InGameVictoryModal
+              isVisible={true}
+              victoryData={victoryData}
+              onClose={
+                onCloseVictory ??
+                (() => {
+                  /* noop */
+                })
+              }
+              onNewGame={
+                onNewGame ??
+                (() => {
+                  /* noop */
+                })
+              }
+              onBackToSelection={
+                onBackToSelection ??
+                (() => {
+                  /* noop */
+                })
+              }
+            />
+          )}
 
-      {/* Zone joueur */}
+          {/* Plateau de jeu normal */}
+          <GameTable playedCards={gameState.playedCards} />
+        </div>
+      </div>
+
+      {/* Zone joueur avec infos de statut */}
       {currentPlayer && (
-        <PlayerArea
-          player={currentPlayer}
-          gameState={gameState}
-          onCardClick={onCardClick}
-          onPlayCard={onPlayCard}
-          hoveredCard={hoveredCard}
-          selectedCard={selectedCard}
-          onCardHover={onCardHover}
-        />
+        <div className="relative">
+          <PlayerArea
+            player={currentPlayer}
+            gameState={gameState}
+            onCardClick={onCardClick}
+            onPlayCard={onPlayCard}
+            hoveredCard={hoveredCard}
+            selectedCard={selectedCard}
+            onCardHover={onCardHover}
+          />
+        </div>
       )}
     </div>
   );

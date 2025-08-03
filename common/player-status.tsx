@@ -9,6 +9,7 @@ interface PlayerStatusProps {
   isOpponent?: boolean;
   gameEnded?: boolean;
   isWinner?: boolean;
+  isThinking?: boolean;
 }
 
 export function PlayerStatus({
@@ -22,6 +23,7 @@ export function PlayerStatus({
   isOpponent = false,
   gameEnded = false,
   isWinner = false,
+  isThinking = false,
 }: PlayerStatusProps) {
   const turnColor = isCurrentTurn
     ? "border-green-500/30 bg-gradient-to-r from-green-500/20 to-green-600/20 shadow-lg"
@@ -36,7 +38,7 @@ export function PlayerStatus({
   return (
     <div className={`mb-1 flex justify-center sm:mb-2 ${className}`}>
       <div
-        className={`flex items-center gap-1 rounded-md px-2 py-1 transition-all duration-300 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 ${turnColor}`}
+        className={`flex min-w-[180px] items-center justify-center gap-1 rounded-md px-2 py-1 transition-all duration-300 sm:gap-2 sm:rounded-lg sm:px-3 sm:py-2 ${turnColor}`}
       >
         {/* Indicateur de tour */}
         <div className={`h-3 w-3 rounded-full ${indicatorColor}`} />
@@ -46,14 +48,6 @@ export function PlayerStatus({
           <span className="hidden sm:inline">{playerName} </span>
           <span className="sm:hidden">{shortName ?? playerName} </span>(
           {cardCount})
-          {isCurrentTurn && (
-            <span className="ml-1 animate-pulse text-xs sm:ml-2">
-              <span className="hidden sm:inline">
-                {isOpponent ? "À son tour " : "À votre tour"}
-              </span>
-              <span className="sm:hidden">🎯</span>
-            </span>
-          )}
         </span>
 
         {/* Indicateur de main */}
@@ -75,6 +69,28 @@ export function PlayerStatus({
           <div className="ml-1 animate-pulse rounded-full bg-red-500 px-1 py-0.5 text-xs font-bold text-red-900 shadow-lg shadow-red-500/50 sm:ml-2 sm:px-2 sm:py-1">
             <span className="hidden sm:inline">🏆 perdu</span>
             <span className="sm:hidden">🏆</span>
+          </div>
+        )}
+
+        {!isOpponent && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 transform animate-pulse">
+            {isCurrentTurn ? (
+              <div className="rounded-full bg-green-500 px-3 py-1 text-sm font-semibold text-white">
+                Votre tour
+              </div>
+            ) : (
+              <div className="rounded-full bg-slate-600 px-3 py-1 text-sm text-white/70">
+                Tour de l&apos;adversaire
+              </div>
+            )}
+          </div>
+        )}
+
+        {isOpponent && isThinking && (
+          <div className="absolute top-2 left-1/2 -translate-x-1/2 transform">
+            <div className="rounded-full bg-slate-600 px-3 py-1 text-sm text-white/70">
+              Réfléchi...
+            </div>
           </div>
         )}
       </div>

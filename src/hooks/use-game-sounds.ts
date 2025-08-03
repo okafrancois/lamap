@@ -65,6 +65,24 @@ export function useGameSounds(gameState: GameState | null) {
       void playSound("ai_thinking");
     }
 
+    // Détecter fin de partie et jouer les sons de victoire/défaite
+    if (
+      previousState.status !== "ended" &&
+      gameState.status === "ended" &&
+      gameState.winnerUsername
+    ) {
+      const isUserWinner = gameState.winnerUsername === userData.user.username;
+
+      // Délai pour laisser l'animation se terminer
+      setTimeout(() => {
+        if (isUserWinner) {
+          void playSound("victory");
+        } else {
+          void playSound("defeat");
+        }
+      }, 300);
+    }
+
     // Mettre à jour la référence
     previousGameStateRef.current = gameState;
   }, [gameState, playSound, userData]);

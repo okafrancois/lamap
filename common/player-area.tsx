@@ -41,6 +41,8 @@ export function PlayerArea({
         gameStarted={gameState.status === "playing"}
         gameEnded={gameState.status === "ended"}
         isWinner={gameState.winnerUsername === player.username}
+        isThinking={player.isThinking}
+        isOpponent={isOpponent}
       />
 
       <PlayerDeck

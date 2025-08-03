@@ -2,7 +2,6 @@
 
 import { useGameController } from "@/hooks/use-game-controller";
 import { GameBoard } from "common/game-board";
-import { VictoryModal } from "common/victory-modal";
 import { GameReviewSheet } from "common/game-review-sheet";
 import { PageContainer } from "@/components/layout/page-container";
 import { LibButton } from "@/components/library/button";
@@ -13,6 +12,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { LibTitle } from "@/components/library/title";
 import {
   IconCards,
@@ -25,15 +33,63 @@ import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { useState } from "react";
 import type { AIDifficulty } from "@/engine/kora-game-engine";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useGameResume } from "@/hooks/use-game-resume";
+
+interface GameConfig {
+  mode: "ai" | "online";
+  difficulty?: "easy" | "medium" | "hard";
+  bet?: number;
+  maxRounds?: number;
+}
 
 export default function PlayPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const gameId = searchParams.get("gameId");
+  const gameId = searchParams.get("id");
+
+  // États supprimés car gérés par le controller et l'URL
 
   const controller = useGameController(gameId);
   const { gameState, ui } = controller;
   const userData = useUserDataContext();
+  const { ongoingGames, resumeGame } = useGameResume();
+
+  // Déterminer l'état actuel
+  const currentStatus = gameId
+    ? gameState?.status === "ended"
+      ? "finished"
+      : gameState?.status === "playing"
+        ? "playing"
+        : "waiting"
+    : "selecting";
+
+  // Gestion de l'URL sans rechargement
+  const updateURL = (newGameId?: string) => {
+    const url = newGameId ? `/play?id=${newGameId}` : "/play";
+    router.push(url, { scroll: false });
+  };
+
+  // Wrapper pour la création de partie avec gestion URL
+  const handleCreateGame = (config: GameConfig) => {
+    const newGameId = controller.createGame(config);
+    if (newGameId) {
+      updateURL(newGameId);
+    }
+  };
+
+  // Wrapper pour rejoindre une partie avec gestion URL
+  const handleJoinGame = (gameId: string) => {
+    const success = controller.joinGame(gameId);
+    if (success) {
+      updateURL(gameId);
+    }
+  };
+
+  // Retour à la sélection
+  const backToSelection = () => {
+    updateURL();
+  };
 
   if (!userData) {
     return <div>Vous devez être connecté pour jouer</div>;
@@ -63,8 +119,46 @@ export default function PlayPage() {
           hoveredCard={ui.hoveredCard}
           selectedCard={controller.getSelectedCardIndex()}
           onCardHover={controller.hoverCard}
+          showVictoryModal={ui.showVictoryModal}
+          victoryData={
+            gameState && controller.engine.gameState
+              ? {
+                  isVictory:
+                    gameState?.winnerUsername === userData.user.username,
+                  playerKoras:
+                    gameState?.players.find(
+                      (p) => p.username === userData.user.username,
+                    )?.koras ?? 0,
+                  opponentKoras:
+                    gameState?.players.find(
+                      (p) => p.username !== userData.user.username,
+                    )?.koras ?? 0,
+                  betAmount: gameState?.currentBet ?? 0,
+                  korasWon: controller.engine.getKorasWonThisGame?.() ?? 0,
+                  victoryType: controller.engine.getVictoryType?.(
+                    userData.user.username,
+                  ) ?? {
+                    type: "normal",
+                    title: "Partie terminée",
+                    description: "Résultat non disponible",
+                    multiplier: "x1",
+                    special: false,
+                  },
+                  victoryMessage:
+                    controller.engine.getVictoryMessage?.(
+                      gameState?.winnerUsername === userData.user.username,
+                    ) ?? "",
+                }
+              : undefined
+          }
+          onCloseVictory={() => ui.actions.hideVictory()}
+          onNewGame={() => {
+            ui.actions.hideVictory();
+            controller.newGame();
+          }}
+          onBackToSelection={backToSelection}
           className={`overflow-hidden p-0 transition-all duration-700 ease-in-out lg:rounded-lg ${
-            gameState?.status === "playing" ? "lg:w-full" : "lg:w-4/6"
+            currentStatus === "selecting" ? "lg:w-4/6" : "lg:w-full"
           }`}
         />
 
@@ -156,70 +250,7 @@ export default function PlayPage() {
           </div>
         )}
 
-        {/* Actions rapides fin de partie - Desktop */}
-        {gameState?.status === "ended" && (
-          <CardContent className="space-y-4 p-4">
-            <div
-              className={`flex items-center gap-3 rounded-lg p-4 ${
-                gameState?.winnerUsername === userData.user.username
-                  ? "border border-green-500/20 bg-green-500/10"
-                  : "border border-red-500/20 bg-red-500/10"
-              }`}
-            >
-              <div
-                className={`flex size-10 items-center justify-center rounded-full text-lg ${
-                  gameState?.winnerUsername === userData.user.username
-                    ? "bg-green-500 text-white"
-                    : "bg-red-500 text-white"
-                }`}
-              >
-                {gameState?.winnerUsername === userData.user.username
-                  ? "🏆"
-                  : "💀"}
-              </div>
-              <div>
-                <div className="font-semibold">
-                  {gameState?.winnerUsername === userData.user.username
-                    ? "Félicitations !"
-                    : "Dommage..."}
-                </div>
-                <div className="text-muted-foreground text-sm">
-                  {(() => {
-                    const currentPlayer = gameState?.players.find(
-                      (p) => p.username === userData.user.username,
-                    );
-                    const opponentPlayer = gameState?.players.find(
-                      (p) => p.username !== userData.user.username,
-                    );
-                    return `${currentPlayer?.koras ?? 0} vs ${opponentPlayer?.koras ?? 0} koras`;
-                  })()}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <LibButton
-                onClick={controller.newGame}
-                className="bg-primary hover:bg-primary/90 w-full"
-                icon={<IconRefresh className="size-4" />}
-              >
-                🚀 Rejouer (même mode)
-              </LibButton>
-              <LibButton
-                onClick={() => {
-                  window.location.reload();
-                }}
-                variant="outline"
-                className="w-full"
-                icon={<IconCards className="size-4" />}
-              >
-                🎯 Changer de mode
-              </LibButton>
-            </div>
-          </CardContent>
-        )}
-
-        {!gameId && (
+        {currentStatus === "selecting" && (
           <Card
             className={`hidden h-full w-2/6 pt-0 transition-all duration-700 ease-in-out lg:block`}
           >
@@ -238,11 +269,54 @@ export default function PlayPage() {
             </CardHeader>
 
             <CardContent className="space-y-4">
+              {/* Parties en cours */}
+              {ongoingGames && ongoingGames.length > 0 && (
+                <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/10 to-blue-600/10 p-4">
+                  <CardHeader className="p-0 pb-3">
+                    <LibTitle
+                      as="h3"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <div className="rounded-lg bg-blue-500/20 p-1">
+                        <IconCards className="size-icon text-blue-400" />
+                      </div>
+                      <span className="text-lg font-semibold">
+                        Parties en cours
+                      </span>
+                    </LibTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 p-0">
+                    {ongoingGames.slice(0, 2).map((game: any) => (
+                      <div
+                        key={game.gameId}
+                        className="flex items-center justify-between rounded bg-blue-500/10 p-2"
+                      >
+                        <div className="text-sm">
+                          <div>vs {game.opponent?.username ?? "IA"}</div>
+                          <div className="text-muted-foreground text-xs">
+                            Tour {game.currentRound}/{game.maxRounds}
+                          </div>
+                        </div>
+                        <LibButton
+                          size="sm"
+                          onClick={() => resumeGame(game.gameId)}
+                          className="h-7 text-xs"
+                        >
+                          Reprendre
+                        </LibButton>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
               <VsIaGameMode
                 isSelected={ui.selectedGameMode === "ai"}
                 onTrigger={() => controller.selectGameMode("ai")}
                 onClose={() => controller.selectGameMode(null)}
-                onNewGame={() => controller.startGame("ai")}
+                onNewGame={(difficulty) =>
+                  handleCreateGame({ mode: "ai", difficulty })
+                }
                 hidden={Boolean(
                   ui.selectedGameMode && ui.selectedGameMode !== "ai",
                 )}
@@ -252,7 +326,9 @@ export default function PlayPage() {
                 isSelected={ui.selectedGameMode === "online"}
                 onTrigger={() => controller.selectGameMode("online")}
                 onClose={() => controller.selectGameMode(null)}
-                onNewGame={() => controller.startGame("online")}
+                onNewGame={(config) =>
+                  handleCreateGame({ mode: "online", ...config })
+                }
                 hidden={Boolean(
                   ui.selectedGameMode && ui.selectedGameMode !== "online",
                 )}
@@ -261,55 +337,6 @@ export default function PlayPage() {
           </Card>
         )}
       </div>
-
-      {/* Modal de victoire/défaite */}
-      <VictoryModal
-        isVisible={ui.showVictoryModal}
-        isVictory={gameState?.winnerUsername === userData.user.username}
-        playerKoras={
-          gameState?.players.find((p) => p.username === userData.user.username)
-            ?.koras ?? 0
-        }
-        opponentKoras={
-          gameState?.players.find((p) => p.username !== userData.user.username)
-            ?.koras ?? 0
-        }
-        betAmount={gameState?.currentBet ?? 0}
-        korasWon={
-          controller.engine.gameState
-            ? controller.engine.getKorasWonThisGame()
-            : 0
-        }
-        victoryType={
-          controller.engine.gameState
-            ? controller.engine.getVictoryType(userData.user.username)
-            : {
-                type: "normal",
-                title: "Partie terminée",
-                description: "Résultat non disponible",
-                multiplier: "x1",
-                special: false,
-              }
-        }
-        victoryMessage={
-          controller.engine.gameState
-            ? controller.engine.getVictoryMessage(
-                gameState?.winnerUsername === userData.user.username,
-              )
-            : ""
-        }
-        onPlayAgain={() => {
-          ui.actions.hideVictory();
-          controller.newGame();
-        }}
-        onClose={() => {
-          ui.actions.hideVictory();
-        }}
-        onEnterReview={() => {
-          ui.actions.hideVictory();
-          ui.actions.showReview();
-        }}
-      />
 
       {/* Sheet de review */}
       <GameReviewSheet
@@ -451,7 +478,7 @@ type OnlineGameModeProps = {
   isSelected: boolean;
   onTrigger: () => void;
   onClose: () => void;
-  onNewGame: () => void;
+  onNewGame: (config: { bet: number; maxRounds?: number }) => void;
   hidden: boolean;
 };
 
@@ -464,6 +491,8 @@ function OnlineGameMode({
 }: OnlineGameModeProps) {
   const modeData = GAME_MODES.find((mode) => mode.id === "online");
   const [option, setOption] = useState<"create" | "join" | null>(null);
+  const [bet, setBet] = useState(10);
+  const [maxRounds, setMaxRounds] = useState(5);
 
   if (!modeData || hidden) {
     return null;
@@ -471,16 +500,61 @@ function OnlineGameMode({
 
   const CreateGameForm = () => {
     return (
-      <div>
-        <h1>Créer une partie</h1>
+      <div className="space-y-3">
+        <h4 className="font-semibold">Configurer la partie</h4>
+        <div>
+          <Label className="text-sm">Mise (koras)</Label>
+          <Input
+            type="number"
+            value={bet}
+            onChange={(e) => setBet(Number(e.target.value))}
+            min="10"
+            max="1000"
+            className="h-8"
+          />
+        </div>
+        <div>
+          <Label className="text-sm">Tours maximum</Label>
+          <Select
+            value={maxRounds.toString()}
+            onValueChange={(value) => setMaxRounds(Number(value))}
+          >
+            <SelectTrigger className="h-8">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="3">3 tours</SelectItem>
+              <SelectItem value="5">5 tours</SelectItem>
+              <SelectItem value="7">7 tours</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     );
   };
 
   const GamesList = () => {
     return (
-      <div>
-        <h1>Liste des parties</h1>
+      <div className="space-y-3">
+        <h4 className="font-semibold">Parties disponibles</h4>
+        <div className="space-y-2">
+          <div className="rounded border p-2 text-sm">
+            <div className="flex items-center justify-between">
+              <div>
+                <div>Partie #1234</div>
+                <div className="text-muted-foreground text-xs">
+                  Mise: 50 koras • 5 tours
+                </div>
+              </div>
+              <LibButton size="sm" className="h-7 text-xs">
+                Rejoindre
+              </LibButton>
+            </div>
+          </div>
+          <div className="text-muted-foreground text-center text-sm">
+            Pas de parties disponibles
+          </div>
+        </div>
       </div>
     );
   };
@@ -518,21 +592,36 @@ function OnlineGameMode({
               </LibButton>
             </div>
           )}
-          {option && (
-            <div className="flex flex-col gap-2">
-              <LibButton
-                className="mt-3 w-full bg-purple-600 hover:bg-purple-700"
-                onClick={onNewGame}
-                icon={<IconPlayerPlay className="size-4" />}
-              >
-                🚀 Commencer la partie
-              </LibButton>
+          {option === "create" && (
+            <div className="space-y-3">
+              <CreateGameForm />
+              <div className="flex flex-col gap-2">
+                <LibButton
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                  onClick={() => onNewGame({ bet, maxRounds })}
+                  icon={<IconPlayerPlay className="size-4" />}
+                >
+                  🚀 Créer la partie
+                </LibButton>
+                <LibButton
+                  className="w-full text-sm"
+                  onClick={() => setOption(null)}
+                  variant={"link"}
+                >
+                  ← Retour
+                </LibButton>
+              </div>
+            </div>
+          )}
+          {option === "join" && (
+            <div className="space-y-3">
+              <GamesList />
               <LibButton
                 className="w-full text-sm"
                 onClick={() => setOption(null)}
                 variant={"link"}
               >
-                ← Changer de mode
+                ← Retour
               </LibButton>
             </div>
           )}

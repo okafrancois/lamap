@@ -124,6 +124,59 @@ export function useGameController(gameId: string | null = null) {
     // TODO: si la partie est en cours et qu'il y a déjà 2 joueurs alors on affiche un message pour dire que la partie est déjà en cours et on ne peut pas la rejoindre
   }, [gameId]);
 
+  // Créer une nouvelle partie avec configuration complète
+  const createGame = useCallback(
+    (config: {
+      mode: GameMode;
+      difficulty?: AIDifficulty;
+      bet?: number;
+      maxRounds?: number;
+    }) => {
+      if (!userData?.user) {
+        toast.error("Vous devez être connecté pour jouer");
+        return null;
+      }
+
+      // Générer un ID de partie unique
+      const newGameId = `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      if (config.mode === "ai") {
+        // Pour l'IA, démarrer immédiatement
+        setTimeout(() => {
+          initializeGame(
+            config.mode,
+            userData.user.username,
+            userData.user.name ?? userData.user.username,
+            config.difficulty,
+          );
+          koraEngine.startNewGame();
+        }, 1000);
+      } else if (config.mode === "online") {
+        // Pour le multijoueur, créer la partie et attendre
+        // TODO: Implémenter la création de partie multijoueur
+        console.log("Création de partie multijoueur:", newGameId, config);
+      }
+
+      return newGameId;
+    },
+    [userData, initializeGame, koraEngine],
+  );
+
+  // Rejoindre une partie existante
+  const joinGame = useCallback(
+    (gameId: string) => {
+      if (!userData?.user) {
+        toast.error("Vous devez être connecté pour jouer");
+        return false;
+      }
+
+      // TODO: Implémenter la logique de rejoindre une partie
+      console.log("Rejoindre la partie:", gameId);
+      return true;
+    },
+    [userData],
+  );
+
   // Nouvelle partie rapide (réutilise le mode actuel)
   const newGame = useCallback(() => {
     if (koraEngine.gameState) {
@@ -250,6 +303,10 @@ export function useGameController(gameId: string | null = null) {
     playCard,
     selectCard,
     hoverCard,
+
+    // Nouvelle gestion des parties
+    createGame,
+    joinGame,
 
     // Utilitaires
     getCardByIndex,
