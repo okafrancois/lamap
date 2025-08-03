@@ -36,7 +36,7 @@ export const GAME_MODES: GameModeOption[] = [
     color: "from-blue-500 to-blue-600",
     difficulty: "Humain",
     players: "2 joueurs",
-    available: false, // Pas encore implémenté
+    available: true, // Pas encore implémenté
   },
   {
     id: "friend",

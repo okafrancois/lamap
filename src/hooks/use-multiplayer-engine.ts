@@ -19,6 +19,13 @@ interface UseMultiplayerEngineProps {
   gameId: string;
   isHost: boolean;
   initialGameState?: GameState;
+  roomPlayers?: Array<{
+    id: string;
+    username: string;
+    koras: number;
+    isReady: boolean;
+    isHost: boolean;
+  }>;
 }
 
 export function useMultiplayerEngine({
@@ -26,6 +33,7 @@ export function useMultiplayerEngine({
   gameId,
   isHost,
   initialGameState,
+  roomPlayers,
 }: UseMultiplayerEngineProps) {
   const userData = useUserDataContext();
   const [gameState, setGameState] = useState<GameState | null>(
@@ -35,6 +43,7 @@ export function useMultiplayerEngine({
 
   const engineRef = useRef<MultiplayerGameEngine | null>(null);
   const eventsProcessed = useRef(new Set<string>());
+  const hasStartedGame = useRef(false);
 
   // ========== MUTATIONS TRPC ==========
 
@@ -63,11 +72,22 @@ export function useMultiplayerEngine({
       let bet: number;
       let maxRounds: number;
 
-      if (state) {
+      if (initialGameState) {
         // Utiliser l'état fourni
-        players = state.players;
-        bet = state.currentBet;
-        maxRounds = state.maxRounds;
+        players = initialGameState.players;
+        bet = initialGameState.currentBet;
+        maxRounds = initialGameState.maxRounds;
+      } else if (roomPlayers && roomPlayers.length > 0) {
+        // Utiliser les joueurs de la salle
+        players = roomPlayers.map((player) => ({
+          username: player.username,
+          type: "user" as const,
+          isConnected: true,
+          name: player.username,
+          koras: player.koras,
+        }));
+        bet = 10; // TODO: Récupérer depuis la salle
+        maxRounds = 5; // TODO: Récupérer depuis la salle
       } else {
         // État par défaut pour une nouvelle partie
         players = [
@@ -100,16 +120,52 @@ export function useMultiplayerEngine({
       });
 
       // Restaurer l'état si fourni
-      if (state) {
-        engine.loadState(state);
+      if (initialGameState) {
+        engine.loadState(initialGameState);
       }
 
       engineRef.current = engine;
       setIsEngineReady(true);
 
       console.log("🎮 Moteur multi-joueur initialisé", config);
+
+      // Si on a les joueurs mais pas d'état, démarrer automatiquement (une seule fois)
+      if (
+        roomPlayers &&
+        roomPlayers.length > 0 &&
+        !initialGameState &&
+        !hasStartedGame.current
+      ) {
+        console.log("🚀 Démarrage automatique de la partie...");
+        console.log(
+          "📊 Joueurs disponibles:",
+          roomPlayers.map((p) => p.username),
+        );
+        hasStartedGame.current = true;
+        setTimeout(() => {
+          console.log("🎯 Appel de startNewGame()...");
+          engine.startNewGame();
+          console.log("✅ startNewGame() appelé");
+        }, 100); // Petit délai pour s'assurer que tout est prêt
+      } else {
+        console.log("❌ Pas de démarrage automatique:", {
+          hasRoomPlayers: !!roomPlayers,
+          roomPlayersLength: roomPlayers?.length,
+          hasState: !!initialGameState,
+          hasStarted: hasStartedGame.current,
+        });
+      }
     },
-    [userData, roomId, gameId, isHost, sendEventMutation, utils],
+    [
+      userData,
+      roomId,
+      gameId,
+      isHost,
+      sendEventMutation,
+      utils,
+      roomPlayers,
+      initialGameState,
+    ],
   );
 
   // ========== GESTION DES ÉVÉNEMENTS ==========

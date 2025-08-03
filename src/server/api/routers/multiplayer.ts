@@ -1,11 +1,5 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import type {
-  CreateRoomInput,
-  JoinRoomInput,
-  PlayCardInput,
-  GetRoomUpdatesInput,
-} from "@/types/multiplayer";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcryptjs";
 
@@ -346,7 +340,7 @@ export const multiplayerRouter = createTRPCRouter({
       }
 
       // Si pas de changement, retourner null (optimisation)
-      if (lastVersion >= room.version) {
+      if (lastVersion > room.version) {
         return null;
       }
 
@@ -601,6 +595,72 @@ export const multiplayerRouter = createTRPCRouter({
         payload: event.payload,
         timestamp: event.timestamp,
       }));
+    }),
+
+  // ========== RÉCUPÉRATION DES INFOS DE PARTIE ==========
+
+  // Récupérer les infos d'une partie par son gameId
+  getGameInfo: protectedProcedure
+    .input(z.object({ gameId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { gameId } = input;
+
+      // Chercher la salle qui contient cette partie
+      const room = await ctx.db.gameRoom.findFirst({
+        where: { gameId },
+        include: {
+          players: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  gameStats: {
+                    select: { currentKoras: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+
+      if (!room) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Partie introuvable",
+        });
+      }
+
+      // Vérifier que l'utilisateur est dans cette salle
+      const isInRoom = room.players.some(
+        (p) => p.userId === ctx.session.user.id,
+      );
+      if (!isInRoom) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Vous n'êtes pas dans cette partie",
+        });
+      }
+
+      const currentPlayer = room.players.find(
+        (p) => p.userId === ctx.session.user.id,
+      );
+
+      return {
+        roomId: room.id,
+        gameId: room.gameId,
+        isHost: currentPlayer?.isHost ?? false,
+        roomName: room.name,
+        status: room.status,
+        players: room.players.map((p) => ({
+          id: p.userId,
+          username: p.user.username ?? "",
+          koras: p.user.gameStats?.currentKoras ?? 100,
+          isReady: p.isReady,
+          isHost: p.isHost,
+        })),
+      };
     }),
 
   // TODO: Ajouter d'autres procédures si nécessaire
