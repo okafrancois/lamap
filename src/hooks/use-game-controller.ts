@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 export type GameMode = "ai" | "online" | "friend";
 
-export function useGameController() {
+export function useGameController(gameId: string | null = null) {
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
@@ -50,7 +50,6 @@ export function useGameController() {
     });
   }, [koraEngine, gameSync, userData]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-
   // Initialiser le jeu avec des joueurs selon le mode choisi
   const initializeGame = useCallback(
     (
@@ -116,6 +115,14 @@ export function useGameController() {
     },
     [initializeGame, koraEngine, ui.aiDifficulty, userData],
   );
+
+  const loadGameState = useCallback(() => {
+    if (!gameId) return;
+    // TODO: charger le jeu si on a un gameId
+    // TODO: si on est pas celui qui a créé la partie ou qu'on est pas encore dans la partie on la rejoins
+    // TODO: si la partie est déjà en cours on la charge
+    // TODO: si la partie est en cours et qu'il y a déjà 2 joueurs alors on affiche un message pour dire que la partie est déjà en cours et on ne peut pas la rejoindre
+  }, [gameId]);
 
   // Nouvelle partie rapide (réutilise le mode actuel)
   const newGame = useCallback(() => {
@@ -220,6 +227,12 @@ export function useGameController() {
       return () => clearTimeout(timer);
     }
   }, [koraEngine.gameState, koraEngine]);
+
+  useEffect(() => {
+    if (gameId) {
+      loadGameState();
+    }
+  }, [gameId, loadGameState]);
 
   // Logique de victoire gérée directement dans le game engine
 

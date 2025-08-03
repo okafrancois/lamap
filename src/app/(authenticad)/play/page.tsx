@@ -20,7 +20,6 @@ import {
   IconPlayerPlay,
   IconStar,
   IconRobot,
-  IconX,
 } from "@tabler/icons-react";
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
@@ -32,7 +31,7 @@ export default function PlayPage() {
   const searchParams = useSearchParams();
   const gameId = searchParams.get("gameId");
 
-  const controller = useGameController();
+  const controller = useGameController(gameId);
   const { gameState, ui } = controller;
   const userData = useUserDataContext();
 
