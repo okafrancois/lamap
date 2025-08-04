@@ -40,8 +40,8 @@ const GameStateSchema = z.object({
   currentRound: z.number(),
   hasHandUsername: z.string().nullable(),
   playerTurnUsername: z.string().nullable(),
-  players: z.array(PlayerEntitySchema),
-  playedCards: z.array(PlayedCardSchema),
+  players: z.any(),
+  playedCards: z.any(),
   winnerUsername: z.string().nullable(),
   currentBet: z.number(),
   endReason: z.string().nullable(),
@@ -218,8 +218,11 @@ export const gameRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const { gameState } = input;
 
+      const players = gameState.players as unknown as PlayerEntity[];
+      const playedCards = gameState.playedCards as unknown as PlayedCard[];
+
       // Vérifier que l'utilisateur est bien dans cette partie
-      const isPlayerInGame = gameState.players.some(
+      const isPlayerInGame = players.some(
         (p) => p.username === ctx.session.user.username,
       );
 
@@ -228,12 +231,10 @@ export const gameRouter = createTRPCRouter({
       }
 
       // Déterminer le mode de jeu
-      const gameMode = gameState.players.some((p) => p.type === "ai")
-        ? "AI"
-        : "ONLINE";
+      const gameMode = players.some((p) => p.type === "ai") ? "AI" : "ONLINE";
 
       // Préparer les données des joueurs avec leurs mains
-      const playersData = gameState.players.map((player) => ({
+      const playersData = players.map((player) => ({
         username: player.username,
         type: player.type,
         isConnected: player.isConnected,
@@ -259,7 +260,7 @@ export const gameRouter = createTRPCRouter({
           lastSyncedAt: new Date(),
           // Sauvegarder les données complètes des joueurs
           players: playersData,
-          playedCards: gameState.playedCards,
+          playedCards: playedCards as unknown as Prisma.InputJsonValue,
         },
         create: {
           gameId: gameState.gameId,
@@ -268,8 +269,7 @@ export const gameRouter = createTRPCRouter({
           currentBet: gameState.currentBet,
           maxRounds: gameState.maxRounds,
           aiDifficulty:
-            gameState.players.find((p) => p.type === "ai")?.aiDifficulty ??
-            null,
+            players.find((p) => p.type === "ai")?.aiDifficulty ?? null,
           currentRound: gameState.currentRound,
           hasHandPlayerId: gameState.hasHandUsername,
           playerTurnId: gameState.playerTurnUsername,
@@ -280,7 +280,7 @@ export const gameRouter = createTRPCRouter({
           localId: input.id,
           hostUsername: gameState.hostUsername,
           players: playersData,
-          playedCards: gameState.playedCards,
+          playedCards: playedCards as unknown as Prisma.InputJsonValue,
         },
       });
 
@@ -289,7 +289,7 @@ export const gameRouter = createTRPCRouter({
         await updateUserStats(
           ctx.db,
           ctx.session.user.id,
-          gameState,
+          gameState as unknown as GameState,
           gameMode === "AI",
         );
       }

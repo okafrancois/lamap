@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { LibButton } from "@/components/library/button";
 import { cn } from "@/lib/utils";
 import { IconPlayerPlay } from "@tabler/icons-react";
 
@@ -30,27 +30,20 @@ export function PlayButton({
         onClick();
       }}
     >
-      <Button
-        size="sm"
+      <LibButton
         disabled={!isPlayable}
-        className={`flex items-center gap-2 shadow-lg transition-transform ${
+        className={`flex items-center rounded-full shadow-lg transition-transform ${
           isPlayable
             ? "bg-primary hover:bg-primary/90 text-primary-foreground hover:scale-105 active:scale-95"
             : "cursor-not-allowed bg-red-500/80 text-white"
         }`}
       >
         {isPlayable ? (
-          <>
-            <IconPlayerPlay className="size-3" />
-            Jouer
-          </>
+          <IconPlayerPlay className="size-icon" />
         ) : (
-          <>
-            <span className="text-xl">🚫</span>
-            Non jouable
-          </>
+          <span className="text-xl">🚫</span>
         )}
-      </Button>
+      </LibButton>
     </div>
   );
 }

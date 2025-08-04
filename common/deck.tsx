@@ -1228,6 +1228,20 @@ interface PlayerDeckProps {
   onCardHover?: (cardIndex: number | null) => void;
 }
 
+const getCardWidth = (isOpponent: boolean, isMobile: boolean) => {
+  if (isMobile) {
+    return isOpponent ? 70 : 90;
+  }
+  return isOpponent ? 100 : 132;
+};
+
+const getCardHeight = (isOpponent: boolean, isMobile: boolean) => {
+  if (isMobile) {
+    return isOpponent ? 100 : 140;
+  }
+  return isOpponent ? 120 : 185;
+};
+
 export function PlayerDeck({
   cards,
   isOpponent = false,
@@ -1242,8 +1256,8 @@ export function PlayerDeck({
 }: PlayerDeckProps) {
   const isMobile = useMobile();
   const { playSound } = useSound();
-  const cardWidth = isOpponent ? 80 : isMobile ? 80 : 110;
-  const cardHeight = isOpponent ? 112 : isMobile ? 104 : 154;
+  const cardWidth = getCardWidth(isOpponent, isMobile);
+  const cardHeight = getCardHeight(isOpponent, isMobile);
   const cardSpacing = isMobile ? cardWidth - 5 : cardWidth + 8;
 
   return (

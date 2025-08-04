@@ -199,7 +199,7 @@ export function GameBoard({
 
       {/* Zone de jeu centrale */}
       <div className="relative z-10 flex min-h-0 flex-1 items-center justify-center px-2 sm:px-4">
-        <div className="relative aspect-[6/4] max-h-[500px] w-auto max-w-[500px] min-w-[300px] lg:min-w-[400px]">
+        <div className="relative w-full max-w-[95%] md:max-w-[80%] lg:max-w-[45%]">
           {/* Modal de victoire intégrée dans le plateau */}
           {showVictoryModal && victoryData && (
             <InGameVictoryModal
