@@ -12,6 +12,7 @@ import { AnimatedCard } from "./animated-card";
 import type { PlayedCard } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { useSound } from "@/hooks/use-sound";
+import { z } from "zod";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -30,12 +31,28 @@ export type Rank =
   | "Q"
   | "K";
 
-export type Card = {
-  suit: Suit;
-  rank: Rank;
-  jouable: boolean;
-  id: string;
-};
+export const CardSchema = z.object({
+  suit: z.enum(["hearts", "diamonds", "clubs", "spades"]),
+  rank: z.enum([
+    "A",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "J",
+    "Q",
+    "K",
+  ]),
+  jouable: z.boolean(),
+  id: z.string(),
+});
+
+export type Card = z.infer<typeof CardSchema>;
 
 interface CardProps {
   suit: Suit;
@@ -58,11 +75,6 @@ const PlayingCard: React.FC<CardProps> = ({
   width = 100,
   height = 140,
   className,
-  isPlayable = true,
-  isFlipping = false,
-  isPlaying = false,
-  isHovered = false,
-  onClick,
   onHover,
 }) => {
   const isRed = suit === "hearts" || suit === "diamonds";

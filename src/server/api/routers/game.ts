@@ -7,6 +7,7 @@ import type {
   PlayerEntity,
 } from "@/engine/kora-game-engine";
 import { GameStatus, type PrismaClient } from "@prisma/client";
+import { CardSchema } from "common/deck";
 
 // ========== SCHEMAS DE VALIDATION ==========
 
@@ -19,14 +20,14 @@ const PlayerEntitySchema = z.object({
   isConnected: z.boolean(),
   name: z.string().optional(),
   avatar: z.string().optional(),
-  hand: z.array(z.any()).optional(), // Simplifié pour le moment
+  hand: z.array(CardSchema).optional(),
   koras: z.number(),
   aiDifficulty: AIDifficultySchema.optional(),
   isThinking: z.boolean().optional(),
 });
 
 const PlayedCardSchema = z.object({
-  card: z.any(), // Simplifié pour le moment
+  card: CardSchema,
   playerUsername: z.string(),
   round: z.number(),
   timestamp: z.number(),
@@ -50,7 +51,7 @@ const GameStateSchema = z.object({
       timestamp: z.number(),
     }),
   ),
-  hostUsername: z.string().nullable(),
+  hostUsername: z.string(),
   seed: z.string(),
   version: z.number(),
 });
@@ -279,7 +280,7 @@ export const gameRouter = createTRPCRouter({
           seed: gameState.seed,
           endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
           localId: input.id,
-          hostUsername: ctx.session.user.username,
+          hostUsername: gameState.hostUsername,
           players: JSON.stringify(playersData),
           playedCards: JSON.stringify(gameState.playedCards),
         },
