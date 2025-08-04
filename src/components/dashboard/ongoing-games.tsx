@@ -15,8 +15,11 @@ import { useGameResume } from "@/hooks/use-game-resume";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { useUserDataContext } from "../layout/user-provider";
+import type { PlayerEntity } from "@/engine/kora-game-engine";
 
 export function OngoingGames() {
+  const userData = useUserDataContext();
   const { ongoingGames, isLoadingGames, resumeGame, isResuming, refetch } =
     useGameResume();
   const router = useRouter();
@@ -101,7 +104,13 @@ export function OngoingGames() {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-medium">
-                    vs {game.opponent?.name || "IA"}
+                    vs{" "}
+                    {
+                      game.players.find(
+                        (p: PlayerEntity) =>
+                          p.username !== userData?.user?.username,
+                      )?.name
+                    }
                   </span>
                   <div className="flex items-center gap-1">
                     <Badge variant="outline" className="text-xs">

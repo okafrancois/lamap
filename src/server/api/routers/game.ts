@@ -1,11 +1,15 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
-import type { GameState } from "@/engine/kora-game-engine";
+import type {
+  GameState,
+  PlayedCard,
+  PlayerEntity,
+} from "@/engine/kora-game-engine";
+import { GameStatus, type PrismaClient } from "@prisma/client";
 
 // ========== SCHEMAS DE VALIDATION ==========
 
-const GameStatusSchema = z.enum(["waiting", "playing", "ended"]);
 const PlayerTypeSchema = z.enum(["user", "ai"]);
 const AIDifficultySchema = z.enum(["easy", "medium", "hard"]);
 
@@ -30,7 +34,7 @@ const PlayedCardSchema = z.object({
 
 const GameStateSchema = z.object({
   gameId: z.string(),
-  status: GameStatusSchema,
+  status: z.nativeEnum(GameStatus),
   maxRounds: z.number(),
   currentRound: z.number(),
   hasHandUsername: z.string().nullable(),
@@ -46,6 +50,7 @@ const GameStateSchema = z.object({
       timestamp: z.number(),
     }),
   ),
+  hostUsername: z.string().nullable(),
   seed: z.string(),
   version: z.number(),
 });
@@ -86,18 +91,27 @@ export const gameRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const gameId = `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
+      // Créer le joueur créateur
+      const creatorPlayer = {
+        username: ctx.session.user.username,
+        type: "user",
+        isConnected: true,
+        name: ctx.session.user.name ?? ctx.session.user.username,
+        koras: 100,
+      };
+
       const game = await ctx.db.game.create({
         data: {
           gameId,
           mode: "ONLINE",
           status: "WAITING",
-          player1Id: ctx.session.user.id,
           currentBet: input.bet,
           maxRounds: input.maxRounds,
           roomName: input.name,
           isPrivate: input.isPrivate,
-          hostId: ctx.session.user.id,
+          hostUsername: ctx.session.user.username,
           seed: Math.random().toString(36),
+          players: [creatorPlayer], // Commencer avec le créateur
         },
       });
 
@@ -114,27 +128,31 @@ export const gameRouter = createTRPCRouter({
         mode: "ONLINE",
         status: "WAITING",
         isPrivate: false,
-        player2Id: null, // Pas encore pleine
-      },
-      include: {
-        player1: {
-          select: { id: true, username: true },
-        },
       },
       orderBy: { startedAt: "desc" },
       take: 20,
     });
 
-    return games.map((game) => ({
-      gameId: game.gameId,
-      name: game.roomName || `Partie de ${game.player1.username}`,
-      hostUsername: game.player1.username,
-      currentPlayers: game.player2Id ? 2 : 1,
-      maxPlayers: game.maxPlayers,
-      bet: game.currentBet,
-      maxRounds: game.maxRounds,
-      createdAt: game.startedAt,
-    }));
+    return games.map((game) => {
+      const players = game.players
+        ? (JSON.parse(game.players as string) as PlayerEntity[])
+        : [];
+      const hostPlayer = players.find(
+        (p: PlayerEntity) =>
+          p.type === "user" && p.username === game.hostUsername,
+      );
+
+      return {
+        gameId: game.gameId,
+        name: game.roomName ?? `Partie de ${hostPlayer?.username ?? "Inconnu"}`,
+        hostUsername: hostPlayer?.username ?? "Inconnu",
+        currentPlayers: players.length,
+        maxPlayers: game.maxPlayers,
+        bet: game.currentBet,
+        maxRounds: game.maxRounds,
+        createdAt: game.startedAt,
+      };
+    });
   }),
 
   // Rejoindre une partie
@@ -152,26 +170,44 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
-      if (game.player2Id) {
+      const players = game.players
+        ? (JSON.parse(game.players as string) as PlayerEntity[])
+        : [];
+
+      if (players.length >= 2) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Partie déjà pleine",
         });
       }
 
-      if (game.player1Id === ctx.session.user.id) {
+      // Vérifier si l'utilisateur est déjà dans la partie
+      const isAlreadyInGame = players.some(
+        (p) => p.username === ctx.session.user.username,
+      );
+      if (isAlreadyInGame) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Vous ne pouvez pas rejoindre votre propre partie",
+          message: "Vous êtes déjà dans cette partie",
         });
       }
 
-      // Ajouter le joueur et démarrer la partie
+      // Ajouter le nouveau joueur
+      const newPlayer = {
+        username: ctx.session.user.username,
+        type: "user",
+        isConnected: true,
+        name: ctx.session.user.name ?? ctx.session.user.username,
+        koras: 100,
+      };
+
+      const updatedPlayers = [...players, newPlayer];
+
       await ctx.db.game.update({
         where: { gameId: input.gameId },
         data: {
-          player2Id: ctx.session.user.id,
-          status: "PLAYING",
+          players: JSON.stringify(updatedPlayers),
+          status: updatedPlayers.length === 2 ? "PLAYING" : "WAITING",
         },
       });
 
@@ -197,46 +233,39 @@ export const gameRouter = createTRPCRouter({
         ? "AI"
         : "ONLINE";
 
-      // Trouver player2Id (pour mode AI, c'est null)
-      const player1 = gameState.players.find((p) => p.type === "user");
-      const player2 = gameState.players.find(
-        (p) => p.type === "user" && p.username !== player1?.username,
-      );
-
-      let player2Id = null;
-      if (player2 && gameMode === "ONLINE") {
-        const player2User = await ctx.db.user.findUnique({
-          where: { username: player2.username },
-        });
-        player2Id = player2User?.id ?? null;
-      }
-
-      // Convertir le status
-      const statusMapping = {
-        waiting: "WAITING",
-        playing: "PLAYING",
-        ended: "ENDED",
-      } as const;
+      // Préparer les données des joueurs avec leurs mains
+      const playersData = gameState.players.map((player) => ({
+        username: player.username,
+        type: player.type,
+        isConnected: player.isConnected,
+        name: player.name,
+        avatar: player.avatar,
+        hand: player.hand ?? [],
+        koras: player.koras,
+        aiDifficulty: player.aiDifficulty,
+        isThinking: player.isThinking,
+      }));
 
       // Upsert la partie en base
       const game = await ctx.db.game.upsert({
         where: { gameId: gameState.gameId },
         update: {
-          status: statusMapping[gameState.status] || "PLAYING",
+          status: gameState.status,
           currentRound: gameState.currentRound,
           hasHandPlayerId: gameState.hasHandUsername,
           playerTurnId: gameState.playerTurnUsername,
           winnerPlayerId: gameState.winnerUsername,
           endReason: gameState.endReason,
-          endedAt: gameState.status === "ended" ? new Date() : null,
+          endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
           lastSyncedAt: new Date(),
+          // Sauvegarder les données complètes des joueurs
+          players: playersData,
+          playedCards: gameState.playedCards,
         },
         create: {
           gameId: gameState.gameId,
           mode: gameMode,
-          status: statusMapping[gameState.status] || "PLAYING",
-          player1Id: ctx.session.user.id,
-          player2Id,
+          status: gameState.status,
           currentBet: gameState.currentBet,
           maxRounds: gameState.maxRounds,
           aiDifficulty:
@@ -248,17 +277,20 @@ export const gameRouter = createTRPCRouter({
           winnerPlayerId: gameState.winnerUsername,
           endReason: gameState.endReason,
           seed: gameState.seed,
-          endedAt: gameState.status === "ended" ? new Date() : null,
+          endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
           localId: input.id,
+          hostUsername: ctx.session.user.username,
+          players: JSON.stringify(playersData),
+          playedCards: JSON.stringify(gameState.playedCards),
         },
       });
 
       // Mettre à jour les stats si la partie est terminée
-      if (gameState.status === "ended" && gameState.winnerUsername) {
+      if (gameState.status === GameStatus.ENDED && gameState.winnerUsername) {
         await updateUserStats(
           ctx.db,
           ctx.session.user.id,
-          gameState as GameState,
+          gameState,
           gameMode === "AI",
         );
       }
@@ -277,29 +309,34 @@ export const gameRouter = createTRPCRouter({
       // Vérifier que la partie existe et que l'utilisateur y participe
       const game = await ctx.db.game.findUnique({
         where: { gameId: input.gameId },
-        include: {
-          player1: true,
-          player2: true,
-        },
       });
 
       if (!game) {
         throw new Error("Partie non trouvée");
       }
 
+      const formattedGame = {
+        ...game,
+        players: JSON.parse(game.players as string) as PlayerEntity[],
+        playedCards: JSON.parse(game.playedCards as string) as PlayedCard[],
+      };
+
       // Vérifier les permissions
-      const isAuthorized =
-        game.player1.username === ctx.session.user.username ||
-        game.player2?.username === ctx.session.user.username;
+      const isAuthorized = formattedGame.players.some(
+        (p) => p.username === ctx.session.user.username,
+      );
 
       if (!isAuthorized) {
         throw new Error("Non autorisé pour cette partie");
       }
 
-      // Trouver l'ID du joueur
-      let playerId = game.player1Id;
-      if (game.player2 && input.playerId === game.player2.username) {
-        playerId = game.player2Id!;
+      // Trouver l'utilisateur dans la base pour avoir son ID
+      const user = await ctx.db.user.findUnique({
+        where: { username: ctx.session.user.username },
+      });
+
+      if (!user) {
+        throw new Error("Utilisateur non trouvé");
       }
 
       // Vérifier si l'action existe déjà (éviter les doublons)
@@ -322,7 +359,7 @@ export const gameRouter = createTRPCRouter({
       const dbAction = await ctx.db.gameAction.create({
         data: {
           gameId: game.gameId,
-          playerId,
+          playerId: user.id,
           actionType: input.type,
           payload: input.payload,
           round: input.round,
@@ -347,12 +384,6 @@ export const gameRouter = createTRPCRouter({
       const game = await ctx.db.game.findUnique({
         where: { gameId: input.gameId },
         include: {
-          player1: {
-            select: { id: true, username: true, name: true },
-          },
-          player2: {
-            select: { id: true, username: true, name: true },
-          },
           actions: {
             orderBy: { timestamp: "asc" },
             include: {
@@ -368,13 +399,23 @@ export const gameRouter = createTRPCRouter({
         throw new Error("Partie non trouvée");
       }
 
+      const players = game.players
+        ? (JSON.parse(game.players as string) as PlayerEntity[])
+        : [];
+
+      const playedCards = game.playedCards
+        ? (JSON.parse(game.playedCards as string) as PlayedCard[])
+        : [];
+
       // Vérifier les permissions
-      const isPlayerInGame =
-        game.player1.username === ctx.session.user.username ||
-        game.player2?.username === ctx.session.user.username;
+      const isPlayerInGame = players.some(
+        (p) => p.username === ctx.session.user.username,
+      );
 
       const canJoinGame =
-        game.status === "WAITING" && !game.player2Id && game.mode === "ONLINE";
+        game.status === "WAITING" &&
+        players.length < 2 &&
+        game.mode === "ONLINE";
 
       if (!isPlayerInGame && !canJoinGame) {
         throw new Error("Non autorisé pour cette partie");
@@ -382,80 +423,9 @@ export const gameRouter = createTRPCRouter({
 
       // Convertir au format attendu par le client
       return {
-        gameId: game.gameId,
-        mode: game.mode.toLowerCase(),
-        status: game.status.toLowerCase(),
-        startedAt: game.startedAt.toISOString(),
-        endedAt: game.endedAt?.toISOString(),
-
-        // Configuration
-        currentBet: game.currentBet,
-        maxRounds: game.maxRounds,
-        aiDifficulty: game.aiDifficulty,
-
-        // Champs multijoueur (ex-room)
-        roomName: game.roomName,
-        player1Id: game.player1Id,
-        player2Id: game.player2Id,
-        player1: game.player1,
-        player2: game.player2,
-
-        // État actuel
-        currentRound: game.currentRound,
-        hasHandPlayerId: game.hasHandPlayerId,
-        playerTurnId: game.playerTurnId,
-        winnerPlayerId: game.winnerPlayerId,
-        endReason: game.endReason,
-        seed: game.seed,
-
-        // Joueurs - seulement les vrais joueurs, pas d'IA automatique
-        players: [
-          {
-            id: game.player1.id,
-            username: game.player1.username,
-            name: game.player1.name,
-            type: "user",
-          },
-          // Ajouter player2 seulement s'il existe
-          ...(game.player2
-            ? [
-                {
-                  id: game.player2.id,
-                  username: game.player2.username,
-                  name: game.player2.name,
-                  type: "user",
-                },
-              ]
-            : []),
-          // Ajouter l'IA seulement en mode AI et si pas de player2
-          ...(game.mode === "AI" && !game.player2
-            ? [
-                {
-                  id: "ai",
-                  username: "ai-opponent",
-                  name: "IA",
-                  type: "ai",
-                  aiDifficulty: game.aiDifficulty,
-                },
-              ]
-            : []),
-        ],
-
-        // Actions
-        actions: game.actions.map((action) => ({
-          id: action.id,
-          gameId: action.gameId,
-          actionType: action.actionType,
-          payload: action.payload,
-          round: action.round,
-          timestamp: action.timestamp.toISOString(),
-          playerId: action.playerId,
-          playerUsername: action.player.username,
-          localId: action.localId,
-        })),
-
-        // Métadonnées de sync
-        lastSyncedAt: game.lastSyncedAt.toISOString(),
+        ...game,
+        players,
+        playedCards,
       };
     }),
 
@@ -501,176 +471,40 @@ export const gameRouter = createTRPCRouter({
 
   // Récupérer l'historique des parties
   getHistory: protectedProcedure.query(async ({ ctx }) => {
-    const games = await ctx.db.game.findMany({
-      where: {
-        OR: [
-          { player1Id: ctx.session.user.id },
-          { player2Id: ctx.session.user.id },
-        ],
-        status: "ENDED", // Seulement les parties terminées
-      },
-      include: {
-        player1: {
-          select: { username: true, name: true },
-        },
-        player2: {
-          select: { username: true, name: true },
-        },
-      },
-      orderBy: {
-        endedAt: "desc",
-      },
-      take: 20, // Les 20 dernières parties
-    });
-
-    return games;
+    // TODO: adapter pour utiliser players JSON
+    return [];
   }),
-
-  // Debug : récupérer toutes les parties (y compris en cours)
-  getAllGames: protectedProcedure.query(async ({ ctx }) => {
-    const games = await ctx.db.game.findMany({
-      where: {
-        OR: [
-          { player1Id: ctx.session.user.id },
-          { player2Id: ctx.session.user.id },
-        ],
-      },
-      include: {
-        player1: {
-          select: { username: true, name: true },
-        },
-        player2: {
-          select: { username: true, name: true },
-        },
-      },
-      orderBy: {
-        startedAt: "desc",
-      },
-      take: 10,
-    });
-
-    return games.map((game) => ({
-      gameId: game.gameId,
-      mode: game.mode,
-      status: game.status,
-      startedAt: game.startedAt,
-      endedAt: game.endedAt,
-      currentBet: game.currentBet,
-      winnerPlayerId: game.winnerPlayerId,
-      victoryType: game.victoryType,
-      endReason: game.endReason,
-      currentRound: game.currentRound,
-      opponent:
-        game.mode === "AI"
-          ? { username: "ai-opponent", name: "IA" }
-          : game.player1Id === ctx.session.user.id
-            ? game.player2
-            : game.player1,
-    }));
-  }),
-
-  // Debug : forcer la fin d'une partie
-  forceEndGame: protectedProcedure
-    .input(z.object({ gameId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const game = await ctx.db.game.findUnique({
-        where: { gameId: input.gameId },
-        include: { player1: true, player2: true },
-      });
-
-      if (!game) {
-        throw new Error("Partie non trouvée");
-      }
-
-      // Vérifier les permissions
-      const isAuthorized =
-        game.player1Id === ctx.session.user.id ||
-        game.player2?.id === ctx.session.user.id;
-
-      if (!isAuthorized) {
-        throw new Error("Non autorisé");
-      }
-
-      // Forcer la fin de la partie
-      const updatedGame = await ctx.db.game.update({
-        where: { gameId: input.gameId },
-        data: {
-          status: "ENDED",
-          endedAt: new Date(),
-          winnerPlayerId: game.player1Id, // Arbitraire pour debug
-          endReason: "debug_force_end",
-        },
-      });
-
-      // Mettre à jour les stats
-      await updateUserStats(
-        ctx.db,
-        game.player1Id,
-        {
-          status: "ended",
-          winnerUsername: game.player1.username,
-          currentBet: game.currentBet,
-          players: [
-            { type: "user", username: game.player1.username },
-            game.player2
-              ? { type: "user", username: game.player2.username }
-              : { type: "ai", username: "ai-opponent" },
-          ],
-        } as any,
-        game.mode === "AI",
-      );
-
-      return { success: true, game: updatedGame };
-    }),
 
   // Récupérer les parties en cours
   getOngoingGames: protectedProcedure.query(async ({ ctx }) => {
     const games = await ctx.db.game.findMany({
       where: {
-        OR: [
-          { player1Id: ctx.session.user.id },
-          { player2Id: ctx.session.user.id },
-        ],
+        playedBy: {
+          some: {
+            id: ctx.session.user.id,
+          },
+        },
         status: "PLAYING",
-      },
-      include: {
-        player1: {
-          select: { username: true, name: true },
-        },
-        player2: {
-          select: { username: true, name: true },
-        },
       },
       orderBy: {
         startedAt: "desc",
       },
     });
 
-    return games.map((game) => ({
-      gameId: game.gameId,
-      mode: game.mode,
-      status: game.status,
-      startedAt: game.startedAt,
-      currentBet: game.currentBet,
-      currentRound: game.currentRound,
-      maxRounds: game.maxRounds,
-      hasHandPlayerId: game.hasHandPlayerId,
-      playerTurnId: game.playerTurnId,
-      aiDifficulty: game.aiDifficulty,
-      opponent:
-        game.mode === "AI"
-          ? { username: "ai-opponent", name: "IA" }
-          : game.player1Id === ctx.session.user.id
-            ? game.player2
-            : game.player1,
+    const formattedGames = games.map((game) => ({
+      ...game,
+      players: JSON.parse(game.players as string),
+      playedCards: JSON.parse(game.playedCards as string),
     }));
+
+    return formattedGames;
   }),
 });
 
 // ========== HELPER FUNCTIONS ==========
 
 async function updateUserStats(
-  db: any,
+  db: PrismaClient,
   userId: string,
   gameState: GameState,
   isAiGame: boolean,

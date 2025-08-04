@@ -35,12 +35,14 @@ import { useState } from "react";
 import type { AIDifficulty } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
+import { GameStatus } from "@prisma/client";
 
 interface GameConfig {
   mode: "ai" | "online";
   difficulty?: "easy" | "medium" | "hard";
   bet?: number;
   maxRounds?: number;
+  hostUsername: string;
 }
 
 interface AvailableGame {
@@ -61,28 +63,33 @@ export default function PlayPage() {
 
   // États supprimés car gérés par le controller et l'URL
 
-  const controller = useGameController(gameId);
-  const { gameState, ui } = controller;
   const userData = useUserDataContext();
 
-  // Query pour obtenir les infos de la partie si on a un gameId
-  const { data: gameInfo } = api.game.getGame.useQuery(
-    { gameId: gameId! },
-    { enabled: !!gameId && gameId.startsWith("game-") },
-  );
+  const controller = useGameController(gameId);
+  const { gameState, ui, gameInfo } = controller;
 
   // Mutation pour créer une partie multijoueur
   const createMultiplayerGame = api.game.createMultiplayerGame.useMutation();
 
   // Déterminer l'état actuel
+  const isCreator = gameInfo?.hostUsername === userData?.user?.username;
+  const canJoinGame =
+    gameId &&
+    gameInfo?.status === GameStatus.WAITING &&
+    gameInfo?.players.length < gameInfo.maxPlayers &&
+    !isCreator;
+
   const currentStatus = gameId
-    ? gameState?.status === "ended"
+    ? gameState?.status === GameStatus.ENDED
       ? "finished"
-      : gameState?.status === "playing"
+      : gameState?.status === GameStatus.PLAYING
         ? "playing"
-        : gameInfo?.status === "waiting" && !gameInfo?.player2Id
-          ? "waiting_for_opponent"
-          : "waiting"
+        : canJoinGame
+          ? "can_join"
+          : gameInfo?.status === GameStatus.WAITING &&
+              gameInfo?.players.length < gameInfo.maxPlayers
+            ? "waiting_for_opponent"
+            : "waiting"
     : "selecting";
 
   // Création de partie avec redirection simple
@@ -97,7 +104,7 @@ export default function PlayPage() {
       try {
         const gameConfig = {
           name: `Partie de ${userData?.user?.username ?? "Joueur"}`,
-          bet: config.bet ?? 10,
+          bet: config.bet ?? 100,
           maxRounds: config.maxRounds ?? 5,
           isPrivate: false,
         };
@@ -111,7 +118,16 @@ export default function PlayPage() {
     }
   };
 
-  // Note: handleJoinGame sera utilisé plus tard pour le multijoueur
+  // Rejoindre une partie multijoueur
+  const handleJoinGame = async () => {
+    if (!gameId) return;
+
+    const success = await controller.joinGame(gameId);
+    if (success) {
+      // La query se rafraîchira automatiquement grâce au polling
+      console.log("Partie rejointe avec succès !");
+    }
+  };
 
   // Retour à la sélection
   const backToSelection = () => {
@@ -185,6 +201,8 @@ export default function PlayPage() {
           }}
           onBackToSelection={backToSelection}
           isWaitingForOpponent={currentStatus === "waiting_for_opponent"}
+          canJoinGame={currentStatus === "can_join"}
+          onJoinGame={handleJoinGame}
           gameInfo={
             gameInfo
               ? {
@@ -200,7 +218,7 @@ export default function PlayPage() {
         />
 
         {/* Contrôles mobiles compacts en bas */}
-        {gameState?.status === "playing" && (
+        {gameState?.status === GameStatus.PLAYING && (
           <div className="bg-background/95 border-t p-3 backdrop-blur-sm lg:hidden">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
@@ -242,7 +260,7 @@ export default function PlayPage() {
         )}
 
         {/* Actions rapides fin de partie */}
-        {gameState?.status === "ended" && (
+        {gameState?.status === GameStatus.ENDED && (
           <div className="bg-background/95 border-t p-3 backdrop-blur-sm lg:hidden">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
@@ -311,7 +329,11 @@ export default function PlayPage() {
                 onTrigger={() => controller.selectGameMode("ai")}
                 onClose={() => controller.selectGameMode(null)}
                 onNewGame={(difficulty) =>
-                  handleCreateGame({ mode: "ai", difficulty })
+                  handleCreateGame({
+                    mode: "ai",
+                    difficulty,
+                    hostUsername: userData.user.username,
+                  })
                 }
                 hidden={Boolean(
                   ui.selectedGameMode && ui.selectedGameMode !== "ai",
@@ -323,7 +345,11 @@ export default function PlayPage() {
                 onTrigger={() => controller.selectGameMode("online")}
                 onClose={() => controller.selectGameMode(null)}
                 onNewGame={(config) =>
-                  handleCreateGame({ mode: "online", ...config })
+                  handleCreateGame({
+                    mode: "online",
+                    ...config,
+                    hostUsername: userData.user.username,
+                  })
                 }
                 hidden={Boolean(
                   ui.selectedGameMode && ui.selectedGameMode !== "online",

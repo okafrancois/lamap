@@ -133,9 +133,14 @@ export function GameHistory() {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {history.slice(0, 5).map((game) => {
+        {/* TODO: rétablir l'historique avec players JSON */}
+        {history.slice(0, 5).map((game: any) => {
           const victoryInfo = getVictoryTypeInfo(game.victoryType ?? "NORMAL");
-          const isWinner = game.winnerPlayerId === game.player1.username;
+          const players = (game.players as any[]) || [];
+          const userPlayer = players.find(
+            (p: any) => p.username === "current_user",
+          ); // TODO: utiliser le vrai user
+          const isWinner = game.winnerPlayerId === userPlayer?.username;
 
           return (
             <div
@@ -175,8 +180,7 @@ export function GameHistory() {
                         <IconUsers className="h-4 w-4" />
                       )}
                       <span className="text-sm">
-                        vs{" "}
-                        {game.player2?.name ?? game.player2?.username ?? "IA"}
+                        vs {players[1]?.name ?? players[1]?.username ?? "IA"}
                       </span>
                     </div>
                   </div>

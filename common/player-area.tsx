@@ -3,6 +3,7 @@ import { PlayerStatus } from "./player-status";
 import { CircularDecoration } from "./decorative-icons";
 import type { GameState, PlayerEntity } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
+import { GameStatus } from "@prisma/client";
 
 interface BasePlayerAreaProps {
   player: PlayerEntity | null | undefined;
@@ -69,8 +70,8 @@ export function PlayerArea({
         playerName={player.username}
         shortName={isOpponent ? "Adversaire" : "Vous"}
         hasHand={gameState.hasHandUsername === player.username}
-        gameStarted={gameState.status === "playing"}
-        gameEnded={gameState.status === "ended"}
+        gameStarted={gameState.status === GameStatus.PLAYING}
+        gameEnded={gameState.status === GameStatus.ENDED}
         isWinner={gameState.winnerUsername === player.username}
         isThinking={player.isThinking}
         isOpponent={isOpponent}
@@ -79,7 +80,7 @@ export function PlayerArea({
       <PlayerDeck
         cards={player.hand ?? []}
         isOpponent={isOpponent}
-        hidden={gameState.status !== "playing"}
+        hidden={gameState.status !== GameStatus.PLAYING}
         isPlayerTurn={gameState.playerTurnUsername === player.username}
         onCardClick={onCardClick}
         onPlayCard={onPlayCard}

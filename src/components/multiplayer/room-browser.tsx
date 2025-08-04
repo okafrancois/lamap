@@ -166,7 +166,7 @@ export function RoomBrowser({ onCreateRoom }: RoomBrowserProps) {
             </CardContent>
           </Card>
         ) : (
-          filteredRooms.map((room) => (
+          filteredRooms.map((room: any) => (
             <Card key={room.id} className="transition-shadow hover:shadow-md">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

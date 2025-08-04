@@ -31,8 +31,18 @@ export function useKoraEngine() {
 
   // Initialiser le moteur de jeu
   const initializeEngine = useCallback(
-    (bet: number, maxRounds: number, players: PlayerEntity[]) => {
-      const engine = createKoraGameEngine(bet, maxRounds, players);
+    (
+      bet: number,
+      maxRounds: number,
+      players: PlayerEntity[],
+      hostUsername: string,
+    ) => {
+      const engine = createKoraGameEngine(
+        bet,
+        maxRounds,
+        players,
+        hostUsername,
+      );
       setGameState(engine.getState());
 
       const unsubscribe = engine.subscribe((newState) => {
@@ -236,6 +246,67 @@ export function useKoraEngine() {
     // Réinitialiser l'état (pour retour à la sélection)
     resetEngine: () => {
       setGameState(null);
+    },
+
+    // Nouvelles méthodes pour multijoueur
+    startAIGame: (
+      bet: number,
+      maxRounds: number,
+      userPlayer: PlayerEntity,
+      aiDifficulty?: AIDifficulty,
+    ) => {
+      try {
+        const engine = getKoraGameEngine();
+        engine.startAIGame(bet, maxRounds, userPlayer, aiDifficulty);
+        setGameState(engine.getState());
+      } catch (error) {
+        console.error("Cannot start AI game: engine not initialized", error);
+      }
+    },
+
+    initializeOnlineGame: (
+      gameId: string,
+      bet: number,
+      maxRounds: number,
+      creator: PlayerEntity,
+    ) => {
+      try {
+        const engine = getKoraGameEngine();
+        engine.initializeOnlineGame(gameId, bet, maxRounds, creator);
+        setGameState(engine.getState());
+      } catch (error) {
+        console.error(
+          "Cannot initialize online game: engine not initialized",
+          error,
+        );
+      }
+    },
+
+    joinOnlineGame: (player: PlayerEntity) => {
+      try {
+        const engine = getKoraGameEngine();
+        const success = engine.joinOnlineGame(player);
+        setGameState(engine.getState());
+        return success;
+      } catch (error) {
+        console.error("Cannot join online game: engine not initialized", error);
+        return false;
+      }
+    },
+
+    startOnlineGame: () => {
+      try {
+        const engine = getKoraGameEngine();
+        const success = engine.startOnlineGame();
+        setGameState(engine.getState());
+        return success;
+      } catch (error) {
+        console.error(
+          "Cannot start online game: engine not initialized",
+          error,
+        );
+        return false;
+      }
     },
   };
 }

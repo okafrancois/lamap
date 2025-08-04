@@ -14,6 +14,7 @@ import {
 } from "@/engine/kora-game-engine";
 import { type Card } from "common/deck";
 import { toast } from "sonner";
+import { GameStatus } from "@prisma/client";
 
 export type GameMode = "ai" | "online" | "friend";
 
@@ -23,11 +24,12 @@ export function useGameController(gameId: string | null = null) {
   const userData = useUserDataContext();
   const gameSync = useGameSync();
 
-  // Mutations pour créer/rejoindre des parties
-  const createMultiplayerGame = api.game.createMultiplayerGame.useMutation();
-  const joinGameMutation = api.game.joinGame.useMutation();
+  // État pour tracker si on a déjà initialisé cette partie
+  const [initializedGameId, setInitializedGameId] = useState<string | null>(
+    null,
+  );
 
-  // Query pour charger une partie existante
+  // Query pour récupérer les infos de partie directement dans le hook
   const { data: gameInfo } = api.game.getGame.useQuery(
     { gameId: gameId! },
     {
@@ -36,6 +38,9 @@ export function useGameController(gameId: string | null = null) {
     },
   );
 
+  // Mutations pour créer/rejoindre des parties
+  const createMultiplayerGame = api.game.createMultiplayerGame.useMutation();
+  const joinGameMutation = api.game.joinGame.useMutation();
   // Gérer les sons du jeu
   useGameSounds(koraEngine.gameState);
 
@@ -71,13 +76,13 @@ export function useGameController(gameId: string | null = null) {
   const initializeGame = useCallback(
     (
       mode: GameMode,
-      userId: string,
+      username: string,
       userName: string,
       aiDifficulty?: AIDifficulty,
     ) => {
       const players: PlayerEntity[] = [
         {
-          username: userId,
+          username,
           type: "user",
           isConnected: true,
           name: userName,
@@ -105,10 +110,10 @@ export function useGameController(gameId: string | null = null) {
         });
       }
 
-      const bet = 10; // Mise par défaut
+      const bet = 100; // Mise par défaut
       const maxRounds = 5; // Tours maximum
 
-      koraEngine.initializeEngine(bet, maxRounds, players);
+      koraEngine.initializeEngine(bet, maxRounds, players, userName);
       ui.actions.setGameMode(mode);
     },
     [koraEngine, ui.actions],
@@ -122,87 +127,91 @@ export function useGameController(gameId: string | null = null) {
         return;
       }
 
-      initializeGame(
-        mode,
-        userData.user.username,
-        userData.user.name ?? userData.user.username,
-        ui.aiDifficulty,
-      );
-      koraEngine.startNewGame();
+      if (mode === "ai") {
+        // Utiliser la nouvelle méthode pour l'IA
+        const userPlayer: PlayerEntity = {
+          username: userData.user.username,
+          type: "user",
+          isConnected: true,
+          name: userData.user.name ?? userData.user.username,
+          koras: 100,
+        };
+
+        koraEngine.startAIGame(100, 5, userPlayer, ui.aiDifficulty);
+      } else {
+        // Pour le multijoueur, utiliser l'ancienne méthode (sera remplacée)
+        initializeGame(
+          mode,
+          userData.user.username,
+          userData.user.name ?? userData.user.username,
+          ui.aiDifficulty,
+        );
+        koraEngine.startOnlineGame();
+      }
     },
     [initializeGame, koraEngine, ui.aiDifficulty, userData],
   );
 
   const loadGameState = useCallback(() => {
-    if (!gameId || !gameInfo) return;
-
-    console.log("Chargement de la partie:", gameId, "Status:", gameInfo.status);
-
-    // Si la partie est en cours (PLAYING), initialiser l'engine
-    if (gameInfo.status === "PLAYING" && gameInfo.player2Id) {
-      console.log("Partie en cours, initialisation du multijoueur");
-
-      // Créer les joueurs pour l'engine
-      const players: PlayerEntity[] = [
-        {
-          username: gameInfo.player1?.username ?? "Player1",
-          type: "user" as const,
-          isConnected: true,
-          name: gameInfo.player1?.username ?? "Player1",
-          koras: 100, // TODO: récupérer les vrais koras
-        },
-        {
-          username: gameInfo.player2?.username ?? "Player2",
-          type: "user" as const,
-          isConnected: true,
-          name: gameInfo.player2?.username ?? "Player2",
-          koras: 100, // TODO: récupérer les vrais koras
-        },
-      ];
-
-      // Initialiser l'engine avec les données de la partie
-      koraEngine.initializeEngine(
-        gameInfo.currentBet,
-        gameInfo.maxRounds,
-        players,
-      );
-
-      // Si on n'a pas encore de gameState, démarrer la partie
-      if (!koraEngine.gameState || koraEngine.gameState.status === "waiting") {
-        koraEngine.startNewGame();
-      }
-    } else if (gameInfo.status === "WAITING" && !gameInfo.player2Id) {
-      console.log("Partie en attente d'un adversaire...");
-      console.log("Debug auto-join:", {
-        currentUser: userData?.user?.username,
-        gameCreator: gameInfo.player1?.username,
-        shouldAutoJoin:
-          userData?.user &&
-          gameInfo.player1?.username !== userData.user.username,
-      });
-
-      // Si on n'est pas le créateur de la partie, rejoindre automatiquement
-      if (
-        userData?.user &&
-        gameInfo.player1?.username !== userData.user.username
-      ) {
-        console.log("🚀 Auto-join de la partie multijoueur...");
-        void joinGameMutation
-          .mutateAsync({ gameId })
-          .then(() => {
-            console.log("✅ Partie rejointe avec succès");
-            // La query se rafraîchira automatiquement
-          })
-          .catch((error) => {
-            console.error("❌ Erreur lors du join:", error);
-          });
-      } else {
-        console.log(
-          "⏳ Pas d'auto-join - utilisateur créateur ou pas connecté",
-        );
-      }
+    if (!gameId || !gameInfo) {
+      return;
     }
-  }, [gameId, gameInfo, koraEngine, userData, joinGameMutation]);
+
+    // Si la partie est en cours (PLAYING/playing), initialiser l'engine
+
+    if (
+      gameInfo.status === GameStatus.PLAYING &&
+      gameInfo.players.length === 2
+    ) {
+      // Éviter la réinitialisation si on a déjà initialisé cette partie
+      if (initializedGameId === gameId) {
+        return;
+      }
+
+      // Si on a des données de joueurs sauvegardées, les utiliser
+      if (Array.isArray(gameInfo.players) && gameInfo.players.length > 0) {
+        // Charger l'état dans l'engine
+        koraEngine.initializeEngine(
+          gameInfo.currentBet,
+          gameInfo.maxRounds,
+          gameInfo.players,
+          gameInfo.hostUsername,
+        );
+        koraEngine.startNewGame();
+      } else {
+        // Initialiser l'engine avec les données de la partie
+        koraEngine.initializeEngine(
+          gameInfo.currentBet,
+          gameInfo.maxRounds,
+          gameInfo.players,
+          gameInfo.hostUsername,
+        );
+
+        // Démarrer une nouvelle partie (génère les cartes)
+        koraEngine.startNewGame();
+
+        // Forcer une sync immédiate après la création
+        setTimeout(() => {
+          if (koraEngine.gameState) {
+            const gameData = {
+              id: `game-${koraEngine.gameState.gameId}`,
+              gameState: koraEngine.gameState,
+              actions: [],
+              createdAt: Date.now(),
+              needsSync: true,
+            };
+            void gameSync.syncGame(gameData);
+          }
+        }, 100);
+      }
+
+      // Marquer cette partie comme initialisée
+      setInitializedGameId(gameId);
+    }
+    // Note: Plus d'auto-join, le bouton de join sera géré dans la page
+  }, [gameId, gameInfo, koraEngine, initializedGameId, gameSync]);
+
+  // Note: loadGameState sera appelé dans l'useEffect principal plus bas
 
   // Créer une nouvelle partie avec configuration complète
   const createGame = useCallback(
@@ -211,6 +220,7 @@ export function useGameController(gameId: string | null = null) {
       difficulty?: AIDifficulty;
       bet?: number;
       maxRounds?: number;
+      hostUsername: string;
     }) => {
       if (!userData?.user) {
         toast.error("Vous devez être connecté pour jouer");
@@ -232,21 +242,36 @@ export function useGameController(gameId: string | null = null) {
           koraEngine.startNewGame();
         }, 1000);
       } else if (config.mode === "online") {
-        // Pour le multijoueur, créer une partie directement
+        // Pour le multijoueur, initialiser la partie avec le créateur
+        const userPlayer: PlayerEntity = {
+          username: userData.user.username,
+          type: "user",
+          isConnected: true,
+          name: userData.user.name ?? userData.user.username,
+          koras: 100,
+        };
+
+        // Initialiser la partie multijoueur
+        koraEngine.initializeOnlineGame(
+          newGameId,
+          config.bet ?? 100,
+          config.maxRounds ?? 5,
+          userPlayer,
+        );
+
+        // Créer la partie en BDD aussi
         const gameConfig = {
           name: `Partie de ${userData.user.username}`,
-          bet: config.bet ?? 10,
+          bet: config.bet ?? 100,
           maxRounds: config.maxRounds ?? 5,
           isPrivate: false,
         };
 
-        // Créer la partie via l'API game
         void createMultiplayerGame.mutateAsync(gameConfig).then((result) => {
           console.log("Partie multijoueur créée:", result.gameId);
         });
 
-        // Pas de gameId immédiat, la redirection sera gérée dans la page
-        return null;
+        return newGameId;
       }
 
       return newGameId;
@@ -254,20 +279,48 @@ export function useGameController(gameId: string | null = null) {
     [userData, initializeGame, koraEngine, createMultiplayerGame],
   );
 
-  // Rejoindre une partie existante
+  // Rejoindre une partie multijoueur
   const joinGame = useCallback(
-    (gameId: string) => {
-      if (!userData?.user) {
-        toast.error("Vous devez être connecté pour jouer");
+    async (gameIdToJoin?: string) => {
+      const targetGameId = gameIdToJoin ?? gameId;
+
+      if (!targetGameId || !userData?.user) {
+        toast.error("Vous devez être connecté pour rejoindre une partie");
         return false;
       }
 
-      // TODO: Implémenter la logique de rejoindre une partie
-      console.log("Rejoindre la partie:", gameId);
-      return true;
+      try {
+        // Rejoindre en BDD
+        await joinGameMutation.mutateAsync({ gameId: targetGameId });
+
+        // Ajouter le joueur dans l'engine local
+        const userPlayer: PlayerEntity = {
+          username: userData.user.username,
+          type: "user",
+          isConnected: true,
+          name: userData.user.name ?? userData.user.username,
+          koras: 100,
+        };
+
+        const success = koraEngine.joinOnlineGame(userPlayer);
+
+        if (success && koraEngine.gameState?.players.length === 2) {
+          // Démarrer la partie automatiquement quand les 2 joueurs sont présents
+          koraEngine.startOnlineGame();
+        }
+
+        toast.success("Partie rejointe avec succès !");
+        return true;
+      } catch (error) {
+        console.error("Erreur lors du join:", error);
+        toast.error("Impossible de rejoindre la partie");
+        return false;
+      }
     },
-    [userData],
+    [userData, joinGameMutation, gameId, koraEngine],
   );
+
+  // L'ancien joinGame est remplacé par le nouveau au-dessus
 
   // Nouvelle partie rapide (réutilise le mode actuel)
   const newGame = useCallback(() => {
@@ -360,7 +413,7 @@ export function useGameController(gameId: string | null = null) {
     const aiPlayer = state.players.find((p) => p.type === "ai");
 
     if (
-      state.status === "playing" &&
+      state.status === GameStatus.PLAYING &&
       state.playerTurnUsername === aiPlayer?.username &&
       !aiPlayer.isThinking
     ) {
@@ -382,7 +435,7 @@ export function useGameController(gameId: string | null = null) {
       ui.actions.hideVictory();
       setSelectedCardId(null);
     }
-  }, [gameId, loadGameState, koraEngine, ui.actions]);
+  }, [gameId, gameInfo, loadGameState, koraEngine, ui.actions]);
 
   // Logique de victoire gérée directement dans le game engine
 
@@ -390,6 +443,7 @@ export function useGameController(gameId: string | null = null) {
     // État du jeu direct
     gameState: koraEngine.gameState,
     currentUserId: userData?.user.username,
+    gameInfo, // Exposer gameInfo pour la page
 
     // Interface utilisateur
     ui,

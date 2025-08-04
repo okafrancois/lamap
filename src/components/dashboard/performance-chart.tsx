@@ -55,7 +55,7 @@ export function PerformanceChart() {
   });
 
   // Remplir avec les données réelles
-  history.forEach((game) => {
+  history.forEach((game: any) => {
     const gameDate = new Date(game.endedAt!);
     const dayData = last7Days.find(
       (day) =>

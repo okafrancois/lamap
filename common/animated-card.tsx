@@ -53,11 +53,13 @@ export function AnimatedCard({
     >
       {/* Bouton Jouer pour carte sélectionnée */}
       {!isOpponent && !hidden && (
-        <PlayButton
-          isVisible={isSelected && !!onPlayClick}
-          onClick={() => onPlayClick?.()}
-          isPlayable={card.jouable}
-        />
+        <>
+          <PlayButton
+            isVisible={isSelected && !!onPlayClick}
+            onClick={() => onPlayClick?.()}
+            isPlayable={card.jouable}
+          />
+        </>
       )}
 
       {/* Carte */}
@@ -75,7 +77,15 @@ export function AnimatedCard({
             isHovered={isHovered}
             isFlipping={isFlipping}
             isPlaying={isPlaying}
-            onClick={onClick}
+            onClick={() => {
+              console.log("🎮 AnimatedCard - Bouton Jouer:", {
+                isSelected,
+                hasOnPlayClick: !!onPlayClick,
+                isVisible: isSelected && !!onPlayClick,
+                cardJouable: card.jouable,
+              });
+              onClick?.();
+            }}
             onHover={onHover}
           />
         </div>

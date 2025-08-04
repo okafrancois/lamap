@@ -54,6 +54,8 @@ interface GameBoardProps {
 
   // Props pour l'état en attente
   isWaitingForOpponent?: boolean;
+  canJoinGame?: boolean;
+  onJoinGame?: () => void;
   gameInfo?: {
     roomName?: string;
     bet: number;
@@ -76,8 +78,22 @@ export function GameBoard({
   onNewGame,
   onBackToSelection,
   isWaitingForOpponent,
+  canJoinGame,
+  onJoinGame,
   gameInfo,
 }: GameBoardProps) {
+  console.log("🎮 GameBoard - gameState reçu:", {
+    hasGameState: !!gameState,
+    players: gameState?.players?.map((p) => ({
+      username: p.username,
+      handLength: p.hand?.length,
+      hand: p.hand?.map((card) => ({
+        id: card.id,
+        suit: card.suit,
+        rank: card.rank,
+      })),
+    })),
+  });
   // Si pas de gameState, afficher un plateau vide avec message d'attente
   if (!gameState) {
     return (
@@ -109,15 +125,34 @@ export function GameBoard({
                   {isWaitingForOpponent ? (
                     <>
                       <div className="text-lg font-semibold">
-                        En attente d'un adversaire...
+                        En attente d&apos;un adversaire...
                       </div>
                       <div className="text-sm text-white/70">
-                        {gameInfo?.roomName || "Partie multijoueur"}
+                        {gameInfo?.roomName ?? "Partie multijoueur"}
                       </div>
                       <div className="mt-2 text-xs text-white/50">
                         Mise: {gameInfo?.bet} koras • {gameInfo?.maxRounds}{" "}
                         tours
                       </div>
+                    </>
+                  ) : canJoinGame ? (
+                    <>
+                      <div className="text-lg font-semibold">
+                        Rejoindre la partie ?
+                      </div>
+                      <div className="text-sm text-white/70">
+                        {gameInfo?.roomName ?? "Partie multijoueur"}
+                      </div>
+                      <div className="mt-2 text-xs text-white/50">
+                        Mise: {gameInfo?.bet} koras • {gameInfo?.maxRounds}{" "}
+                        tours
+                      </div>
+                      <button
+                        onClick={onJoinGame}
+                        className="mt-4 rounded-lg bg-amber-500 px-6 py-2 font-semibold text-white transition-colors hover:bg-amber-600"
+                      >
+                        Rejoindre
+                      </button>
                     </>
                   ) : (
                     <>

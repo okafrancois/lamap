@@ -1,9 +1,9 @@
 import { type Card, type Suit, type Rank } from "common/deck";
 import { AIPlayer } from "@/engine/ai-player";
+import { GameStatus } from "@prisma/client";
 
 // Types améliorés pour le game engine
 export type PlayerType = "user" | "ai";
-export type GameStatus = "waiting" | "playing" | "ended";
 export type KoraType = "none" | "simple" | "double" | "triple";
 export type AIDifficulty = "easy" | "medium" | "hard";
 export type GameMode = "ai" | "online" | "local";
@@ -49,6 +49,7 @@ export interface GameState {
   endReason: string | null;
   gameLog: Array<{ message: string; timestamp: number }>;
   seed: string;
+  hostUsername: string;
   version: number;
 }
 
@@ -74,21 +75,27 @@ export class KoraGameEngine {
   private onVictoryCallback?: () => void;
   private onGameUpdateCallback?: (gameState: GameState) => void;
 
-  constructor(bet: number, maxRounds: number, players: PlayerEntity[]) {
-    this.state = this.getInitialState(bet, maxRounds, players);
+  constructor(
+    bet: number,
+    maxRounds: number,
+    players: PlayerEntity[],
+    hostUsername: string,
+  ) {
+    this.state = this.getInitialState(bet, maxRounds, players, hostUsername);
   }
 
   private getInitialState(
     bet = 10,
     maxRounds = 5,
     players: PlayerEntity[] = [],
+    hostUsername: string,
   ): GameState {
     const seed = Date.now().toString();
     return {
       gameId: `game-${seed}`,
       seed,
       version: 0,
-      status: "waiting",
+      status: GameStatus.WAITING,
       currentRound: 1,
       maxRounds,
       hasHandUsername: null,
@@ -99,6 +106,7 @@ export class KoraGameEngine {
       winnerUsername: null,
       endReason: null,
       gameLog: [],
+      hostUsername,
     };
   }
 
@@ -195,12 +203,13 @@ export class KoraGameEngine {
         this.state.currentBet,
         this.state.maxRounds,
         this.state.players,
+        this.state.hostUsername,
       ),
       players: this.state.players.map((player) => ({
         ...player,
         hand: player.username === startingPlayerId ? firstPlayer : secondPlayer,
       })),
-      status: "playing",
+      status: GameStatus.PLAYING,
       currentRound: 1,
       hasHandUsername: startingPlayerId,
       playerTurnUsername: startingPlayerId,
@@ -301,7 +310,7 @@ export class KoraGameEngine {
   }
 
   public playCard(cardId: string, player: PlayerEntity): boolean {
-    if (this.state.status !== "playing") {
+    if (this.state.status !== GameStatus.PLAYING) {
       return false;
     }
 
@@ -362,7 +371,10 @@ export class KoraGameEngine {
     this.updatePlayableCards();
     this.notifyListeners();
 
-    // Sauvegarder l'action et l'état
+    // Déclencher la synchronisation automatique
+    if (this.onGameUpdateCallback) {
+      this.onGameUpdateCallback(this.state);
+    }
 
     // Déclencher automatiquement l'IA si c'est son tour et qu'elle est de type AI
     void this.triggerAIIfNeeded();
@@ -374,7 +386,7 @@ export class KoraGameEngine {
   private async triggerAIIfNeeded(): Promise<void> {
     if (
       this.state.players.find((p) => p.type === "ai") &&
-      this.state.status === "playing"
+      this.state.status === GameStatus.PLAYING
     ) {
       const currentRoundCards = this.state.playedCards.filter(
         (p) => p.round === this.state.currentRound,
@@ -513,7 +525,7 @@ export class KoraGameEngine {
   }
 
   private endGame(winnerId: string): void {
-    this.state.status = "ended";
+    this.state.status = GameStatus.ENDED;
     this.state.winnerUsername = winnerId;
 
     // Gérer les gains/pertes de koras pour une partie normale
@@ -554,7 +566,16 @@ export class KoraGameEngine {
   }
 
   public canPlayCard(cardId: string, player: PlayerEntity): boolean {
-    if (this.state.status !== "playing") return false;
+    console.log("🎯 canPlayCard check:", {
+      status: this.state.status,
+      statusMatch: this.state.status === GameStatus.PLAYING,
+      playerUsername: player.username,
+      isPlayerTurn: this.isPlayerTurn(player),
+      hasHandUsername: this.state.hasHandUsername,
+      isHandPlayer: this.state.hasHandUsername === player.username,
+    });
+
+    if (this.state.status !== GameStatus.PLAYING) return false;
     if (!this.isPlayerTurn(player)) return false;
 
     const card = player.hand?.find((c) => c.id === cardId);
@@ -688,7 +709,7 @@ export class KoraGameEngine {
 
     const typedPlayer = this.state.players.find((p) => p.username === player);
 
-    if (this.state.status !== "playing") {
+    if (this.state.status !== GameStatus.PLAYING) {
       return { valid: false, error: "La partie n'est pas en cours" };
     }
 
@@ -710,7 +731,7 @@ export class KoraGameEngine {
   }
 
   private validateStartGameAction(): { valid: boolean; error?: string } {
-    if (this.state.status === "playing") {
+    if (this.state.status === GameStatus.PLAYING) {
       return { valid: false, error: "Une partie est déjà en cours" };
     }
     return { valid: true };
@@ -966,7 +987,7 @@ Koras Adversaire: ${state.players[1]!.koras}
   }
 
   public async triggerAITurn(aiPlayer: PlayerEntity): Promise<void> {
-    if (this.state.status !== "playing") {
+    if (this.state.status !== GameStatus.PLAYING) {
       return;
     }
 
@@ -1037,6 +1058,118 @@ Koras Adversaire: ${state.players[1]!.koras}
     this.state.players.find((p) => p.type === "ai")!.isThinking = false;
     this.notifyListeners();
   }
+
+  // ========== NOUVELLES MÉTHODES POUR MULTIJOUEUR ==========
+
+  // Initialiser une partie IA complète (tout d'un coup)
+  public startAIGame(
+    bet: number,
+    maxRounds: number,
+    userPlayer: PlayerEntity,
+    aiDifficulty: AIDifficulty = "medium",
+  ): void {
+    const players: PlayerEntity[] = [
+      userPlayer,
+      {
+        username: "ai-opponent",
+        type: "ai",
+        isConnected: true,
+        name: "IA",
+        koras: 100,
+        aiDifficulty,
+      },
+    ];
+
+    // Créer un nouvel état initial
+    this.state = {
+      gameId: `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      status: GameStatus.WAITING,
+      currentRound: 1,
+      currentBet: bet,
+      maxRounds,
+      players,
+      playedCards: [],
+      hasHandUsername: null,
+      playerTurnUsername: null,
+      winnerUsername: null,
+      endReason: null,
+      seed: Math.random().toString(36),
+      gameLog: [],
+      version: 1,
+      hostUsername: userPlayer.username,
+    };
+
+    this.startNewGame();
+  }
+
+  // Initialiser une partie multijoueur (seulement le créateur)
+  public initializeOnlineGame(
+    gameId: string,
+    bet: number,
+    maxRounds: number,
+    creator: PlayerEntity,
+  ): void {
+    const players: PlayerEntity[] = [creator];
+
+    // Créer l'état initial avec seulement le créateur
+    this.state = {
+      gameId,
+      status: GameStatus.WAITING,
+      currentRound: 1,
+      currentBet: bet,
+      maxRounds,
+      players,
+      playedCards: [],
+      hasHandUsername: null,
+      playerTurnUsername: null,
+      winnerUsername: null,
+      endReason: null,
+      seed: Math.random().toString(36),
+      gameLog: [],
+      version: 1,
+      hostUsername: creator.username,
+    };
+
+    this.notifyListeners();
+  }
+
+  // Ajouter le 2e joueur à une partie multijoueur
+  public joinOnlineGame(player: PlayerEntity): boolean {
+    if (!this.state) return false;
+    if (this.state.status !== GameStatus.WAITING) return false;
+    if (this.state.players.length >= 2) return false;
+
+    // Ajouter le joueur
+    this.state.players.push(player);
+
+    this.notifyListeners();
+    return true;
+  }
+
+  // Démarrer la partie multijoueur (générer les cartes)
+  public startOnlineGame(): boolean {
+    if (!this.state) return false;
+    if (this.state.status !== GameStatus.WAITING) return false;
+    if (this.state.players.length !== 2) return false;
+
+    // Générer et distribuer les cartes
+    const { firstPlayer, secondPlayer } = this.distributeCards();
+    this.state.players[0]!.hand = firstPlayer;
+    this.state.players[1]!.hand = secondPlayer;
+
+    // Déterminer qui commence (simple: premier joueur)
+    this.state.hasHandUsername = this.state.players[0]!.username;
+    this.state.playerTurnUsername = this.state.players[0]!.username;
+
+    // Passer en mode "playing"
+    this.state.status = GameStatus.PLAYING;
+
+    // Mettre à jour les cartes jouables
+    this.updatePlayableCards();
+
+    this.notifyListeners();
+    return true;
+  }
 }
 
 // Instance singleton du game engine
@@ -1046,8 +1179,14 @@ export const createKoraGameEngine = (
   bet: number,
   maxRounds: number,
   players: PlayerEntity[],
+  hostUsername: string,
 ) => {
-  gameEngineInstance = new KoraGameEngine(bet, maxRounds, players);
+  gameEngineInstance = new KoraGameEngine(
+    bet,
+    maxRounds,
+    players,
+    hostUsername,
+  );
   return gameEngineInstance;
 };
 
@@ -1059,3 +1198,6 @@ export const getKoraGameEngine = (): KoraGameEngine => {
   }
   return gameEngineInstance;
 };
+
+// ========== NOUVELLES MÉTHODES POUR MULTIJOUEUR ==========
+// Ajouter ces méthodes à la classe KoraGameEngine :
