@@ -13,6 +13,7 @@ import type { PlayedCard } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { useSound } from "@/hooks/use-sound";
 import { z } from "zod";
+import { useMobile } from "@/hooks/use-mobile";
 
 // Types de cartes
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -1189,10 +1190,11 @@ export function GameCard({
   faceDown = false,
   className,
 }: GameCardProps) {
+  const isMobile = useMobile();
   const sizes = {
-    small: { width: 32, height: 45 },
-    medium: { width: 50, height: 70 },
-    large: { width: 70, height: 98 },
+    small: { width: isMobile ? 32 : 50, height: isMobile ? 45 : 70 },
+    medium: { width: isMobile ? 50 : 70, height: isMobile ? 70 : 98 },
+    large: { width: isMobile ? 70 : 98, height: isMobile ? 98 : 130 },
   };
 
   const { width, height } = sizes[size];
@@ -1238,10 +1240,11 @@ export function PlayerDeck({
   selectedCard,
   onCardHover,
 }: PlayerDeckProps) {
+  const isMobile = useMobile();
   const { playSound } = useSound();
-  const cardWidth = isOpponent ? 80 : 110;
-  const cardHeight = isOpponent ? 112 : 154;
-  const cardSpacing = cardWidth + 8;
+  const cardWidth = isOpponent ? 80 : isMobile ? 80 : 110;
+  const cardHeight = isOpponent ? 112 : isMobile ? 104 : 154;
+  const cardSpacing = isMobile ? cardWidth - 5 : cardWidth + 8;
 
   return (
     <div className={cn("relative flex items-center justify-center", className)}>

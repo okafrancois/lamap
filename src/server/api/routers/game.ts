@@ -6,7 +6,7 @@ import type {
   PlayedCard,
   PlayerEntity,
 } from "@/engine/kora-game-engine";
-import { GameStatus, type PrismaClient } from "@prisma/client";
+import { GameStatus, Prisma, type PrismaClient } from "@prisma/client";
 import { CardSchema } from "common/deck";
 
 // ========== SCHEMAS DE VALIDATION ==========
@@ -171,9 +171,7 @@ export const gameRouter = createTRPCRouter({
         });
       }
 
-      const players = game.players
-        ? (JSON.parse(game.players as string) as PlayerEntity[])
-        : [];
+      const players = game.players as unknown as PlayerEntity[];
 
       if (players.length >= 2) {
         throw new TRPCError({
@@ -207,7 +205,7 @@ export const gameRouter = createTRPCRouter({
       await ctx.db.game.update({
         where: { gameId: input.gameId },
         data: {
-          players: JSON.stringify(updatedPlayers),
+          players: updatedPlayers as unknown as Prisma.InputJsonValue,
           status: updatedPlayers.length === 2 ? "PLAYING" : "WAITING",
         },
       });
@@ -281,8 +279,8 @@ export const gameRouter = createTRPCRouter({
           endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
           localId: input.id,
           hostUsername: gameState.hostUsername,
-          players: JSON.stringify(playersData),
-          playedCards: JSON.stringify(gameState.playedCards),
+          players: playersData,
+          playedCards: gameState.playedCards,
         },
       });
 
@@ -318,8 +316,8 @@ export const gameRouter = createTRPCRouter({
 
       const formattedGame = {
         ...game,
-        players: JSON.parse(game.players as string) as PlayerEntity[],
-        playedCards: JSON.parse(game.playedCards as string) as PlayedCard[],
+        players: game.players as unknown as PlayerEntity[],
+        playedCards: game.playedCards as unknown as PlayedCard[],
       };
 
       // Vérifier les permissions
@@ -400,13 +398,9 @@ export const gameRouter = createTRPCRouter({
         throw new Error("Partie non trouvée");
       }
 
-      const players = game.players
-        ? (JSON.parse(game.players as string) as PlayerEntity[])
-        : [];
+      const players = game.players as unknown as PlayerEntity[];
 
-      const playedCards = game.playedCards
-        ? (JSON.parse(game.playedCards as string) as PlayedCard[])
-        : [];
+      const playedCards = game.playedCards as unknown as PlayedCard[];
 
       // Vérifier les permissions
       const isPlayerInGame = players.some(
@@ -494,8 +488,8 @@ export const gameRouter = createTRPCRouter({
 
     const formattedGames = games.map((game) => ({
       ...game,
-      players: JSON.parse(game.players as string),
-      playedCards: JSON.parse(game.playedCards as string),
+      players: game.players as unknown as PlayerEntity[],
+      playedCards: game.playedCards as unknown as PlayedCard[],
     }));
 
     return formattedGames;

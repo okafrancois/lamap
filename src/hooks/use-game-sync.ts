@@ -16,8 +16,6 @@ interface LocalGameData {
 
 export function useGameSync() {
   const saveGameMutation = api.game.saveGame.useMutation();
-  const saveActionMutation = api.game.saveAction.useMutation();
-  const updateStatsMutation = api.game.updateStats.useMutation();
 
   const syncInProgress = useRef(false);
   const syncInterval = useRef<NodeJS.Timeout | null>(null);
@@ -84,8 +82,6 @@ export function useGameSync() {
           errors++;
         }
       }
-
-      console.log(`📊 Sync terminé: ${success} réussis, ${errors} erreurs`);
     } finally {
       syncInProgress.current = false;
     }

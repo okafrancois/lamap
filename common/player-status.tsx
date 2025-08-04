@@ -2,7 +2,6 @@ interface PlayerStatusProps {
   isCurrentTurn: boolean;
   cardCount: number;
   playerName: string;
-  shortName?: string;
   hasHand?: boolean;
   gameStarted?: boolean;
   className?: string;
@@ -16,7 +15,6 @@ export function PlayerStatus({
   isCurrentTurn,
   cardCount,
   playerName,
-  shortName,
   hasHand = false,
   gameStarted = false,
   className = "",
@@ -45,9 +43,8 @@ export function PlayerStatus({
 
         {/* Nom et informations */}
         <span className={`text-xs font-medium sm:text-sm ${textColor}`}>
-          <span className="hidden sm:inline">{playerName} </span>
-          <span className="sm:hidden">{shortName ?? playerName} </span>(
-          {cardCount})
+          <span>{playerName} </span>
+          {cardCount}
         </span>
 
         {/* Indicateur de main */}

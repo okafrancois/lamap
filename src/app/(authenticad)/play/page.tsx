@@ -123,10 +123,6 @@ export default function PlayPage() {
     if (!gameId) return;
 
     const success = await controller.joinGame(gameId);
-    if (success) {
-      // La query se rafraîchira automatiquement grâce au polling
-      console.log("Partie rejointe avec succès !");
-    }
   };
 
   // Retour à la sélection
@@ -307,9 +303,9 @@ export default function PlayPage() {
 
         {currentStatus === "selecting" && (
           <Card
-            className={`hidden h-full w-2/6 pt-0 transition-all duration-700 ease-in-out lg:block`}
+            className={`h-2/5 w-full pt-0 transition-all duration-700 ease-in-out lg:block lg:h-full lg:w-2/6`}
           >
-            <CardHeader className="from-secondary/10 to-primary/10 mb-4 border-b bg-gradient-to-r !p-3">
+            <CardHeader className="from-secondary/10 to-primary/10 border-b bg-gradient-to-r !p-3 lg:mb-4">
               <LibTitle as="h3" className="flex w-full items-center gap-3">
                 <div className="bg-secondary/20 rounded-lg p-2">
                   <IconCards className="text-secondary size-icon" />
@@ -323,7 +319,7 @@ export default function PlayPage() {
               </LibTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 overflow-y-auto">
               <VsIaGameMode
                 isSelected={ui.selectedGameMode === "ai"}
                 onTrigger={() => controller.selectGameMode("ai")}

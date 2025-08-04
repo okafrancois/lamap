@@ -36,11 +36,6 @@ const data = {
       icon: IconDashboard,
     },
     {
-      title: "Multi-joueur",
-      url: "/multiplayer",
-      icon: IconSwords,
-    },
-    {
       title: "Historique",
       url: "/history",
       icon: IconClock,
