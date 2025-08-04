@@ -60,7 +60,7 @@ export function useGameController(gameId: string | null = null) {
     koraEngine.setOnGameUpdateCallback((gameState) => {
       // Créer les données de jeu pour le sync
       const gameData = {
-        id: `game-${gameState.gameId}`,
+        id: gameState.gameId,
         gameState,
         actions: [], // TODO: implémenter les actions si nécessaire
         createdAt: Date.now(),
@@ -194,7 +194,7 @@ export function useGameController(gameId: string | null = null) {
         setTimeout(() => {
           if (koraEngine.gameState) {
             const gameData = {
-              id: `game-${koraEngine.gameState.gameId}`,
+              id: koraEngine.gameState.gameId,
               gameState: koraEngine.gameState,
               actions: [],
               createdAt: Date.now(),

@@ -1049,6 +1049,15 @@ Koras Adversaire: ${state.players[1]!.koras}
     this.notifyListeners();
   }
 
+  private getAiUsername(difficulty: AIDifficulty): string {
+    const difficultyMap = {
+      easy: "bindi-du-tierqua",
+      medium: "le-ndoss",
+      hard: "le-grand-bandi",
+    };
+    return `ai-opponent-${difficultyMap[difficulty]}`;
+  }
+
   // ========== NOUVELLES MÉTHODES POUR MULTIJOUEUR ==========
 
   // Initialiser une partie IA complète (tout d'un coup)
@@ -1061,7 +1070,7 @@ Koras Adversaire: ${state.players[1]!.koras}
     const players: PlayerEntity[] = [
       userPlayer,
       {
-        username: "ai-opponent",
+        username: this.getAiUsername(aiDifficulty),
         type: "ai",
         isConnected: true,
         name: "IA",

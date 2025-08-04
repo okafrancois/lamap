@@ -28,7 +28,7 @@ export function useGameSync() {
 
         // Marquer comme synchronisé dans localStorage
         localStorage.setItem(
-          `kora-game-${gameData.gameState.gameId}`,
+          gameData.gameState.gameId,
           JSON.stringify({
             ...gameData,
             needsSync: false,
