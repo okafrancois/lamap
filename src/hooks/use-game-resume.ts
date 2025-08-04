@@ -40,7 +40,7 @@ export function useGameResume() {
         ];
 
         // Ajouter l'adversaire
-        if (serverGame.mode === "ai") {
+        if (serverGame.mode === "AI") {
           players.push({
             username: "ai-opponent",
             type: "ai",
@@ -67,6 +67,7 @@ export function useGameResume() {
           serverGame.currentBet,
           serverGame.maxRounds,
           players,
+          serverGame.hostUsername,
         );
 
         // TODO: Restaurer l'état complet de la partie

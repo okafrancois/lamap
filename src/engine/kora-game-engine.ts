@@ -566,15 +566,6 @@ export class KoraGameEngine {
   }
 
   public canPlayCard(cardId: string, player: PlayerEntity): boolean {
-    console.log("🎯 canPlayCard check:", {
-      status: this.state.status,
-      statusMatch: this.state.status === GameStatus.PLAYING,
-      playerUsername: player.username,
-      isPlayerTurn: this.isPlayerTurn(player),
-      hasHandUsername: this.state.hasHandUsername,
-      isHandPlayer: this.state.hasHandUsername === player.username,
-    });
-
     if (this.state.status !== GameStatus.PLAYING) return false;
     if (!this.isPlayerTurn(player)) return false;
 
@@ -667,7 +658,6 @@ export class KoraGameEngine {
     const timestamp = Date.now();
     const logEntry = { message, timestamp };
     this.state.gameLog.push(logEntry);
-    console.log(`[${new Date(timestamp).toLocaleTimeString()}] ${message}`);
   }
 
   // ========== VALIDATION DES ACTIONS ==========

@@ -267,9 +267,7 @@ export function useGameController(gameId: string | null = null) {
           isPrivate: false,
         };
 
-        void createMultiplayerGame.mutateAsync(gameConfig).then((result) => {
-          console.log("Partie multijoueur créée:", result.gameId);
-        });
+        void createMultiplayerGame.mutateAsync(gameConfig);
 
         return newGameId;
       }

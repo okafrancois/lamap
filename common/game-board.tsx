@@ -82,18 +82,6 @@ export function GameBoard({
   onJoinGame,
   gameInfo,
 }: GameBoardProps) {
-  console.log("🎮 GameBoard - gameState reçu:", {
-    hasGameState: !!gameState,
-    players: gameState?.players?.map((p) => ({
-      username: p.username,
-      handLength: p.hand?.length,
-      hand: p.hand?.map((card) => ({
-        id: card.id,
-        suit: card.suit,
-        rank: card.rank,
-      })),
-    })),
-  });
   // Si pas de gameState, afficher un plateau vide avec message d'attente
   if (!gameState) {
     return (

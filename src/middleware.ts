@@ -20,7 +20,6 @@ export default auth((req) => {
   }
 
   if (isHomePage && isLoggedIn) {
-    console.log("redirecting to play");
     return Response.redirect(new URL("/play", req.nextUrl));
   }
 

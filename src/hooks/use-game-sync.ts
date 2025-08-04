@@ -26,7 +26,6 @@ export function useGameSync() {
   const syncGame = useCallback(
     async (gameData: LocalGameData): Promise<boolean> => {
       try {
-        console.log("🔄 Sync jeu:", gameData.gameState.gameId);
         await saveGameMutation.mutateAsync(gameData);
 
         // Marquer comme synchronisé dans localStorage
@@ -39,7 +38,6 @@ export function useGameSync() {
           }),
         );
 
-        console.log("✅ Jeu synchronisé:", gameData.gameState.gameId);
         return true;
       } catch (error) {
         console.error("❌ Erreur sync jeu:", error);
@@ -77,7 +75,6 @@ export function useGameSync() {
         })
         .filter((game) => game?.needsSync);
 
-      console.log(`🎮 ${localGames.length} jeux à synchroniser`);
       for (const game of localGames) {
         if (!game) continue;
         const result = await syncGame(game);
