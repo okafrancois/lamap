@@ -34,7 +34,7 @@ export function useGameResume() {
             username: userData.user.username,
             type: "user",
             isConnected: true,
-            name: userData.user.name || userData.user.username,
+            name: userData.user.name ?? userData.user.username,
             koras: 100, // Valeur par défaut, sera mise à jour
           },
         ];
@@ -87,7 +87,7 @@ export function useGameResume() {
 
   return {
     // Données
-    ongoingGames: ongoingGamesQuery.data || [],
+    ongoingGames: ongoingGamesQuery.data ?? [],
     isLoadingGames: ongoingGamesQuery.isLoading,
 
     // Actions

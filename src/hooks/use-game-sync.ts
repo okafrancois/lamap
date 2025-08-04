@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import type { GameState } from "@/engine/kora-game-engine";
+import type { GameAction, GameState } from "@/engine/kora-game-engine";
 
 // Types pour le sync local
 interface LocalGameData {
   id: string;
   gameState: GameState;
-  actions: any[];
+  actions: GameAction[];
   createdAt: number;
   needsSync: boolean;
   syncedAt?: number;
@@ -75,14 +75,11 @@ export function useGameSync() {
             return null;
           }
         })
-        .filter(
-          (game): game is LocalGameData => game !== null && game.needsSync,
-        );
+        .filter((game) => game?.needsSync);
 
       console.log(`🎮 ${localGames.length} jeux à synchroniser`);
-
-      // Sync séquentiel pour éviter la surcharge
       for (const game of localGames) {
+        if (!game) continue;
         const result = await syncGame(game);
         if (result) {
           success++;
