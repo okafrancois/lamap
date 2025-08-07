@@ -21,6 +21,7 @@ declare module "next-auth" {
       role: Role;
       username: string;
       email?: string | null;
+      koras: number;
     } & DefaultSession["user"];
   }
 
@@ -28,6 +29,7 @@ declare module "next-auth" {
     role: Role;
     username: string;
     email?: string | null;
+    koras: number;
   }
 }
 
@@ -39,6 +41,7 @@ declare module "next-auth/jwt" {
     username: string;
     name?: string;
     image?: string;
+    koras: number;
   }
 }
 
@@ -76,10 +79,7 @@ export const authConfig = {
             return null;
           }
 
-          const isValidPassword = await verifyPassword(
-            password,
-            user.password as string,
-          );
+          const isValidPassword = await verifyPassword(password, user.password);
 
           if (!isValidPassword) {
             return null;
@@ -89,8 +89,9 @@ export const authConfig = {
             id: user.id,
             name: user.name ?? user.username,
             email: user.email,
-            username: user.username as string,
+            username: user.username,
             role: user.role,
+            koras: user.koras,
           };
         } catch (error) {
           console.error(
@@ -101,15 +102,6 @@ export const authConfig = {
         }
       },
     }),
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
   ],
   pages: {
     signIn: "/login",
@@ -128,6 +120,7 @@ export const authConfig = {
         role: token.role,
         username: token.username,
         email: token.email,
+        koras: token.koras,
       },
     }),
     jwt: async ({ token, user }) => {
@@ -138,6 +131,7 @@ export const authConfig = {
         token.username = user.username!;
         token.name = user.name!;
         token.image = user.image!;
+        token.koras = user.koras!;
       }
 
       return token;

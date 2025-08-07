@@ -122,7 +122,7 @@ export default function PlayPage() {
   const handleJoinGame = async () => {
     if (!gameId) return;
 
-    const success = await controller.joinGame(gameId);
+    await controller.joinGame(gameId);
   };
 
   // Retour à la sélection

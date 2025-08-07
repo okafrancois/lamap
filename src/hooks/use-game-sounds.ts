@@ -2,22 +2,22 @@
 
 import { useEffect, useRef } from "react";
 import { useSound } from "@/hooks/use-sound";
-import { type GameState } from "@/engine/kora-game-engine";
+import { type Game } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
 
-export function useGameSounds(gameState: GameState | null) {
+export function useGameSounds(gameState: Game | null) {
   const { playSound } = useSound();
   const userData = useUserDataContext();
-  const previousGameStateRef = useRef<GameState | null>(null);
+  const previousGameRef = useRef<Game | null>(null);
 
   useEffect(() => {
     if (!gameState || !userData) return;
 
-    const previousState = previousGameStateRef.current;
+    const previousState = previousGameRef.current;
 
     // Première fois - pas de sons à jouer
     if (!previousState) {
-      previousGameStateRef.current = gameState;
+      previousGameRef.current = gameState;
       return;
     }
 
@@ -66,13 +66,13 @@ export function useGameSounds(gameState: GameState | null) {
     }
 
     // Mettre à jour la référence
-    previousGameStateRef.current = gameState;
+    previousGameRef.current = gameState;
   }, [gameState, playSound, userData]);
 
   // Nettoyer la référence quand le composant se démonte
   useEffect(() => {
     return () => {
-      previousGameStateRef.current = null;
+      previousGameRef.current = null;
     };
   }, []);
 }

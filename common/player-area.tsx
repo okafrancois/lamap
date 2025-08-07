@@ -1,13 +1,13 @@
 import { PlayerDeck } from "./deck";
 import { PlayerStatus } from "./player-status";
 import { CircularDecoration } from "./decorative-icons";
-import type { GameState, PlayerEntity } from "@/engine/kora-game-engine";
+import type { Game, PlayerEntity } from "@/engine/kora-game-engine";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { GameStatus } from "@prisma/client";
 
 interface BasePlayerAreaProps {
   player: PlayerEntity | null | undefined;
-  gameState: GameState | null | undefined;
+  gameState: Game | null | undefined;
   className?: string;
 }
 

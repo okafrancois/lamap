@@ -1,5 +1,5 @@
 import { type Card, type Suit, type Rank } from "common/deck";
-import { type GameState } from "./kora-game-engine";
+import { type Game } from "./kora-game-engine";
 
 interface CardMemory {
   playedCards: Card[];
@@ -32,7 +32,7 @@ export class AIPlayer {
     };
   }
 
-  public chooseCard(gameState: GameState): Card | null {
+  public chooseCard(gameState: Game): Card | null {
     // Trouver le joueur IA dans l'état du jeu
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
     if (!aiPlayer?.hand) {
@@ -59,7 +59,7 @@ export class AIPlayer {
     }
   }
 
-  private updateMemory(gameState: GameState): void {
+  private updateMemory(gameState: Game): void {
     // Trouver le joueur humain et ses cartes jouées
     const humanPlayer = gameState.players.find((p) => p.type === "user");
     if (!humanPlayer) return;
@@ -110,7 +110,7 @@ export class AIPlayer {
     return playableCards[randomIndex]!;
   }
 
-  private chooseSmartCard(gameState: GameState, playableCards: Card[]): Card {
+  private chooseSmartCard(gameState: Game, playableCards: Card[]): Card {
     if (gameState.currentRound === 5) {
       return (
         this.chooseKoraStrategy(gameState, playableCards) ??
@@ -131,10 +131,7 @@ export class AIPlayer {
     }
   }
 
-  private chooseStrategicCard(
-    gameState: GameState,
-    playableCards: Card[],
-  ): Card {
+  private chooseStrategicCard(gameState: Game, playableCards: Card[]): Card {
     const koraCard = this.chooseKoraStrategy(gameState, playableCards);
     if (koraCard) return koraCard;
 
@@ -153,7 +150,7 @@ export class AIPlayer {
   }
 
   private chooseKoraStrategy(
-    gameState: GameState,
+    gameState: Game,
     playableCards: Card[],
   ): Card | null {
     const threes = playableCards.filter((card) => card.rank === "3");
@@ -197,7 +194,7 @@ export class AIPlayer {
     return null;
   }
 
-  private chooseSafestThree(gameState: GameState, threes: Card[]): Card {
+  private chooseSafestThree(gameState: Game, threes: Card[]): Card {
     if (threes.length === 1) return threes[0]!;
 
     const playerRemainingCards = this.estimatePlayerCards(gameState);
@@ -215,10 +212,7 @@ export class AIPlayer {
     });
   }
 
-  private findProtectedThree(
-    gameState: GameState,
-    threes: Card[],
-  ): Card | null {
+  private findProtectedThree(gameState: Game, threes: Card[]): Card | null {
     const playerRemainingCards = this.estimatePlayerCards(gameState);
 
     return (
@@ -231,7 +225,7 @@ export class AIPlayer {
     );
   }
 
-  private predictPlayerNextCard(gameState: GameState): Card | null {
+  private predictPlayerNextCard(gameState: Game): Card | null {
     const estimatedCards = this.estimatePlayerCards(gameState);
 
     if (estimatedCards.length === 0) return null;
@@ -268,7 +262,7 @@ export class AIPlayer {
   }
 
   private chooseDefensiveCard(
-    gameState: GameState,
+    gameState: Game,
     playableCards: Card[],
     predictedCard: Card | null,
   ): Card | null {
@@ -307,7 +301,7 @@ export class AIPlayer {
   }
 
   private chooseControlCard(
-    gameState: GameState,
+    gameState: Game,
     playableCards: Card[],
   ): Card | null {
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
@@ -358,7 +352,7 @@ export class AIPlayer {
     );
   }
 
-  private estimatePlayerCards(gameState: GameState): ProbabilityCard[] {
+  private estimatePlayerCards(gameState: Game): ProbabilityCard[] {
     const allCards = this.createFullDeck();
     const playedCardIds = gameState.playedCards.map((pc) => pc.card.id);
 
@@ -410,10 +404,7 @@ export class AIPlayer {
     return deck;
   }
 
-  private chooseWhenHavingHand(
-    gameState: GameState,
-    playableCards: Card[],
-  ): Card {
+  private chooseWhenHavingHand(gameState: Game, playableCards: Card[]): Card {
     const playerEstimatedCards = this.estimatePlayerCards(gameState);
     const weakSuits = this.findPlayerWeakSuits(playerEstimatedCards);
 
@@ -442,10 +433,7 @@ export class AIPlayer {
     return this.chooseOptimalCard(gameState, playableCards);
   }
 
-  private chooseWhenResponding(
-    gameState: GameState,
-    playableCards: Card[],
-  ): Card {
+  private chooseWhenResponding(gameState: Game, playableCards: Card[]): Card {
     const currentRoundCards = gameState.playedCards.filter(
       (p) => p.round === gameState.currentRound,
     );
@@ -481,7 +469,7 @@ export class AIPlayer {
     return this.chooseBestCard(gameState, playableCards);
   }
 
-  private chooseOptimalCard(gameState: GameState, playableCards: Card[]): Card {
+  private chooseOptimalCard(gameState: Game, playableCards: Card[]): Card {
     const currentRoundCards = gameState.playedCards.filter(
       (p) => p.round === gameState.currentRound,
     );
@@ -517,7 +505,7 @@ export class AIPlayer {
     return this.chooseBestCard(gameState, playableCards);
   }
 
-  private chooseBestCard(gameState: GameState, playableCards: Card[]): Card {
+  private chooseBestCard(gameState: Game, playableCards: Card[]): Card {
     if (gameState.currentRound === 5) {
       return playableCards.reduce((best, card) =>
         this.getCardValue(card.rank) > this.getCardValue(best.rank)

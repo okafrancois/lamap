@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import type { GameAction, GameState } from "@/engine/kora-game-engine";
+import type { GameAction, Game } from "@/engine/kora-game-engine";
 
 // Types pour le sync local
 interface LocalGameData {
   id: string;
-  gameState: GameState;
+  gameState: Game;
   actions: GameAction[];
   createdAt: number;
   needsSync: boolean;

@@ -5,10 +5,10 @@ import { BackgroundDecorations } from "./background-decorations";
 import { GameTable } from "./game-table";
 import { PlayerArea } from "./player-area";
 import { InGameVictoryModal } from "./in-game-victory-modal";
-import type { GameState } from "@/engine/kora-game-engine";
+import type { Game } from "@/engine/kora-game-engine";
 
 interface GameBoardProps {
-  gameState: GameState | null;
+  gameState: Game | null;
   currentUserId: string;
   className?: string;
   onCardClick?: (cardIndex: number) => void;
@@ -26,7 +26,7 @@ interface GameBoardProps {
   // Callbacks pour multijoueur
   onPlayerJoin?: (playerId: string) => void;
   onPlayerLeave?: (playerId: string) => void;
-  onGameStateSync?: (gameState: unknown) => void;
+  onGameSync?: (gameState: unknown) => void;
   onConnectionChange?: (
     status: "connected" | "disconnected" | "reconnecting",
   ) => void;
@@ -166,7 +166,7 @@ export function GameBoard({
     );
   }
 
-  // Extraire les données du GameState
+  // Extraire les données du Game
   const currentPlayer = gameState.players.find(
     (p) => p.username === currentUserId,
   );

@@ -4,7 +4,7 @@ import { type Card } from "common/deck";
 export type GamePhase = "waiting" | "playing" | "ended" | "victory" | "defeat";
 export type PlayerTurn = "player" | "opponent";
 
-interface GameState {
+interface Game {
   phase: GamePhase;
   currentTurn: PlayerTurn;
   playerCards: Card[];
@@ -33,8 +33,8 @@ interface GameActions {
   playRandomCard: () => void;
 }
 
-export function useGameState(): GameState & GameActions {
-  const [gameState, setGameState] = useState<GameState>({
+export function useGame(): Game & GameActions {
+  const [gameState, setGame] = useState<Game>({
     phase: "waiting",
     currentTurn: "player",
     playerCards: [
@@ -60,7 +60,7 @@ export function useGameState(): GameState & GameActions {
   });
 
   const startGame = useCallback(() => {
-    setGameState((prev) => ({
+    setGame((prev) => ({
       ...prev,
       phase: "playing",
       currentTurn: "player",
@@ -72,7 +72,7 @@ export function useGameState(): GameState & GameActions {
     (cardIndex: number) => {
       if (gameState.isAnimating || gameState.phase !== "playing") return;
 
-      setGameState((prev) => {
+      setGame((prev) => {
         const card = prev.playerCards[cardIndex];
         if (!card) return prev;
 
@@ -81,7 +81,7 @@ export function useGameState(): GameState & GameActions {
 
         // Après un délai pour l'animation
         setTimeout(() => {
-          setGameState((current) => ({
+          setGame((current) => ({
             ...current,
             playerCards: current.playerCards.filter((_, i) => i !== cardIndex),
             playedCards: [...current.playedCards, card],
@@ -92,7 +92,7 @@ export function useGameState(): GameState & GameActions {
 
           // Simuler le tour de l'adversaire après 2 secondes
           setTimeout(() => {
-            setGameState((opponent) => {
+            setGame((opponent) => {
               if (opponent.opponentCards.length === 0) {
                 return { ...opponent, phase: "ended" };
               }
@@ -126,14 +126,14 @@ export function useGameState(): GameState & GameActions {
   const setHoveredCard = useCallback(
     (cardIndex: number | null) => {
       if (!gameState.isAnimating) {
-        setGameState((prev) => ({ ...prev, hoveredCard: cardIndex }));
+        setGame((prev) => ({ ...prev, hoveredCard: cardIndex }));
       }
     },
     [gameState.isAnimating],
   );
 
   const switchTurn = useCallback(() => {
-    setGameState((prev) => ({
+    setGame((prev) => ({
       ...prev,
       currentTurn: prev.currentTurn === "player" ? "opponent" : "player",
       playableCards:
@@ -144,7 +144,7 @@ export function useGameState(): GameState & GameActions {
   }, []);
 
   const endGame = useCallback(() => {
-    setGameState((prev) => ({
+    setGame((prev) => ({
       ...prev,
       phase: "ended",
       playableCards: [],
@@ -153,7 +153,7 @@ export function useGameState(): GameState & GameActions {
   }, []);
 
   const setVictory = useCallback(() => {
-    setGameState((prev) => ({
+    setGame((prev) => ({
       ...prev,
       phase: "victory",
       playableCards: [],
@@ -163,7 +163,7 @@ export function useGameState(): GameState & GameActions {
   }, []);
 
   const setDefeat = useCallback(() => {
-    setGameState((prev) => ({
+    setGame((prev) => ({
       ...prev,
       phase: "defeat",
       playableCards: [],
@@ -174,19 +174,19 @@ export function useGameState(): GameState & GameActions {
 
   // Actions pour le debug
   const setPhase = useCallback((phase: GamePhase) => {
-    setGameState((prev) => ({ ...prev, phase }));
+    setGame((prev) => ({ ...prev, phase }));
   }, []);
 
   const setCurrentTurn = useCallback((turn: PlayerTurn) => {
-    setGameState((prev) => ({ ...prev, currentTurn: turn }));
+    setGame((prev) => ({ ...prev, currentTurn: turn }));
   }, []);
 
   const setPlayableCards = useCallback((cards: number[]) => {
-    setGameState((prev) => ({ ...prev, playableCards: cards }));
+    setGame((prev) => ({ ...prev, playableCards: cards }));
   }, []);
 
   const selectCard = useCallback((cardIndex: number | null) => {
-    setGameState((prev) => ({
+    setGame((prev) => ({
       ...prev,
       selectedCard: prev.selectedCard === cardIndex ? null : cardIndex,
     }));
@@ -195,7 +195,7 @@ export function useGameState(): GameState & GameActions {
   const playSelectedCard = useCallback(() => {
     if (gameState.selectedCard !== null) {
       playCard(gameState.selectedCard);
-      setGameState((prev) => ({ ...prev, selectedCard: null }));
+      setGame((prev) => ({ ...prev, selectedCard: null }));
     }
   }, [gameState.selectedCard, playCard]);
 

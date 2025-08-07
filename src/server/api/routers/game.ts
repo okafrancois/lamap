@@ -1,94 +1,20 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { TRPCError } from "@trpc/server";
-import type {
-  GameState,
-  PlayedCard,
-  PlayerEntity,
-} from "@/engine/kora-game-engine";
-import { GameStatus, Prisma, type PrismaClient } from "@prisma/client";
-import { CardSchema } from "common/deck";
-
-// ========== SCHEMAS DE VALIDATION ==========
-
-const PlayerTypeSchema = z.enum(["user", "ai"]);
-const AIDifficultySchema = z.enum(["easy", "medium", "hard"]);
-
-const PlayerEntitySchema = z.object({
-  username: z.string(),
-  type: PlayerTypeSchema,
-  isConnected: z.boolean(),
-  name: z.string().optional(),
-  avatar: z.string().optional(),
-  hand: z.array(CardSchema).optional(),
-  koras: z.number(),
-  aiDifficulty: AIDifficultySchema.optional(),
-  isThinking: z.boolean().optional(),
-});
-
-const PlayedCardSchema = z.object({
-  card: CardSchema,
-  playerUsername: z.string(),
-  round: z.number(),
-  timestamp: z.number(),
-});
-
-const GameStateSchema = z.object({
-  gameId: z.string(),
-  status: z.nativeEnum(GameStatus),
-  maxRounds: z.number(),
-  currentRound: z.number(),
-  hasHandUsername: z.string().nullable(),
-  playerTurnUsername: z.string().nullable(),
-  players: z.any(),
-  playedCards: z.any(),
-  winnerUsername: z.string().nullable(),
-  currentBet: z.number(),
-  endReason: z.string().nullable(),
-  gameLog: z.array(
-    z.object({
-      message: z.string(),
-      timestamp: z.number(),
-    }),
-  ),
-  hostUsername: z.string(),
-  seed: z.string(),
-  version: z.number(),
-});
-
-const LocalGameDataSchema = z.object({
-  id: z.string(),
-  gameState: GameStateSchema,
-  actions: z.array(z.any()), // Simplifié pour le moment
-  createdAt: z.number(),
-  syncedAt: z.number().optional(),
-  needsSync: z.boolean(),
-});
-
-const LocalGameActionSchema = z.object({
-  id: z.string(),
-  gameId: z.string(),
-  type: z.string(),
-  payload: z.any(),
-  timestamp: z.number(),
-  playerId: z.string(),
-  round: z.number(),
-  synced: z.boolean(),
-});
+import type { Game, PlayedCard, PlayerEntity } from "@/engine/kora-game-engine";
+import { GameStatus, type Prisma, type PrismaClient } from "@prisma/client";
+import {
+  LocalGameDataSchema,
+  LocalGameActionSchema,
+  CreateMultiplayerGameSchema,
+} from "./schemas";
 
 // ========== ROUTER ==========
 
 export const gameRouter = createTRPCRouter({
   // Créer une partie multijoueur
   createMultiplayerGame: protectedProcedure
-    .input(
-      z.object({
-        name: z.string().min(1).max(50),
-        bet: z.number().min(1).max(1000),
-        maxRounds: z.number().min(1).max(10),
-        isPrivate: z.boolean().optional().default(false),
-      }),
-    )
+    .input(CreateMultiplayerGameSchema)
     .mutation(async ({ ctx, input }) => {
       const gameId = `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
@@ -109,7 +35,16 @@ export const gameRouter = createTRPCRouter({
           currentBet: input.bet,
           maxRounds: input.maxRounds,
           roomName: input.name,
-          isPrivate: input.isPrivate,
+          ...(input.isPrivate &&
+            input.joinCode && {
+              isPrivate: true,
+              joinCode: input.joinCode,
+            }),
+          playedBy: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
           hostUsername: ctx.session.user.username,
           seed: Math.random().toString(36),
           players: [creatorPlayer], // Commencer avec le créateur
@@ -197,7 +132,7 @@ export const gameRouter = createTRPCRouter({
         type: "user",
         isConnected: true,
         name: ctx.session.user.name ?? ctx.session.user.username,
-        koras: 100,
+        koras: ctx.session.user.koras,
       };
 
       const updatedPlayers = [...players, newPlayer];
@@ -250,15 +185,10 @@ export const gameRouter = createTRPCRouter({
       const game = await ctx.db.game.upsert({
         where: { gameId: gameState.gameId },
         update: {
-          status: gameState.status,
-          currentRound: gameState.currentRound,
-          hasHandPlayerId: gameState.hasHandUsername,
-          playerTurnId: gameState.playerTurnUsername,
-          winnerPlayerId: gameState.winnerUsername,
-          endReason: gameState.endReason,
+          ...gameState,
+
           endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
           lastSyncedAt: new Date(),
-          // Sauvegarder les données complètes des joueurs
           players: playersData,
           playedCards: playedCards as unknown as Prisma.InputJsonValue,
         },
@@ -268,16 +198,21 @@ export const gameRouter = createTRPCRouter({
           status: gameState.status,
           currentBet: gameState.currentBet,
           maxRounds: gameState.maxRounds,
-          aiDifficulty:
-            players.find((p) => p.type === "ai")?.aiDifficulty ?? null,
+          ...(gameMode === "AI" && {
+            aiDifficulty:
+              players.find((p) => p.type === "ai")?.aiDifficulty ?? null,
+          }),
+          ...(gameMode === "ONLINE" && {
+            isPrivate: gameState.isPrivate,
+            joinCode: gameState.joinCode,
+          }),
           currentRound: gameState.currentRound,
-          hasHandPlayerId: gameState.hasHandUsername,
-          playerTurnId: gameState.playerTurnUsername,
-          winnerPlayerId: gameState.winnerUsername,
+          hasHandUsername: gameState.hasHandUsername,
+          playerTurnUsername: gameState.playerTurnUsername,
+          winnerUsername: gameState.winnerUsername,
           endReason: gameState.endReason,
           seed: gameState.seed,
           endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
-          localId: input.id,
           hostUsername: gameState.hostUsername,
           players: playersData,
           playedCards: playedCards as unknown as Prisma.InputJsonValue,
@@ -289,7 +224,7 @@ export const gameRouter = createTRPCRouter({
         await updateUserStats(
           ctx.db,
           ctx.session.user.id,
-          gameState as unknown as GameState,
+          gameState as unknown as Game,
           gameMode === "AI",
         );
       }
@@ -359,7 +294,7 @@ export const gameRouter = createTRPCRouter({
         data: {
           gameId: game.gameId,
           playerId: user.id,
-          actionType: input.type,
+          actionType: input.actionType,
           payload: input.payload,
           round: input.round,
           timestamp: new Date(input.timestamp),
@@ -421,6 +356,10 @@ export const gameRouter = createTRPCRouter({
         ...game,
         players,
         playedCards,
+        gameLog: game.gameLog as unknown as Array<{
+          message: string;
+          timestamp: number;
+        }>,
       };
     }),
 
@@ -501,7 +440,7 @@ export const gameRouter = createTRPCRouter({
 async function updateUserStats(
   db: PrismaClient,
   userId: string,
-  gameState: GameState,
+  gameState: Game,
   isAiGame: boolean,
 ) {
   try {

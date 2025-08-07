@@ -11,6 +11,7 @@ import { api } from "@/trpc/react";
 import {
   type PlayerEntity,
   type AIDifficulty,
+  type Game,
 } from "@/engine/kora-game-engine";
 import { type Card } from "common/deck";
 import { toast } from "sonner";
@@ -74,12 +75,7 @@ export function useGameController(gameId: string | null = null) {
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   // Initialiser le jeu avec des joueurs selon le mode choisi
   const initializeGame = useCallback(
-    (
-      mode: GameMode,
-      username: string,
-      userName: string,
-      aiDifficulty?: AIDifficulty,
-    ) => {
+    (gameData: Game) => {
       const players: PlayerEntity[] = [
         {
           username,
@@ -152,7 +148,7 @@ export function useGameController(gameId: string | null = null) {
     [initializeGame, koraEngine, ui.aiDifficulty, userData],
   );
 
-  const loadGameState = useCallback(() => {
+  const loadGame = useCallback(() => {
     if (!gameId || !gameInfo) {
       return;
     }
@@ -211,7 +207,7 @@ export function useGameController(gameId: string | null = null) {
     // Note: Plus d'auto-join, le bouton de join sera géré dans la page
   }, [gameId, gameInfo, koraEngine, initializedGameId, gameSync]);
 
-  // Note: loadGameState sera appelé dans l'useEffect principal plus bas
+  // Note: loadGame sera appelé dans l'useEffect principal plus bas
 
   // Créer une nouvelle partie avec configuration complète
   const createGame = useCallback(
@@ -426,14 +422,14 @@ export function useGameController(gameId: string | null = null) {
 
   useEffect(() => {
     if (gameId) {
-      loadGameState();
+      loadGame();
     } else {
       // Pas de gameId = retour à la sélection, on nettoie tout
       koraEngine.resetEngine();
       ui.actions.hideVictory();
       setSelectedCardId(null);
     }
-  }, [gameId, gameInfo, loadGameState, koraEngine, ui.actions]);
+  }, [gameId, gameInfo, loadGame, koraEngine, ui.actions]);
 
   // Logique de victoire gérée directement dans le game engine
 

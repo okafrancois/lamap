@@ -40,6 +40,13 @@ enum Role {
     USER
 }
 
+enum ActionType {
+    PLAY_CARD
+    START_GAME
+    END_GAME
+    SYNC_STATE
+}
+
 model Session {
     id           String   @id @default(cuid())
     sessionToken String   @unique
@@ -59,6 +66,7 @@ model User {
     role          Role      @default(USER)
     accounts      Account[]
     sessions      Session[]
+    koras         Int       @default(0)
     
     playedGames    Game[]
     gameActions    GameAction[]
@@ -117,9 +125,9 @@ model Game {
     
     // État de la partie
     currentRound      Int        @default(1)
-    hasHandPlayerId   String?    // Qui a la main
-    playerTurnId      String?    // Tour actuel
-    winnerPlayerId    String?    // Gagnant
+    hasHandUsername   String?    // Qui a la main
+    playerTurnUsername      String?    // Tour actuel
+    winnerUsername    String?    // Gagnant
     victoryType       VictoryType?
     endReason         String?
     
@@ -127,6 +135,8 @@ model Game {
     seed              String     // Pour reproductibilité
     startedAt         DateTime   @default(now())
     endedAt           DateTime?
+    version           Int        @default(1)
+    gameLog           Json?      // Log de la partie
     
     // Relations
     actions           GameAction[]
@@ -135,8 +145,6 @@ model Game {
     players           Json?      // Données complètes des joueurs avec leurs mains
     playedCards       Json?      // Cartes jouées dans la partie
     
-    // Sync
-    localId           String?    // ID local pour sync
     lastSyncedAt      DateTime   @default(now())
 
     // Relations
@@ -154,7 +162,7 @@ model GameAction {
     playerId      String
     player        User     @relation(fields: [playerId], references: [id])
     
-    actionType    String   // "PLAY_CARD", "START_GAME", "END_GAME"
+    actionType    ActionType
     payload       Json     // Données de l'action
     round         Int
     timestamp     DateTime @default(now())

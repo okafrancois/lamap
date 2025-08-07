@@ -1,6 +1,6 @@
 import { type Card, type Suit, type Rank } from "common/deck";
 import { AIPlayer } from "@/engine/ai-player";
-import { GameStatus } from "@prisma/client";
+import { GameStatus, type Game as PrismaGame } from "@prisma/client";
 
 // Types améliorés pour le game engine
 export type PlayerType = "user" | "ai";
@@ -35,22 +35,11 @@ export interface GameAction {
   actionId: string;
 }
 
-export interface GameState {
-  gameId: string;
-  status: GameStatus;
-  maxRounds: number;
-  currentRound: number;
-  hasHandUsername: string | null;
-  playerTurnUsername: string | null;
+export interface Game extends Omit<PrismaGame, "players" | "playedCards"> {
   players: PlayerEntity[];
   playedCards: PlayedCard[];
-  winnerUsername: string | null;
-  currentBet: number;
-  endReason: string | null;
+  actions: GameAction[];
   gameLog: Array<{ message: string; timestamp: number }>;
-  seed: string;
-  hostUsername: string;
-  version: number;
 }
 
 export interface GameActions {
@@ -70,18 +59,13 @@ export interface GameActions {
 }
 
 export class KoraGameEngine {
-  private state: GameState;
-  private listeners: ((state: GameState) => void)[] = [];
+  private state: Game;
+  private listeners: ((state: Game) => void)[] = [];
   private onVictoryCallback?: () => void;
-  private onGameUpdateCallback?: (gameState: GameState) => void;
+  private onGameUpdateCallback?: (gameState: Game) => void;
 
-  constructor(
-    bet: number,
-    maxRounds: number,
-    players: PlayerEntity[],
-    hostUsername: string,
-  ) {
-    this.state = this.getInitialState(bet, maxRounds, players, hostUsername);
+  constructor(gameData: Game) {
+    this.state = gameData;
   }
 
   private getInitialState(
@@ -89,8 +73,8 @@ export class KoraGameEngine {
     maxRounds = 5,
     players: PlayerEntity[] = [],
     hostUsername: string,
-  ): GameState {
-    const seed = Date.now().toString();
+  ): Game {
+    const seed = crypto.randomUUID();
     return {
       gameId: `game-${seed}`,
       seed,
@@ -106,7 +90,18 @@ export class KoraGameEngine {
       winnerUsername: null,
       endReason: null,
       gameLog: [],
+      actions: [],
+      mode: "AI",
+      maxPlayers: 2,
+      aiDifficulty: null,
+      roomName: null,
+      isPrivate: false,
       hostUsername,
+      joinCode: null,
+      startedAt: new Date(),
+      endedAt: null,
+      lastSyncedAt: new Date(),
+      victoryType: null,
     };
   }
 
@@ -199,12 +194,7 @@ export class KoraGameEngine {
     const startingPlayerId = this.getStartingPlayer();
 
     this.state = {
-      ...this.getInitialState(
-        this.state.currentBet,
-        this.state.maxRounds,
-        this.state.players,
-        this.state.hostUsername,
-      ),
+      ...this.state,
       players: this.state.players.map((player) => ({
         ...player,
         hand: player.username === startingPlayerId ? firstPlayer : secondPlayer,
@@ -729,11 +719,11 @@ export class KoraGameEngine {
 
   // ========== INTERFACE PUBLIQUE ==========
 
-  public getState(): GameState {
+  public getState(): Game {
     return { ...this.state };
   }
 
-  public subscribe(listener: (state: GameState) => void): () => void {
+  public subscribe(listener: (state: Game) => void): () => void {
     this.listeners.push(listener);
     return () => {
       this.listeners = this.listeners.filter((l) => l !== listener);
@@ -744,7 +734,7 @@ export class KoraGameEngine {
     this.onVictoryCallback = callback;
   }
 
-  setOnGameUpdateCallback(callback: (gameState: GameState) => void): void {
+  setOnGameUpdateCallback(callback: (gameState: Game) => void): void {
     this.onGameUpdateCallback = callback;
   }
 
@@ -753,7 +743,7 @@ export class KoraGameEngine {
   /**
    * Charger un état de jeu complet (pour la reprise de partie multi-joueur)
    */
-  public loadState(newState: GameState): void {
+  public loadState(newState: Game): void {
     this.state = { ...newState };
     this.notifyListeners();
   }
@@ -1079,23 +1069,14 @@ Koras Adversaire: ${state.players[1]!.koras}
       },
     ];
 
+    const gameId = crypto.randomUUID();
+
     // Créer un nouvel état initial
     this.state = {
-      gameId: `game-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      status: GameStatus.WAITING,
-      currentRound: 1,
-      currentBet: bet,
-      maxRounds,
-      players,
-      playedCards: [],
-      hasHandUsername: null,
-      playerTurnUsername: null,
-      winnerUsername: null,
-      endReason: null,
-      seed: Math.random().toString(36),
-      gameLog: [],
-      version: 1,
-      hostUsername: userPlayer.username,
+      ...this.getInitialState(bet, maxRounds, players, userPlayer.username),
+      gameId,
+      mode: "AI",
+      aiDifficulty,
     };
 
     this.startNewGame();
@@ -1112,21 +1093,8 @@ Koras Adversaire: ${state.players[1]!.koras}
 
     // Créer l'état initial avec seulement le créateur
     this.state = {
+      ...this.getInitialState(bet, maxRounds, players, creator.username),
       gameId,
-      status: GameStatus.WAITING,
-      currentRound: 1,
-      currentBet: bet,
-      maxRounds,
-      players,
-      playedCards: [],
-      hasHandUsername: null,
-      playerTurnUsername: null,
-      winnerUsername: null,
-      endReason: null,
-      seed: Math.random().toString(36),
-      gameLog: [],
-      version: 1,
-      hostUsername: creator.username,
     };
 
     this.notifyListeners();
@@ -1174,18 +1142,8 @@ Koras Adversaire: ${state.players[1]!.koras}
 // Instance singleton du game engine
 let gameEngineInstance: KoraGameEngine | null = null;
 
-export const createKoraGameEngine = (
-  bet: number,
-  maxRounds: number,
-  players: PlayerEntity[],
-  hostUsername: string,
-) => {
-  gameEngineInstance = new KoraGameEngine(
-    bet,
-    maxRounds,
-    players,
-    hostUsername,
-  );
+export const createKoraGameEngine = (gameData: Game) => {
+  gameEngineInstance = new KoraGameEngine(gameData);
   return gameEngineInstance;
 };
 
@@ -1197,6 +1155,3 @@ export const getKoraGameEngine = (): KoraGameEngine => {
   }
   return gameEngineInstance;
 };
-
-// ========== NOUVELLES MÉTHODES POUR MULTIJOUEUR ==========
-// Ajouter ces méthodes à la classe KoraGameEngine :

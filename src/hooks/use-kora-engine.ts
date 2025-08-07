@@ -4,22 +4,22 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getKoraGameEngine,
   createKoraGameEngine,
-  type GameState,
+  type Game,
   type PlayerEntity,
   type AIDifficulty,
 } from "@/engine/kora-game-engine";
 import { type Card } from "common/deck";
 
 export function useKoraEngine() {
-  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [gameState, setGame] = useState<Game | null>(null);
 
   useEffect(() => {
     try {
       const engine = getKoraGameEngine();
-      setGameState(engine.getState());
+      setGame(engine.getState());
 
       const unsubscribe = engine.subscribe((newState) => {
-        setGameState(newState);
+        setGame(newState);
       });
 
       return unsubscribe;
@@ -43,10 +43,10 @@ export function useKoraEngine() {
         players,
         hostUsername,
       );
-      setGameState(engine.getState());
+      setGame(engine.getState());
 
       const unsubscribe = engine.subscribe((newState) => {
-        setGameState(newState);
+        setGame(newState);
       });
 
       return unsubscribe;
@@ -231,7 +231,7 @@ export function useKoraEngine() {
         );
       }
     },
-    setOnGameUpdateCallback: (callback: (gameState: GameState) => void) => {
+    setOnGameUpdateCallback: (callback: (gameState: Game) => void) => {
       try {
         const engine = getKoraGameEngine();
         engine.setOnGameUpdateCallback(callback);
@@ -245,7 +245,7 @@ export function useKoraEngine() {
 
     // Réinitialiser l'état (pour retour à la sélection)
     resetEngine: () => {
-      setGameState(null);
+      setGame(null);
     },
 
     // Nouvelles méthodes pour multijoueur
@@ -258,7 +258,7 @@ export function useKoraEngine() {
       try {
         const engine = getKoraGameEngine();
         engine.startAIGame(bet, maxRounds, userPlayer, aiDifficulty);
-        setGameState(engine.getState());
+        setGame(engine.getState());
       } catch (error) {
         console.error("Cannot start AI game: engine not initialized", error);
       }
@@ -273,7 +273,7 @@ export function useKoraEngine() {
       try {
         const engine = getKoraGameEngine();
         engine.initializeOnlineGame(gameId, bet, maxRounds, creator);
-        setGameState(engine.getState());
+        setGame(engine.getState());
       } catch (error) {
         console.error(
           "Cannot initialize online game: engine not initialized",
@@ -286,7 +286,7 @@ export function useKoraEngine() {
       try {
         const engine = getKoraGameEngine();
         const success = engine.joinOnlineGame(player);
-        setGameState(engine.getState());
+        setGame(engine.getState());
         return success;
       } catch (error) {
         console.error("Cannot join online game: engine not initialized", error);
@@ -298,7 +298,7 @@ export function useKoraEngine() {
       try {
         const engine = getKoraGameEngine();
         const success = engine.startOnlineGame();
-        setGameState(engine.getState());
+        setGame(engine.getState());
         return success;
       } catch (error) {
         console.error(
@@ -313,7 +313,7 @@ export function useKoraEngine() {
 
 // Export des types pour compatibilité
 export type {
-  GameState,
+  Game,
   PlayerEntity,
   AIDifficulty,
 } from "@/engine/kora-game-engine";
