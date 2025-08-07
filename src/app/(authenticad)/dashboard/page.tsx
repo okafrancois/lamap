@@ -27,7 +27,6 @@ export default function DashboardPage() {
 
       {/* Parties en cours */}
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <OngoingGames />
         <GameHistory />
       </div>
 

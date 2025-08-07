@@ -351,8 +351,7 @@ export const gameRouter = createTRPCRouter({
         throw new Error("Non autorisé pour cette partie");
       }
 
-      // Convertir au format attendu par le client
-      return {
+      const gameData: Game = {
         ...game,
         players,
         playedCards,
@@ -361,6 +360,8 @@ export const gameRouter = createTRPCRouter({
           timestamp: number;
         }>,
       };
+
+      return gameData;
     }),
 
   // Récupérer les stats de l'utilisateur

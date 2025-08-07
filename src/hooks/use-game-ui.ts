@@ -2,8 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { type AIDifficulty } from "@/engine/kora-game-engine";
-
-export type GameMode = "ai" | "online" | "friend";
+import { type GameMode } from "@prisma/client";
 
 interface GameUI {
   // États de l'interface

@@ -7,6 +7,7 @@ import {
   type Game,
   type PlayerEntity,
   type AIDifficulty,
+  type GameConfig,
 } from "@/engine/kora-game-engine";
 import { type Card } from "common/deck";
 
@@ -30,35 +31,22 @@ export function useKoraEngine() {
   }, []);
 
   // Initialiser le moteur de jeu
-  const initializeEngine = useCallback(
-    (
-      bet: number,
-      maxRounds: number,
-      players: PlayerEntity[],
-      hostUsername: string,
-    ) => {
-      const engine = createKoraGameEngine(
-        bet,
-        maxRounds,
-        players,
-        hostUsername,
-      );
-      setGame(engine.getState());
+  const initializeEngine = useCallback((gameData: Game) => {
+    const engine = createKoraGameEngine(gameData);
+    setGame(engine.getState());
 
-      const unsubscribe = engine.subscribe((newState) => {
-        setGame(newState);
-      });
+    const unsubscribe = engine.subscribe((newState) => {
+      setGame(newState);
+    });
 
-      return unsubscribe;
-    },
-    [],
-  );
+    return unsubscribe;
+  }, []);
 
   // Actions principales
-  const startNewGame = useCallback(() => {
+  const startGame = useCallback(() => {
     try {
       const engine = getKoraGameEngine();
-      engine.startNewGame();
+      engine.startGame();
     } catch (error) {
       console.error("Cannot start game: engine not initialized", error);
     }
@@ -194,15 +182,21 @@ export function useKoraEngine() {
     }
   }, []);
 
+  const createNewGame = useCallback((gameConfig: GameConfig) => {
+    const engine = getKoraGameEngine();
+    engine.createNewGame(gameConfig);
+    setGame(engine.getState());
+  }, []);
+
   return {
     // État du jeu
     gameState,
 
     // Actions d'initialisation
     initializeEngine,
-
+    createNewGame,
     // Actions de jeu
-    startNewGame,
+    startGame,
     playCard,
 
     // Utilitaires
@@ -246,40 +240,6 @@ export function useKoraEngine() {
     // Réinitialiser l'état (pour retour à la sélection)
     resetEngine: () => {
       setGame(null);
-    },
-
-    // Nouvelles méthodes pour multijoueur
-    startAIGame: (
-      bet: number,
-      maxRounds: number,
-      userPlayer: PlayerEntity,
-      aiDifficulty?: AIDifficulty,
-    ) => {
-      try {
-        const engine = getKoraGameEngine();
-        engine.startAIGame(bet, maxRounds, userPlayer, aiDifficulty);
-        setGame(engine.getState());
-      } catch (error) {
-        console.error("Cannot start AI game: engine not initialized", error);
-      }
-    },
-
-    initializeOnlineGame: (
-      gameId: string,
-      bet: number,
-      maxRounds: number,
-      creator: PlayerEntity,
-    ) => {
-      try {
-        const engine = getKoraGameEngine();
-        engine.initializeOnlineGame(gameId, bet, maxRounds, creator);
-        setGame(engine.getState());
-      } catch (error) {
-        console.error(
-          "Cannot initialize online game: engine not initialized",
-          error,
-        );
-      }
     },
 
     joinOnlineGame: (player: PlayerEntity) => {

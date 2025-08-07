@@ -6,7 +6,20 @@ import { GameStatus, type Game as PrismaGame } from "@prisma/client";
 export type PlayerType = "user" | "ai";
 export type KoraType = "none" | "simple" | "double" | "triple";
 export type AIDifficulty = "easy" | "medium" | "hard";
-export type GameMode = "ai" | "online" | "local";
+
+export type GameConfig = Pick<
+  Game,
+  | "mode"
+  | "maxRounds"
+  | "aiDifficulty"
+  | "currentBet"
+  | "isPrivate"
+  | "joinCode"
+  | "roomName"
+  | "maxPlayers"
+  | "players"
+  | "hostUsername"
+>;
 
 export interface PlayerEntity {
   username: string;
@@ -43,8 +56,10 @@ export interface Game extends Omit<PrismaGame, "players" | "playedCards"> {
 }
 
 export interface GameActions {
+  getAiUsername: (difficulty: AIDifficulty) => string;
   // Actions principales
   startNewGame: () => void;
+  createNewGame: (gameConfig: GameConfig) => void;
   playCard: (cardId: string, playerId: string) => boolean;
 
   // Actions de debug/god mode
@@ -68,44 +83,48 @@ export class KoraGameEngine {
     this.state = gameData;
   }
 
-  private getInitialState(
-    bet = 10,
-    maxRounds = 5,
-    players: PlayerEntity[] = [],
-    hostUsername: string,
-  ): Game {
+  private getInitialState(gameConfig: GameConfig): Game {
     const seed = crypto.randomUUID();
+    const players = [...gameConfig.players];
+
+    if (gameConfig.mode === "AI") {
+      players.push({
+        username: this.getAiUsername(gameConfig.aiDifficulty as AIDifficulty),
+        type: "ai",
+        isConnected: true,
+        koras: 0,
+      });
+    }
     return {
       gameId: `game-${seed}`,
       seed,
       version: 0,
       status: GameStatus.WAITING,
       currentRound: 1,
-      maxRounds,
+      maxRounds: gameConfig.maxRounds ?? 5,
       hasHandUsername: null,
       playerTurnUsername: null,
-      players,
+      players: players,
       playedCards: [],
-      currentBet: bet,
+      currentBet: gameConfig.currentBet ?? 100,
       winnerUsername: null,
       endReason: null,
       gameLog: [],
       actions: [],
-      mode: "AI",
-      maxPlayers: 2,
-      aiDifficulty: null,
-      roomName: null,
-      isPrivate: false,
-      hostUsername,
-      joinCode: null,
+      mode: gameConfig.mode,
+      maxPlayers: gameConfig.maxPlayers ?? 2,
+      aiDifficulty:
+        gameConfig.mode === "AI" ? (gameConfig.aiDifficulty ?? "medium") : null,
+      roomName: gameConfig.roomName,
+      isPrivate: gameConfig.isPrivate,
+      hostUsername: gameConfig.hostUsername,
+      joinCode: gameConfig.joinCode,
       startedAt: new Date(),
       endedAt: null,
       lastSyncedAt: new Date(),
       victoryType: null,
     };
   }
-
-  // ========== CRÉATION ET DISTRIBUTION DES CARTES ==========
 
   private createDeck(): Card[] {
     const suits: Suit[] = ["hearts", "diamonds", "clubs", "spades"];
@@ -188,7 +207,12 @@ export class KoraGameEngine {
 
   // ========== LOGIQUE DE JEU PRINCIPALE ==========
 
-  public startNewGame(): void {
+  public createNewGame(gameConfig: GameConfig): void {
+    this.state = this.getInitialState(gameConfig);
+    this.notifyListeners();
+  }
+
+  public startGame(): void {
     // Distribution des cartes
     const { firstPlayer, secondPlayer } = this.distributeCards();
     const startingPlayerId = this.getStartingPlayer();
@@ -1039,65 +1063,13 @@ Koras Adversaire: ${state.players[1]!.koras}
     this.notifyListeners();
   }
 
-  private getAiUsername(difficulty: AIDifficulty): string {
+  public getAiUsername(difficulty: AIDifficulty): string {
     const difficultyMap = {
       easy: "bindi-du-tierqua",
       medium: "le-ndoss",
       hard: "le-grand-bandi",
     };
-    return `ai-opponent-${difficultyMap[difficulty]}`;
-  }
-
-  // ========== NOUVELLES MÉTHODES POUR MULTIJOUEUR ==========
-
-  // Initialiser une partie IA complète (tout d'un coup)
-  public startAIGame(
-    bet: number,
-    maxRounds: number,
-    userPlayer: PlayerEntity,
-    aiDifficulty: AIDifficulty = "medium",
-  ): void {
-    const players: PlayerEntity[] = [
-      userPlayer,
-      {
-        username: this.getAiUsername(aiDifficulty),
-        type: "ai",
-        isConnected: true,
-        name: "IA",
-        koras: 100,
-        aiDifficulty,
-      },
-    ];
-
-    const gameId = crypto.randomUUID();
-
-    // Créer un nouvel état initial
-    this.state = {
-      ...this.getInitialState(bet, maxRounds, players, userPlayer.username),
-      gameId,
-      mode: "AI",
-      aiDifficulty,
-    };
-
-    this.startNewGame();
-  }
-
-  // Initialiser une partie multijoueur (seulement le créateur)
-  public initializeOnlineGame(
-    gameId: string,
-    bet: number,
-    maxRounds: number,
-    creator: PlayerEntity,
-  ): void {
-    const players: PlayerEntity[] = [creator];
-
-    // Créer l'état initial avec seulement le créateur
-    this.state = {
-      ...this.getInitialState(bet, maxRounds, players, creator.username),
-      gameId,
-    };
-
-    this.notifyListeners();
+    return `${difficultyMap[difficulty]} (bot)`;
   }
 
   // Ajouter le 2e joueur à une partie multijoueur

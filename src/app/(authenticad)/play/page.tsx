@@ -32,18 +32,11 @@ import {
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { useState } from "react";
-import type { AIDifficulty } from "@/engine/kora-game-engine";
+import type { AIDifficulty, GameConfig } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
 import { GameStatus } from "@prisma/client";
-
-interface GameConfig {
-  mode: "ai" | "online";
-  difficulty?: "easy" | "medium" | "hard";
-  bet?: number;
-  maxRounds?: number;
-  hostUsername: string;
-}
+import { toast } from "sonner";
 
 interface AvailableGame {
   gameId: string;
@@ -68,9 +61,6 @@ export default function PlayPage() {
   const controller = useGameController(gameId);
   const { gameState, ui, gameInfo } = controller;
 
-  // Mutation pour créer une partie multijoueur
-  const createMultiplayerGame = api.game.createMultiplayerGame.useMutation();
-
   // Déterminer l'état actuel
   const isCreator = gameInfo?.hostUsername === userData?.user?.username;
   const canJoinGame =
@@ -93,29 +83,27 @@ export default function PlayPage() {
     : "selecting";
 
   // Création de partie avec redirection simple
-  const handleCreateGame = async (config: GameConfig) => {
-    if (config.mode === "ai") {
-      const newGameId = controller.createGame(config);
-      if (newGameId) {
-        router.push(`/play?id=${newGameId}`);
-      }
-    } else if (config.mode === "online") {
-      // Pour le multijoueur, créer via l'API directement
-      try {
-        const gameConfig = {
-          name: `Partie de ${userData?.user?.username ?? "Joueur"}`,
-          bet: config.bet ?? 100,
-          maxRounds: config.maxRounds ?? 5,
-          isPrivate: false,
-        };
+  const handleCreateGame = async (
+    config: Pick<
+      GameConfig,
+      | "mode"
+      | "aiDifficulty"
+      | "currentBet"
+      | "maxRounds"
+      | "isPrivate"
+      | "joinCode"
+    >,
+  ) => {
+    const currentUser = userData?.user;
 
-        const result = await createMultiplayerGame.mutateAsync(gameConfig);
-
-        router.push(`/play?id=${result.gameId}`);
-      } catch (error) {
-        console.error("Erreur création partie:", error);
-      }
+    if (!currentUser) {
+      toast.error("Vous devez être connecté pour créer une partie");
+      return;
     }
+
+    const newGameId = controller.createGame(config, currentUser);
+
+    router.push(`/play?id=${newGameId}`);
   };
 
   // Rejoindre une partie multijoueur
@@ -321,34 +309,40 @@ export default function PlayPage() {
 
             <CardContent className="space-y-4 overflow-y-auto">
               <VsIaGameMode
-                isSelected={ui.selectedGameMode === "ai"}
-                onTrigger={() => controller.selectGameMode("ai")}
+                isSelected={ui.selectedGameMode === "AI"}
+                onTrigger={() => controller.selectGameMode("AI")}
                 onClose={() => controller.selectGameMode(null)}
                 onNewGame={(difficulty) =>
                   handleCreateGame({
-                    mode: "ai",
-                    difficulty,
-                    hostUsername: userData.user.username,
+                    mode: "AI",
+                    aiDifficulty: difficulty,
+                    currentBet: 0,
+                    maxRounds: 5,
+                    isPrivate: false,
+                    joinCode: null,
                   })
                 }
                 hidden={Boolean(
-                  ui.selectedGameMode && ui.selectedGameMode !== "ai",
+                  ui.selectedGameMode && ui.selectedGameMode !== "AI",
                 )}
               />
 
               <OnlineGameMode
-                isSelected={ui.selectedGameMode === "online"}
-                onTrigger={() => controller.selectGameMode("online")}
+                isSelected={ui.selectedGameMode === "ONLINE"}
+                onTrigger={() => controller.selectGameMode("ONLINE")}
                 onClose={() => controller.selectGameMode(null)}
                 onNewGame={(config) =>
                   handleCreateGame({
-                    mode: "online",
-                    ...config,
-                    hostUsername: userData.user.username,
+                    mode: "ONLINE",
+                    currentBet: config.bet,
+                    maxRounds: config.maxRounds ?? 5,
+                    isPrivate: false,
+                    joinCode: null,
+                    aiDifficulty: null,
                   })
                 }
                 hidden={Boolean(
-                  ui.selectedGameMode && ui.selectedGameMode !== "online",
+                  ui.selectedGameMode && ui.selectedGameMode !== "ONLINE",
                 )}
               />
             </CardContent>
@@ -380,7 +374,7 @@ function VsIaGameMode({
   onNewGame,
   hidden,
 }: VsIaGameModeProps) {
-  const modeData = GAME_MODES.find((mode) => mode.id === "ai");
+  const modeData = GAME_MODES.find((mode) => mode.id === "AI");
 
   const [difficulty, setDifficulty] = useState<AIDifficulty>("medium");
 
@@ -507,7 +501,7 @@ function OnlineGameMode({
   onNewGame,
   hidden,
 }: OnlineGameModeProps) {
-  const modeData = GAME_MODES.find((mode) => mode.id === "online");
+  const modeData = GAME_MODES.find((mode) => mode.id === "ONLINE");
   const [option, setOption] = useState<"create" | "join" | null>(null);
   const [bet, setBet] = useState(10);
   const [maxRounds, setMaxRounds] = useState(5);

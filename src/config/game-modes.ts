@@ -1,3 +1,4 @@
+import type { GameMode } from "@prisma/client";
 import {
   IconRobot,
   IconUsers,
@@ -6,7 +7,7 @@ import {
 } from "@tabler/icons-react";
 
 export interface GameModeOption {
-  id: "ai" | "online" | "friend";
+  id: GameMode;
   title: string;
   description: string;
   icon: Icon;
@@ -18,7 +19,7 @@ export interface GameModeOption {
 
 export const GAME_MODES: GameModeOption[] = [
   {
-    id: "ai",
+    id: "AI",
     title: "Contre l'IA",
     description:
       "Affrontez une intelligence artificielle avec 3 niveaux de difficulté",
@@ -29,7 +30,7 @@ export const GAME_MODES: GameModeOption[] = [
     available: true,
   },
   {
-    id: "online",
+    id: "ONLINE",
     title: "Multijoueur en ligne",
     description: "Jouez contre d'autres joueurs en ligne",
     icon: IconUsers,
@@ -39,7 +40,7 @@ export const GAME_MODES: GameModeOption[] = [
     available: true, // Pas encore implémenté
   },
   {
-    id: "friend",
+    id: "LOCAL",
     title: "Avec un ami",
     description: "Jouez à deux sur le même appareil",
     icon: IconUserPlus,
