@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import {
   getKoraGameEngine,
   createKoraGameEngine,
+  buildInitialGameStateFromConfig,
   type Game,
   type PlayerEntity,
   type AIDifficulty,
@@ -182,10 +183,21 @@ export function useKoraEngine() {
     }
   }, []);
 
-  const createNewGame = useCallback((gameConfig: GameConfig) => {
-    const engine = getKoraGameEngine();
-    engine.createNewGame(gameConfig);
-    setGame(engine.getState());
+  const createNewGame = useCallback((gameConfig: GameConfig): Game => {
+    try {
+      const engine = getKoraGameEngine();
+      engine.createNewGame(gameConfig);
+      const state = engine.getState();
+      setGame(state);
+      return state;
+    } catch {
+      const initialState = buildInitialGameStateFromConfig(gameConfig);
+      const engine = createKoraGameEngine(initialState);
+      engine.createNewGame(gameConfig);
+      const state = engine.getState();
+      setGame(state);
+      return state;
+    }
   }, []);
 
   return {

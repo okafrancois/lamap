@@ -4,9 +4,9 @@ import { TRPCError } from "@trpc/server";
 import type { Game, PlayedCard, PlayerEntity } from "@/engine/kora-game-engine";
 import { GameStatus, type Prisma, type PrismaClient } from "@prisma/client";
 import {
-  LocalGameDataSchema,
   LocalGameActionSchema,
   CreateMultiplayerGameSchema,
+  GameSchema,
 } from "./schemas";
 
 // ========== ROUTER ==========
@@ -149,15 +149,10 @@ export const gameRouter = createTRPCRouter({
     }),
   // Sauvegarder une partie
   saveGame: protectedProcedure
-    .input(LocalGameDataSchema)
+    .input(GameSchema)
     .mutation(async ({ ctx, input }) => {
-      const { gameState } = input;
-
-      const players = gameState.players as unknown as PlayerEntity[];
-      const playedCards = gameState.playedCards as unknown as PlayedCard[];
-
       // Vérifier que l'utilisateur est bien dans cette partie
-      const isPlayerInGame = players.some(
+      const isPlayerInGame = input.players.some(
         (p) => p.username === ctx.session.user.username,
       );
 
@@ -165,69 +160,60 @@ export const gameRouter = createTRPCRouter({
         throw new Error("Utilisateur non autorisé pour cette partie");
       }
 
-      // Déterminer le mode de jeu
-      const gameMode = players.some((p) => p.type === "ai") ? "AI" : "ONLINE";
-
-      // Préparer les données des joueurs avec leurs mains
-      const playersData = players.map((player) => ({
-        username: player.username,
-        type: player.type,
-        isConnected: player.isConnected,
-        name: player.name,
-        avatar: player.avatar,
-        hand: player.hand ?? [],
-        koras: player.koras,
-        aiDifficulty: player.aiDifficulty,
-        isThinking: player.isThinking,
-      }));
+      // Extraire les actions pour les gérer séparément
+      const { actions, ...gameData } = input;
 
       // Upsert la partie en base
       const game = await ctx.db.game.upsert({
-        where: { gameId: gameState.gameId },
+        where: { gameId: input.gameId },
         update: {
-          ...gameState,
-
-          endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
+          ...gameData,
+          endedAt: input.status === GameStatus.ENDED ? new Date() : null,
           lastSyncedAt: new Date(),
-          players: playersData,
-          playedCards: playedCards as unknown as Prisma.InputJsonValue,
+          players: input.players,
+          playedCards: input.playedCards as unknown as Prisma.InputJsonValue,
         },
         create: {
-          gameId: gameState.gameId,
-          mode: gameMode,
-          status: gameState.status,
-          currentBet: gameState.currentBet,
-          maxRounds: gameState.maxRounds,
-          ...(gameMode === "AI" && {
+          gameId: input.gameId,
+          mode: input.mode,
+          status: input.status,
+          currentBet: input.currentBet,
+          maxRounds: input.maxRounds,
+          ...(input.mode === "AI" && {
             aiDifficulty:
-              players.find((p) => p.type === "ai")?.aiDifficulty ?? null,
+              input.players.find((p) => p.type === "ai")?.aiDifficulty ?? null,
           }),
-          ...(gameMode === "ONLINE" && {
-            isPrivate: gameState.isPrivate,
-            joinCode: gameState.joinCode,
+          ...(input.mode === "ONLINE" && {
+            isPrivate: input.isPrivate,
+            joinCode: input.joinCode,
           }),
-          currentRound: gameState.currentRound,
-          hasHandUsername: gameState.hasHandUsername,
-          playerTurnUsername: gameState.playerTurnUsername,
-          winnerUsername: gameState.winnerUsername,
-          endReason: gameState.endReason,
-          seed: gameState.seed,
-          endedAt: gameState.status === GameStatus.ENDED ? new Date() : null,
-          hostUsername: gameState.hostUsername,
-          players: playersData,
-          playedCards: playedCards as unknown as Prisma.InputJsonValue,
+          currentRound: input.currentRound,
+          hasHandUsername: input.hasHandUsername,
+          playerTurnUsername: input.playerTurnUsername,
+          winnerUsername: input.winnerUsername,
+          endReason: input.endReason,
+          seed: input.seed,
+          endedAt: input.status === GameStatus.ENDED ? new Date() : null,
+          hostUsername: input.hostUsername,
+          players: input.players,
+          playedCards: input.playedCards,
         },
       });
 
-      // Mettre à jour les stats si la partie est terminée
-      if (gameState.status === GameStatus.ENDED && gameState.winnerUsername) {
-        await updateUserStats(
-          ctx.db,
-          ctx.session.user.id,
-          gameState as unknown as Game,
-          gameMode === "AI",
-        );
-      }
+      // Persister les actions
+      await ctx.db.gameAction.createMany({
+        data: actions.map((action) => ({
+          gameId: input.gameId,
+          playerId: action.playerId,
+          actionType: action.actionType,
+          payload: action.payload ?? {},
+          round: action.round,
+          timestamp: action.timestamp,
+          localId: action.localId,
+          processed: action.processed,
+        })),
+        skipDuplicates: true,
+      });
 
       return {
         success: true,
@@ -359,6 +345,17 @@ export const gameRouter = createTRPCRouter({
           message: string;
           timestamp: number;
         }>,
+        actions: game.actions.map((action) => ({
+          type: action.actionType as
+            | "PLAY_CARD"
+            | "START_GAME"
+            | "END_GAME"
+            | "SYNC_STATE",
+          payload: action.payload,
+          timestamp: action.timestamp.getTime(),
+          playerUsername: action.player.username,
+          actionId: action.id,
+        })),
       };
 
       return gameData;

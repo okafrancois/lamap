@@ -40,6 +40,7 @@ export function useGameController(gameId: string | null = null) {
   );
 
   const joinGameMutation = api.game.joinGame.useMutation();
+  const saveGameMutation = api.game.saveGame.useMutation();
   // Gérer les sons du jeu
   useGameSounds(koraEngine.gameState);
 
@@ -133,13 +134,17 @@ export function useGameController(gameId: string | null = null) {
           type: "user",
           isConnected: true,
           name: currentUser.name ?? currentUser.username,
-          koras: currentUser.koras,
+          koras: Number(
+            (currentUser as unknown as { koras?: number })?.koras ??
+              userData?.user?.koras ??
+              100,
+          ),
         },
       ];
 
       const roomName = `Partie de ${currentUser.username} - ${config.mode}`;
 
-      koraEngine.createNewGame({
+      const state = koraEngine.createNewGame({
         mode: config.mode,
         maxRounds: config.maxRounds,
         aiDifficulty: config.mode === "AI" ? config.aiDifficulty : null,
@@ -152,16 +157,14 @@ export function useGameController(gameId: string | null = null) {
         players,
       });
 
-      const gameData = koraEngine.gameState;
-
-      if (gameData) {
-        api.game.saveGame.useMutation().mutate(gameData);
-        return koraEngine.gameState?.gameId;
+      if (state) {
+        saveGameMutation.mutate(gameState);
+        return state.gameId;
       }
 
       return null;
     },
-    [userData, koraEngine],
+    [userData, koraEngine, saveGameMutation],
   );
 
   // Rejoindre une partie multijoueur

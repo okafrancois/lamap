@@ -80,7 +80,9 @@ export class KoraGameEngine {
   private onGameUpdateCallback?: (gameState: Game) => void;
 
   constructor(gameData: Game) {
-    this.state = gameData;
+    this.state = {
+      ...gameData,
+    };
   }
 
   private getInitialState(gameConfig: GameConfig): Game {
@@ -855,7 +857,7 @@ Koras Adversaire: ${state.players[1]!.koras}
     multiplier: string;
     special: boolean;
   } {
-    const recentLogs = this.state.gameLog.slice(-10);
+    const recentLogs = (this.state.gameLog ?? []).slice(-10);
     const isPlayerWinner = this.state.winnerUsername === playerUsername;
 
     for (const log of recentLogs) {
@@ -1126,4 +1128,57 @@ export const getKoraGameEngine = (): KoraGameEngine => {
     );
   }
   return gameEngineInstance;
+};
+
+// Construire un état initial de jeu à partir d'une configuration (exposé publiquement)
+export const buildInitialGameStateFromConfig = (
+  gameConfig: GameConfig,
+): Game => {
+  const seed = crypto.randomUUID();
+  const players = [...gameConfig.players];
+
+  if (gameConfig.mode === "AI") {
+    const difficultyMap = {
+      easy: "bindi-du-tierqua",
+      medium: "le-ndoss",
+      hard: "le-grand-bandi",
+    } as const;
+    players.push({
+      username: `${difficultyMap[(gameConfig.aiDifficulty ?? "medium") as AIDifficulty]} (bot)`,
+      type: "ai",
+      isConnected: true,
+      koras: 0,
+      aiDifficulty: (gameConfig.aiDifficulty ?? "medium") as AIDifficulty,
+    });
+  }
+
+  return {
+    gameId: `game-${seed}`,
+    seed,
+    version: 0,
+    status: GameStatus.WAITING,
+    currentRound: 1,
+    maxRounds: gameConfig.maxRounds ?? 5,
+    hasHandUsername: null,
+    playerTurnUsername: null,
+    players,
+    playedCards: [],
+    currentBet: gameConfig.currentBet ?? 100,
+    winnerUsername: null,
+    endReason: null,
+    gameLog: [],
+    actions: [],
+    mode: gameConfig.mode,
+    maxPlayers: gameConfig.maxPlayers ?? 2,
+    aiDifficulty:
+      gameConfig.mode === "AI" ? (gameConfig.aiDifficulty ?? "medium") : null,
+    roomName: gameConfig.roomName,
+    isPrivate: gameConfig.isPrivate,
+    hostUsername: gameConfig.hostUsername,
+    joinCode: gameConfig.joinCode,
+    startedAt: new Date(),
+    endedAt: null,
+    lastSyncedAt: new Date(),
+    victoryType: null,
+  };
 };

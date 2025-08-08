@@ -24,6 +24,26 @@ export const PlayedCardSchema = z.object({
   timestamp: z.number(),
 });
 
+export const LocalGameActionSchema = z.object({
+  id: z.string(),
+  gameId: z.string(),
+  actionType: z.nativeEnum(ActionType),
+  payload: z.any(),
+  round: z.number(),
+  timestamp: z.date(),
+  playerId: z.string(),
+  localId: z.string().optional(),
+  processed: z.boolean().default(false),
+});
+
+export const CreateMultiplayerGameSchema = z.object({
+  name: z.string().min(1).max(50),
+  bet: z.number().min(1).max(1000),
+  maxRounds: z.number().min(1).max(10),
+  isPrivate: z.boolean().optional().default(false),
+  joinCode: z.string().optional().nullable(),
+});
+
 export const GameSchema = z.object({
   gameId: z.string(),
   status: z.nativeEnum(GameStatus),
@@ -55,7 +75,9 @@ export const GameSchema = z.object({
   startedAt: z.date().optional(),
   endedAt: z.date().nullable().optional(),
   lastSyncedAt: z.date().optional(),
+  actions: z.array(LocalGameActionSchema),
 });
+
 export const LocalGameDataSchema = z.object({
   id: z.string(),
   gameState: GameSchema,
@@ -63,24 +85,4 @@ export const LocalGameDataSchema = z.object({
   createdAt: z.number(),
   syncedAt: z.number().optional(),
   needsSync: z.boolean(),
-});
-
-export const LocalGameActionSchema = z.object({
-  id: z.string(),
-  gameId: z.string(),
-  actionType: z.nativeEnum(ActionType),
-  payload: z.any(),
-  round: z.number(),
-  timestamp: z.date(),
-  playerId: z.string(),
-  localId: z.string().optional(),
-  processed: z.boolean().default(false),
-});
-
-export const CreateMultiplayerGameSchema = z.object({
-  name: z.string().min(1).max(50),
-  bet: z.number().min(1).max(1000),
-  maxRounds: z.number().min(1).max(10),
-  isPrivate: z.boolean().optional().default(false),
-  joinCode: z.string().optional().nullable(),
 });
