@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { api } from "@/trpc/react";
-import type { GameAction, Game } from "@/engine/kora-game-engine";
+import type { Game } from "@/engine/kora-game-engine";
 
-// Types pour le sync local
+// Types pour le sync local - alignés avec les schémas du serveur
 interface LocalGameData {
   id: string;
   gameState: Game;
-  actions: GameAction[];
+  actions: any[]; // Actions formatées pour le serveur
   createdAt: number;
   needsSync: boolean;
   syncedAt?: number;
@@ -24,7 +24,13 @@ export function useGameSync() {
   const syncGame = useCallback(
     async (gameData: LocalGameData): Promise<boolean> => {
       try {
-        await saveGameMutation.mutateAsync(gameData);
+        // Préparer les données au format attendu par le serveur
+        const gameDataForServer = {
+          ...gameData.gameState,
+          actions: gameData.actions, // Actions déjà au bon format
+        };
+
+        await saveGameMutation.mutateAsync(gameDataForServer);
 
         // Marquer comme synchronisé dans localStorage
         localStorage.setItem(

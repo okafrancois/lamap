@@ -35,7 +35,7 @@ export function useGameController(gameId: string | null = null) {
     { gameId: gameId! },
     {
       enabled: !!gameId && gameId.startsWith("game-"),
-      refetchInterval: 2000, // Polling pour les updates multijoueur
+      refetchInterval: 2000,
     },
   );
 
@@ -158,7 +158,12 @@ export function useGameController(gameId: string | null = null) {
       });
 
       if (state) {
-        saveGameMutation.mutate(gameState);
+        // Transformer le state pour la sauvegarde (sans les actions du moteur qui ne correspondent pas au schéma)
+        const gameDataForSave = {
+          ...state,
+          actions: [], // On initialise avec un tableau vide pour une nouvelle partie
+        };
+        saveGameMutation.mutate(gameDataForSave);
         return state.gameId;
       }
 

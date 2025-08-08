@@ -6,7 +6,7 @@ import { GameStatus, type Prisma, type PrismaClient } from "@prisma/client";
 import {
   LocalGameActionSchema,
   CreateMultiplayerGameSchema,
-  GameSchema,
+  type GameSchemaType,
 } from "./schemas";
 
 // ========== ROUTER ==========
@@ -149,10 +149,11 @@ export const gameRouter = createTRPCRouter({
     }),
   // Sauvegarder une partie
   saveGame: protectedProcedure
-    .input(GameSchema)
+    .input(z.any())
     .mutation(async ({ ctx, input }) => {
+      const gameData = input as GameSchemaType;
       // Vérifier que l'utilisateur est bien dans cette partie
-      const isPlayerInGame = input.players.some(
+      const isPlayerInGame = gameData.players.some(
         (p) => p.username === ctx.session.user.username,
       );
 
@@ -161,16 +162,16 @@ export const gameRouter = createTRPCRouter({
       }
 
       // Extraire les actions pour les gérer séparément
-      const { actions, ...gameData } = input;
+      const { actions, ...gameDataWithoutActions } = gameData;
 
       // Upsert la partie en base
       const game = await ctx.db.game.upsert({
         where: { gameId: input.gameId },
         update: {
-          ...gameData,
-          endedAt: input.status === GameStatus.ENDED ? new Date() : null,
+          ...gameDataWithoutActions,
+          endedAt: gameData.status === GameStatus.ENDED ? new Date() : null,
           lastSyncedAt: new Date(),
-          players: input.players,
+          players: gameData.players,
           playedCards: input.playedCards as unknown as Prisma.InputJsonValue,
         },
         create: {

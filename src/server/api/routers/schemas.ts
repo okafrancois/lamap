@@ -78,6 +78,8 @@ export const GameSchema = z.object({
   actions: z.array(LocalGameActionSchema),
 });
 
+export type GameSchemaType = z.infer<typeof GameSchema>;
+
 export const LocalGameDataSchema = z.object({
   id: z.string(),
   gameState: GameSchema,
