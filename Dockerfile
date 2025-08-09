@@ -1,37 +1,37 @@
-# syntax=docker/dockerfile:1.7-labs
-
-FROM node:20-alpine AS base
-ENV NODE_ENV=production
+FROM node:20-alpine AS deps
 WORKDIR /app
-
-FROM base AS deps
-# Required for prisma binary and tools
 RUN apk add --no-cache libc6-compat openssl
 COPY package.json package-lock.json* bun.lock* ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci --include=dev
+RUN npm ci
 
-FROM deps AS builder
+FROM node:20-alpine AS builder
+WORKDIR /app
+RUN apk add --no-cache openssl
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV SKIP_ENV_VALIDATION=1
 RUN npx prisma generate
 RUN npm run build
 
-FROM base AS runner
-RUN apk add --no-cache openssl
-ENV NODE_ENV=production
+FROM node:20-alpine AS runner
 WORKDIR /app
+ENV NODE_ENV=production
+RUN apk add --no-cache openssl
 
-# Copy only the standalone output
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy runtime files
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/package-lock.json ./package-lock.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 
-# Prisma needs migrations at runtime for deploy (optional)
+# Drop dev dependencies to slim the image
+RUN npm prune --omit=dev
+
 ENV PORT=3000
 EXPOSE 3000
 
-CMD node server.js
+CMD ["npm", "start"]
 
 
