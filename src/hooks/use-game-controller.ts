@@ -28,47 +28,48 @@ export function useGameController(gameId: string | null = null) {
     null,
   );
 
-  const { data: gameInfo } = api.game.getGame.useQuery(
-    { gameId: gameId! },
-    {
-      enabled: !!gameId && gameId.startsWith("game-"),
-      refetchInterval: () => {
-        const gameDatas = koraEngine.gameState;
-        if (!gameDatas) return false;
+  const { data: gameInfo, refetch: refetchGameInfo } =
+    api.game.getGame.useQuery(
+      { gameId: gameId! },
+      {
+        enabled: !!gameId && gameId.startsWith("game-"),
+        refetchInterval: () => {
+          const gameDatas = koraEngine.gameState;
+          if (!gameDatas) return false;
 
-        if (gameDatas.status === GameStatus.WAITING) {
-          return 3000;
-        }
+          if (gameDatas.status === GameStatus.WAITING) {
+            return 3000;
+          }
 
-        if (gameDatas.mode === "AI") {
+          if (gameDatas.mode === "AI") {
+            return false;
+          }
+
+          if (gameDatas.players.length < 2) {
+            return 3000;
+          }
+
+          if (
+            gameDatas?.status === GameStatus.PLAYING &&
+            gameDatas.playerTurnUsername === userData?.user?.username
+          ) {
+            return false;
+          }
+
+          if (
+            gameDatas?.status === GameStatus.PLAYING &&
+            gameDatas.playerTurnUsername !== userData?.user?.username
+          ) {
+            return 3000;
+          }
+          if (gameDatas?.status === GameStatus.ENDED) {
+            return false;
+          }
           return false;
-        }
-
-        if (gameDatas.players.length < 2) {
-          return 3000;
-        }
-
-        if (
-          gameDatas?.status === GameStatus.PLAYING &&
-          gameDatas.playerTurnUsername === userData?.user?.username
-        ) {
-          return false;
-        }
-
-        if (
-          gameDatas?.status === GameStatus.PLAYING &&
-          gameDatas.playerTurnUsername !== userData?.user?.username
-        ) {
-          return 3000;
-        }
-        if (gameDatas?.status === GameStatus.ENDED) {
-          return false;
-        }
-        return false;
+        },
+        refetchIntervalInBackground: false,
       },
-      refetchIntervalInBackground: false,
-    },
-  );
+    );
 
   const joinGameMutation = api.game.joinGame.useMutation();
   const saveGameMutation = api.game.saveGame.useMutation();
@@ -136,6 +137,19 @@ export function useGameController(gameId: string | null = null) {
 
     if (!initializedGameId && gameInfo) {
       initializeGame(gameInfo);
+
+      // Si c'est une partie ONLINE qui est en PLAYING avec 2 joueurs, la démarrer automatiquement
+      if (
+        gameInfo.mode === "ONLINE" &&
+        gameInfo.status === GameStatus.PLAYING &&
+        gameInfo.players.length === 2 &&
+        gameInfo.currentRound === 1 &&
+        !gameInfo.hasHandUsername
+      ) {
+        setTimeout(() => {
+          koraEngine.startGame();
+        }, 200);
+      }
     }
 
     // Marquer cette partie comme initialisée
@@ -230,21 +244,15 @@ export function useGameController(gameId: string | null = null) {
       }
 
       try {
+        // Rejoindre en BDD côté serveur
         await joinGameMutation.mutateAsync({ gameId: targetGameId });
 
-        const userPlayer: PlayerEntity = {
-          username: userData.user.username,
-          type: "user",
-          isConnected: true,
-          name: userData.user.name ?? userData.user.username,
-          koras: 100,
-        };
-
-        const success = koraEngine.joinOnlineGame(userPlayer);
-
-        if (success && koraEngine.gameState?.players.length === 2) {
-          koraEngine.startOnlineGame();
-        }
+        // Attendre que les données se synchronisent et rafraîchir
+        // Le refetchInterval va automatiquement récupérer l'état mis à jour
+        setTimeout(() => {
+          // Forcer un refetch immédiat
+          void refetchGameInfo();
+        }, 100);
 
         toast.success("Partie rejointe avec succès !");
         return true;
@@ -254,7 +262,7 @@ export function useGameController(gameId: string | null = null) {
         return false;
       }
     },
-    [userData, joinGameMutation, gameId, koraEngine],
+    [userData, joinGameMutation, gameId, refetchGameInfo],
   );
 
   const newGame = useCallback(() => {

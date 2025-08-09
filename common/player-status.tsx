@@ -43,8 +43,7 @@ export function PlayerStatus({
 
         {/* Nom et informations */}
         <span className={`text-xs font-medium sm:text-sm ${textColor}`}>
-          <span>{playerName} </span>
-          {cardCount}
+          <span>{playerName} </span>({cardCount})
         </span>
 
         {/* Indicateur de main */}
