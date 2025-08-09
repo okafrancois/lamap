@@ -183,6 +183,25 @@ export function useKoraEngine() {
     }
   }, []);
 
+  const createNewVsAiGame = useCallback((gameConfig: GameConfig): Game => {
+    try {
+      const engine = getKoraGameEngine();
+      engine.createNewGame(gameConfig);
+      engine.startGame();
+      const state = engine.getState();
+      setGame(state);
+      return state;
+    } catch {
+      const initialState = buildInitialGameStateFromConfig(gameConfig);
+      const engine = createKoraGameEngine(initialState);
+      engine.createNewGame(gameConfig);
+      engine.startGame();
+      const state = engine.getState();
+      setGame(state);
+      return state;
+    }
+  }, []);
+
   const createNewGame = useCallback((gameConfig: GameConfig): Game => {
     try {
       const engine = getKoraGameEngine();
@@ -207,6 +226,7 @@ export function useKoraEngine() {
     // Actions d'initialisation
     initializeEngine,
     createNewGame,
+    createNewVsAiGame,
     // Actions de jeu
     startGame,
     playCard,

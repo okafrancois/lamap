@@ -151,37 +151,43 @@ export function useGameController(gameId: string | null = null) {
 
       const roomName = `Partie de ${currentUser.username} - ${config.mode}`;
 
-      const state = koraEngine.createNewGame({
-        mode: config.mode,
-        maxRounds: config.maxRounds,
-        aiDifficulty: config.mode === "AI" ? config.aiDifficulty : null,
-        currentBet: config.currentBet,
-        isPrivate: config.isPrivate,
-        joinCode: config.joinCode,
-        roomName: roomName,
-        maxPlayers: 2,
-        hostUsername: currentUser.username,
-        players,
-      });
+      let state: Game | null = null;
+
+      if (config.mode === "AI") {
+        state = koraEngine.createNewVsAiGame({
+          mode: config.mode,
+          maxRounds: config.maxRounds,
+          aiDifficulty: config.aiDifficulty ?? "medium",
+          currentBet: config.currentBet,
+          isPrivate: config.isPrivate,
+          joinCode: config.joinCode,
+          roomName: roomName,
+          maxPlayers: 2,
+          hostUsername: currentUser.username,
+          players,
+        });
+      } else {
+        state = koraEngine.createNewGame({
+          mode: config.mode,
+          maxRounds: config.maxRounds,
+          aiDifficulty: null,
+          currentBet: config.currentBet,
+          isPrivate: config.isPrivate,
+          joinCode: config.joinCode,
+          roomName: roomName,
+          maxPlayers: 2,
+          hostUsername: currentUser.username,
+          players,
+        });
+      }
 
       if (state) {
-        // Démarrer automatiquement les parties AI
-        if (config.mode === "AI") {
-          setTimeout(() => {
-            koraEngine.startGame();
-
-            saveGameMutation.mutate({
-              ...state,
-              actions: [],
-            });
-          }, 100);
-        } else {
-          saveGameMutation.mutate({
-            ...state,
-            actions: [],
-          });
-        }
-
+        // Transformer le state pour la sauvegarde (sans les actions du moteur qui ne correspondent pas au schéma)
+        const gameDataForSave = {
+          ...state,
+          actions: [], // On initialise avec un tableau vide pour une nouvelle partie
+        };
+        saveGameMutation.mutate(gameDataForSave);
         return state.gameId;
       }
 
