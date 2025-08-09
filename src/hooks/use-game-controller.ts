@@ -39,7 +39,7 @@ export function useGameController(gameId: string | null = null) {
           if (!gameDatas) return false;
 
           if (gameDatas.status === GameStatus.WAITING) {
-            return 3000;
+            return 1000;
           }
 
           if (gameDatas.mode === "AI") {
@@ -47,7 +47,7 @@ export function useGameController(gameId: string | null = null) {
           }
 
           if (gameDatas.players.length < 2) {
-            return 3000;
+            return 1000;
           }
 
           if (
@@ -61,7 +61,7 @@ export function useGameController(gameId: string | null = null) {
             gameDatas?.status === GameStatus.PLAYING &&
             gameDatas.playerTurnUsername !== userData?.user?.username
           ) {
-            return 3000;
+            return 1000;
           }
           if (gameDatas?.status === GameStatus.ENDED) {
             return false;
