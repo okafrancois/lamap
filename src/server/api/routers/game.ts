@@ -69,26 +69,18 @@ export const gameRouter = createTRPCRouter({
       take: 20,
     });
 
-    return games.map((game) => {
-      const players = game.players
-        ? (JSON.parse(game.players as string) as PlayerEntity[])
-        : [];
-      const hostPlayer = players.find(
-        (p: PlayerEntity) =>
-          p.type === "user" && p.username === game.hostUsername,
-      );
-
-      return {
+    return games
+      .map((game) => ({
         gameId: game.gameId,
-        name: game.roomName ?? `Partie de ${hostPlayer?.username ?? "Inconnu"}`,
-        hostUsername: hostPlayer?.username ?? "Inconnu",
-        currentPlayers: players.length,
+        name: game.roomName,
+        hostUsername: game.hostUsername,
+        currentPlayers: (game.players as unknown as PlayerEntity[]).length,
         maxPlayers: game.maxPlayers,
         bet: game.currentBet,
         maxRounds: game.maxRounds,
         createdAt: game.startedAt,
-      };
-    });
+      }))
+      .filter((game) => game.currentPlayers < game.maxPlayers);
   }),
 
   // Rejoindre une partie

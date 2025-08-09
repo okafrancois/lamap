@@ -17,13 +17,14 @@ import { type Card } from "common/deck";
 import { toast } from "sonner";
 import { type GameMode, GameStatus } from "@prisma/client";
 import type { User } from "next-auth";
+import { useRouter } from "next/navigation";
 
 export function useGameController(gameId: string | null = null) {
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
   const gameSync = useGameSync();
-
+  const router = useRouter();
   const [initializedGameId, setInitializedGameId] = useState<string | null>(
     null,
   );
@@ -114,8 +115,6 @@ export function useGameController(gameId: string | null = null) {
     if (!gameId || !gameInfo) {
       return;
     }
-
-    console.log("🎮 gameInfo:", gameInfo);
 
     if (initializedGameId === gameId) {
       const currentState = koraEngine.gameState;
@@ -243,12 +242,8 @@ export function useGameController(gameId: string | null = null) {
         // Rejoindre en BDD côté serveur
         await joinGameMutation.mutateAsync({ gameId: targetGameId });
 
-        // Attendre que les données se synchronisent et rafraîchir
-        // Le refetchInterval va automatiquement récupérer l'état mis à jour
-        setTimeout(() => {
-          // Forcer un refetch immédiat
-          void refetchGameInfo();
-        }, 100);
+        void refetchGameInfo();
+        router.refresh();
 
         toast.success("Partie rejointe avec succès !");
         return true;
@@ -258,7 +253,7 @@ export function useGameController(gameId: string | null = null) {
         return false;
       }
     },
-    [userData, joinGameMutation, gameId, refetchGameInfo],
+    [userData, joinGameMutation, gameId, refetchGameInfo, router],
   );
 
   const newGame = useCallback(() => {
@@ -401,7 +396,7 @@ export function useGameController(gameId: string | null = null) {
     ) {
       const timer = setTimeout(() => {
         void koraEngine.triggerAITurn();
-      }, 1000);
+      }, 500);
 
       return () => clearTimeout(timer);
     }
