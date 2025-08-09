@@ -20,6 +20,7 @@ import { type GameMode, GameStatus } from "@prisma/client";
 import type { User } from "next-auth";
 
 export function useGameController(gameId: string | null = null) {
+  const [refetchInterval, setRefetchInterval] = useState<number | null>(null);
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
@@ -35,9 +36,17 @@ export function useGameController(gameId: string | null = null) {
     { gameId: gameId! },
     {
       enabled: !!gameId && gameId.startsWith("game-"),
-      refetchInterval: 2000,
+      ...(refetchInterval && { refetchInterval }),
     },
   );
+
+  useEffect(() => {
+    if (gameInfo?.status === GameStatus.PLAYING && gameInfo.mode === "ONLINE") {
+      setRefetchInterval(2000);
+    } else {
+      setRefetchInterval(null);
+    }
+  }, [gameInfo?.status, gameInfo?.mode]);
 
   const joinGameMutation = api.game.joinGame.useMutation();
   const saveGameMutation = api.game.saveGame.useMutation();
@@ -46,7 +55,7 @@ export function useGameController(gameId: string | null = null) {
 
   // Configurer le callback de victoire
   useEffect(() => {
-    if (!koraEngine.gameState) return; // Attendre que l'engine soit initialisé
+    if (!koraEngine.gameState) return;
 
     koraEngine.setOnVictoryCallback(() => {
       ui.actions.showVictory();
@@ -55,14 +64,13 @@ export function useGameController(gameId: string | null = null) {
 
   // Configurer le sync automatique
   useEffect(() => {
-    if (!userData || !koraEngine.gameState) return; // Attendre que l'engine soit initialisé
+    if (!userData || !koraEngine.gameState) return;
 
     koraEngine.setOnGameUpdateCallback((gameState) => {
-      // Créer les données de jeu pour le sync
       const gameData = {
         id: gameState.gameId,
         gameState,
-        actions: [], // TODO: implémenter les actions si nécessaire
+        actions: gameState.actions,
         createdAt: Date.now(),
         needsSync: true,
       };
@@ -104,7 +112,6 @@ export function useGameController(gameId: string | null = null) {
 
     // Marquer cette partie comme initialisée
     setInitializedGameId(gameId);
-    // Note: Plus d'auto-join, le bouton de join sera géré dans la page
   }, [gameId, gameInfo, koraEngine, initializedGameId, ui]);
 
   // Note: loadGame sera appelé dans l'useEffect principal plus bas
@@ -158,12 +165,23 @@ export function useGameController(gameId: string | null = null) {
       });
 
       if (state) {
-        // Transformer le state pour la sauvegarde (sans les actions du moteur qui ne correspondent pas au schéma)
-        const gameDataForSave = {
-          ...state,
-          actions: [], // On initialise avec un tableau vide pour une nouvelle partie
-        };
-        saveGameMutation.mutate(gameDataForSave);
+        // Démarrer automatiquement les parties AI
+        if (config.mode === "AI") {
+          setTimeout(() => {
+            koraEngine.startGame();
+
+            saveGameMutation.mutate({
+              ...state,
+              actions: [],
+            });
+          }, 100);
+        } else {
+          saveGameMutation.mutate({
+            ...state,
+            actions: [],
+          });
+        }
+
         return state.gameId;
       }
 
