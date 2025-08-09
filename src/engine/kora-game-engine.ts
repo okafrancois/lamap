@@ -352,6 +352,21 @@ export class KoraGameEngine {
       return false;
     }
 
+    // Protection contre les double-jeux : vérifier que cette carte n'a pas déjà été jouée ce tour
+    const roundCards = this.state.playedCards.filter(
+      (p) => p.round === this.state.currentRound,
+    );
+    const cardAlreadyPlayed = roundCards.some(
+      (playedCard) =>
+        playedCard.card.id === cardId &&
+        playedCard.playerUsername === player.username,
+    );
+
+    if (cardAlreadyPlayed) {
+      console.warn("Card already played this round:", cardId);
+      return false;
+    }
+
     // Jouer la carte
     const newPlayedCards: PlayedCard[] = [
       ...this.state.playedCards,

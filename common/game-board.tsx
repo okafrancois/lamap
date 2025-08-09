@@ -6,6 +6,7 @@ import { GameTable } from "./game-table";
 import { PlayerArea } from "./player-area";
 import { InGameVictoryModal } from "./in-game-victory-modal";
 import type { Game } from "@/engine/kora-game-engine";
+import { GameStatus } from "@prisma/client";
 
 interface GameBoardProps {
   gameState: Game | null;
@@ -82,8 +83,9 @@ export function GameBoard({
   onJoinGame,
   gameInfo,
 }: GameBoardProps) {
+  console.log("🎮 gameState:", gameState);
   // Si pas de gameState, afficher un plateau vide avec message d'attente
-  if (!gameState) {
+  if (gameState?.status === GameStatus.WAITING || !gameState) {
     return (
       <div
         className={cn(
@@ -110,7 +112,8 @@ export function GameBoard({
             <div className="relative h-full w-full rounded-2xl border-4 border-amber-400/80 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-900 shadow-2xl">
               <div className="flex h-full items-center justify-center">
                 <div className="text-center text-white/90">
-                  {isWaitingForOpponent ? (
+                  {isWaitingForOpponent ||
+                  gameState?.status === GameStatus.WAITING ? (
                     <>
                       <div className="text-lg font-semibold">
                         En attente d&apos;un adversaire...
@@ -122,6 +125,11 @@ export function GameBoard({
                         Mise: {gameInfo?.bet} koras • {gameInfo?.maxRounds}{" "}
                         tours
                       </div>
+                      <ul className="mt-2 flex list-disc flex-col items-center justify-center gap-2 text-sm">
+                        {gameState?.players.map((player) => (
+                          <li key={player.username}>@{player.username}</li>
+                        ))}
+                      </ul>
                     </>
                   ) : canJoinGame ? (
                     <>

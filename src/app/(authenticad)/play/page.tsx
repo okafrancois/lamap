@@ -131,9 +131,7 @@ export default function PlayPage() {
       <div className="flex h-full w-full flex-col lg:flex-row lg:gap-4">
         {/* Plateau de jeu - Largeur adaptative */}
         <GameBoard
-          gameState={
-            gameState?.status === GameStatus.PLAYING ? gameState : null
-          }
+          gameState={gameState}
           currentUserId={userData.user.username}
           onCardClick={(cardIndex) => {
             const actualGameState = controller.gameState;

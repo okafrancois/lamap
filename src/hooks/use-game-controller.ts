@@ -32,7 +32,40 @@ export function useGameController(gameId: string | null = null) {
     { gameId: gameId! },
     {
       enabled: !!gameId && gameId.startsWith("game-"),
-      refetchInterval: 3000,
+      refetchInterval: () => {
+        const gameDatas = koraEngine.gameState;
+        if (!gameDatas) return false;
+
+        if (gameDatas.status === GameStatus.WAITING) {
+          return 3000;
+        }
+
+        if (gameDatas.mode === "AI") {
+          return false;
+        }
+
+        if (gameDatas.players.length < 2) {
+          return 3000;
+        }
+
+        if (
+          gameDatas?.status === GameStatus.PLAYING &&
+          gameDatas.playerTurnUsername === userData?.user?.username
+        ) {
+          return false;
+        }
+
+        if (
+          gameDatas?.status === GameStatus.PLAYING &&
+          gameDatas.playerTurnUsername !== userData?.user?.username
+        ) {
+          return 3000;
+        }
+        if (gameDatas?.status === GameStatus.ENDED) {
+          return false;
+        }
+        return false;
+      },
       refetchIntervalInBackground: false,
     },
   );
@@ -65,6 +98,7 @@ export function useGameController(gameId: string | null = null) {
     });
   }, [koraEngine.gameState, koraEngine, gameSync, userData]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const [isPlayingCard, setIsPlayingCard] = useState(false);
 
   const startGame = useCallback(() => {
     if (!userData?.user) {
@@ -79,6 +113,8 @@ export function useGameController(gameId: string | null = null) {
     if (!gameId || !gameInfo) {
       return;
     }
+
+    console.log("🎮 gameInfo:", gameInfo);
 
     if (initializedGameId === gameId) {
       const currentState = koraEngine.gameState;
@@ -254,22 +290,49 @@ export function useGameController(gameId: string | null = null) {
   }, [koraEngine, ui.actions]);
 
   const playCard = useCallback(() => {
-    if (!selectedCardId || !koraEngine.gameState) return;
+    // Protection contre les double-clics
+    if (isPlayingCard || !selectedCardId || !koraEngine.gameState) return;
 
     const userPlayer = koraEngine.gameState.players.find(
       (p) => p.username === userData?.user?.username,
     );
     if (!userPlayer) return;
 
-    const success = koraEngine.playCard(selectedCardId, userPlayer.username);
-    if (success) {
+    // Vérifier que la carte est toujours dans la main du joueur
+    const cardStillInHand = userPlayer.hand?.find(
+      (card) => card.id === selectedCardId,
+    );
+    if (!cardStillInHand) {
+      console.warn("Card not found in hand, resetting selection");
       setSelectedCardId(null);
+      return;
     }
-  }, [selectedCardId, koraEngine, userData]);
 
-  const selectCard = useCallback((cardId: string) => {
-    setSelectedCardId(cardId);
-  }, []);
+    // Marquer comme en cours de jeu
+    setIsPlayingCard(true);
+
+    try {
+      const success = koraEngine.playCard(selectedCardId, userPlayer.username);
+      if (success) {
+        setSelectedCardId(null);
+      }
+    } finally {
+      // Libérer le verrou après un délai
+      setTimeout(() => {
+        setIsPlayingCard(false);
+      }, 500);
+    }
+  }, [selectedCardId, koraEngine, userData, isPlayingCard]);
+
+  const selectCard = useCallback(
+    (cardId: string) => {
+      // Éviter de sélectionner pendant qu'une carte est en cours de jeu
+      if (isPlayingCard) return;
+
+      setSelectedCardId(cardId);
+    },
+    [isPlayingCard],
+  );
 
   const hoverCard = useCallback(
     (cardIndex: number | null) => {
@@ -355,6 +418,9 @@ export function useGameController(gameId: string | null = null) {
     currentUserId: userData?.user.username,
     gameInfo, // Exposer gameInfo pour la page
     ui,
+
+    // État de l'action en cours
+    isPlayingCard,
 
     startGame,
     newGame,
