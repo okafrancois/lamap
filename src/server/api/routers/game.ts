@@ -141,7 +141,11 @@ export const gameRouter = createTRPCRouter({
         where: { gameId: input.gameId },
         data: {
           players: updatedPlayers as unknown as Prisma.InputJsonValue,
-          status: updatedPlayers.length === 2 ? "PLAYING" : "WAITING",
+          playedBy: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
         },
       });
 
@@ -182,7 +186,8 @@ export const gameRouter = createTRPCRouter({
           maxRounds: input.maxRounds,
           ...(input.mode === "AI" && {
             aiDifficulty:
-              input.players.find((p) => p.type === "ai")?.aiDifficulty ?? null,
+              input.players.find((p: PlayerEntity) => p.type === "ai")
+                ?.aiDifficulty ?? null,
           }),
           ...(input.mode === "ONLINE" && {
             isPrivate: input.isPrivate,
@@ -198,6 +203,11 @@ export const gameRouter = createTRPCRouter({
           hostUsername: input.hostUsername,
           players: input.players,
           playedCards: input.playedCards,
+          playedBy: {
+            connect: {
+              id: ctx.session.user.id,
+            },
+          },
         },
       });
 

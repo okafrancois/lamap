@@ -138,13 +138,9 @@ export function useGameController(gameId: string | null = null) {
     if (!initializedGameId && gameInfo) {
       initializeGame(gameInfo);
 
-      // Si c'est une partie ONLINE qui est en PLAYING avec 2 joueurs, la démarrer automatiquement
       if (
-        gameInfo.mode === "ONLINE" &&
-        gameInfo.status === GameStatus.PLAYING &&
-        gameInfo.players.length === 2 &&
-        gameInfo.currentRound === 1 &&
-        !gameInfo.hasHandUsername
+        gameInfo.status === GameStatus.WAITING &&
+        gameInfo.players.length === 2
       ) {
         setTimeout(() => {
           koraEngine.startGame();
