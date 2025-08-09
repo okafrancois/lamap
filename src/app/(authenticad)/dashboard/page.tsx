@@ -2,7 +2,6 @@ import { PageContainer } from "@/components/layout/page-container";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { GameHistory } from "@/components/dashboard/game-history";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
-import { OngoingGames } from "@/components/dashboard/ongoing-games";
 import { LibTitle } from "@/components/library/title";
 import { IconChartBar, IconTrophy } from "@tabler/icons-react";
 
