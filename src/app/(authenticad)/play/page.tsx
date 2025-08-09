@@ -31,7 +31,7 @@ import {
 } from "@tabler/icons-react";
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { AIDifficulty, GameConfig } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";

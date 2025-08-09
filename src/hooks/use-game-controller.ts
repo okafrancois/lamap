@@ -32,7 +32,7 @@ export function useGameController(gameId: string | null = null) {
     { gameId: gameId! },
     {
       enabled: !!gameId && gameId.startsWith("game-"),
-      refetchInterval: 2000,
+      refetchInterval: 10000,
       refetchIntervalInBackground: false,
     },
   );
