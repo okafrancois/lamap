@@ -31,7 +31,7 @@ import {
 } from "@tabler/icons-react";
 import { GAME_MODES, AI_DIFFICULTIES } from "@/config/game-modes";
 import { useUserDataContext } from "@/components/layout/user-provider";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { AIDifficulty, GameConfig } from "@/engine/kora-game-engine";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/trpc/react";
@@ -59,25 +59,25 @@ export default function PlayPage() {
   const userData = useUserDataContext();
 
   const controller = useGameController(gameId);
-  const { gameState, ui } = controller;
+  const { gameState, ui, gameInfo } = controller;
 
   // Déterminer l'état actuel
-  const isCreator = gameState?.hostUsername === userData?.user?.username;
+  const isCreator = gameInfo?.hostUsername === userData?.user?.username;
   const canJoinGame =
     gameId &&
-    gameState?.status === GameStatus.WAITING &&
-    gameState?.players.length < gameState.maxPlayers &&
+    gameInfo?.status === GameStatus.WAITING &&
+    gameInfo?.players.length < gameInfo.maxPlayers &&
     !isCreator;
 
   const currentStatus = gameId
-    ? gameState?.status === GameStatus.ENDED
+    ? gameInfo?.status === GameStatus.ENDED
       ? "finished"
-      : gameState?.status === GameStatus.PLAYING
+      : gameInfo?.status === GameStatus.PLAYING
         ? "playing"
         : canJoinGame
           ? "can_join"
-          : gameState?.status === GameStatus.WAITING &&
-              gameState?.players.length < gameState.maxPlayers
+          : gameInfo?.status === GameStatus.WAITING &&
+              gameInfo?.players.length < gameInfo.maxPlayers
             ? "waiting_for_opponent"
             : "waiting"
     : "selecting";
@@ -131,14 +131,19 @@ export default function PlayPage() {
       <div className="flex h-full w-full flex-col lg:flex-row lg:gap-4">
         {/* Plateau de jeu - Largeur adaptative */}
         <GameBoard
-          gameState={gameState}
+          gameState={
+            gameState?.status === GameStatus.PLAYING ? gameState : null
+          }
           currentUserId={userData.user.username}
           onCardClick={(cardIndex) => {
             const actualGameState = controller.gameState;
-            const currentPlayer = actualGameState?.players.find(
+            if (!actualGameState) return;
+
+            const currentPlayer = actualGameState.players.find(
               (p) => p.username === userData.user.username,
             );
             const cardId = currentPlayer?.hand?.[cardIndex]?.id;
+
             if (cardId) {
               controller.selectCard(cardId);
             }
@@ -189,11 +194,11 @@ export default function PlayPage() {
           canJoinGame={currentStatus === "can_join"}
           onJoinGame={handleJoinGame}
           gameInfo={
-            gameState
+            gameInfo
               ? {
-                  roomName: gameState.roomName ?? undefined,
-                  bet: gameState.currentBet,
-                  maxRounds: gameState.maxRounds,
+                  roomName: gameInfo.roomName ?? undefined,
+                  bet: gameInfo.currentBet,
+                  maxRounds: gameInfo.maxRounds,
                 }
               : undefined
           }

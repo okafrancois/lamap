@@ -257,7 +257,7 @@ export function useGameController(gameId: string | null = null) {
     if (!selectedCardId || !koraEngine.gameState) return;
 
     const userPlayer = koraEngine.gameState.players.find(
-      (p) => p.type === "user",
+      (p) => p.username === userData?.user?.username,
     );
     if (!userPlayer) return;
 
@@ -265,7 +265,7 @@ export function useGameController(gameId: string | null = null) {
     if (success) {
       setSelectedCardId(null);
     }
-  }, [selectedCardId, koraEngine]);
+  }, [selectedCardId, koraEngine, userData]);
 
   const selectCard = useCallback((cardId: string) => {
     setSelectedCardId(cardId);
@@ -283,20 +283,20 @@ export function useGameController(gameId: string | null = null) {
       if (!koraEngine.gameState) return null;
 
       const userPlayer = koraEngine.gameState.players.find(
-        (p) => p.type === "user",
+        (p) => p.username === userData?.user?.username,
       );
       if (!userPlayer?.hand) return null;
 
       return userPlayer.hand[cardIndex] ?? null;
     },
-    [koraEngine.gameState],
+    [koraEngine.gameState, userData],
   );
 
   const getSelectedCardIndex = useCallback((): number | null => {
     if (!selectedCardId || !koraEngine.gameState) return null;
 
     const userPlayer = koraEngine.gameState.players.find(
-      (p) => p.type === "user",
+      (p) => p.username === userData?.user?.username,
     );
     if (!userPlayer?.hand) return null;
 
@@ -304,7 +304,7 @@ export function useGameController(gameId: string | null = null) {
       (card) => card.id === selectedCardId,
     );
     return index >= 0 ? index : null;
-  }, [selectedCardId, koraEngine.gameState]);
+  }, [selectedCardId, koraEngine.gameState, userData]);
 
   const selectGameMode = useCallback(
     (mode: GameMode | null) => {
@@ -353,6 +353,7 @@ export function useGameController(gameId: string | null = null) {
   return {
     gameState: koraEngine.gameState,
     currentUserId: userData?.user.username,
+    gameInfo, // Exposer gameInfo pour la page
     ui,
 
     startGame,
