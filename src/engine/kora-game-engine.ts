@@ -774,6 +774,21 @@ export class KoraGameEngine {
     this.notifyListeners();
   }
 
+  public updateState(updatedGameData: Game): void {
+    // Temporairement désactiver les callbacks pour éviter les boucles
+    const tempUpdateCallback = this.onGameUpdateCallback;
+    this.onGameUpdateCallback = undefined;
+
+    this.state = { ...updatedGameData };
+    this.updatePlayableCards();
+    this.notifyListeners();
+
+    // Restaurer le callback après un délai
+    setTimeout(() => {
+      this.onGameUpdateCallback = tempUpdateCallback;
+    }, 100);
+  }
+
   /**
    * Obtenir un joueur par son username
    */

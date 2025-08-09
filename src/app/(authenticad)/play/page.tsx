@@ -59,14 +59,14 @@ export default function PlayPage() {
   const userData = useUserDataContext();
 
   const controller = useGameController(gameId);
-  const { gameState, ui, gameInfo } = controller;
+  const { gameState, ui } = controller;
 
   // Déterminer l'état actuel
-  const isCreator = gameInfo?.hostUsername === userData?.user?.username;
+  const isCreator = gameState?.hostUsername === userData?.user?.username;
   const canJoinGame =
     gameId &&
-    gameInfo?.status === GameStatus.WAITING &&
-    gameInfo?.players.length < gameInfo.maxPlayers &&
+    gameState?.status === GameStatus.WAITING &&
+    gameState?.players.length < gameState.maxPlayers &&
     !isCreator;
 
   const currentStatus = gameId
@@ -76,8 +76,8 @@ export default function PlayPage() {
         ? "playing"
         : canJoinGame
           ? "can_join"
-          : gameInfo?.status === GameStatus.WAITING &&
-              gameInfo?.players.length < gameInfo.maxPlayers
+          : gameState?.status === GameStatus.WAITING &&
+              gameState?.players.length < gameState.maxPlayers
             ? "waiting_for_opponent"
             : "waiting"
     : "selecting";
@@ -134,7 +134,8 @@ export default function PlayPage() {
           gameState={gameState}
           currentUserId={userData.user.username}
           onCardClick={(cardIndex) => {
-            const currentPlayer = gameState?.players.find(
+            const actualGameState = controller.gameState;
+            const currentPlayer = actualGameState?.players.find(
               (p) => p.username === userData.user.username,
             );
             const cardId = currentPlayer?.hand?.[cardIndex]?.id;
@@ -188,11 +189,11 @@ export default function PlayPage() {
           canJoinGame={currentStatus === "can_join"}
           onJoinGame={handleJoinGame}
           gameInfo={
-            gameInfo
+            gameState
               ? {
-                  roomName: gameInfo.roomName ?? undefined,
-                  bet: gameInfo.currentBet,
-                  maxRounds: gameInfo.maxRounds,
+                  roomName: gameState.roomName ?? undefined,
+                  bet: gameState.currentBet,
+                  maxRounds: gameState.maxRounds,
                 }
               : undefined
           }

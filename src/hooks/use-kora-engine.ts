@@ -274,6 +274,17 @@ export function useKoraEngine() {
       setGame(null);
     },
 
+    // Mettre à jour l'état de la partie
+    updateState: (updatedGameData: Game) => {
+      try {
+        const engine = getKoraGameEngine();
+        engine.updateState(updatedGameData);
+        setGame(updatedGameData);
+      } catch (error) {
+        console.error("Cannot update state: engine not initialized", error);
+      }
+    },
+
     joinOnlineGame: (player: PlayerEntity) => {
       try {
         const engine = getKoraGameEngine();

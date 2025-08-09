@@ -6,7 +6,6 @@ import { useGameUI } from "@/hooks/use-game-ui";
 import { useGameSounds } from "@/hooks/use-game-sounds";
 import { useUserDataContext } from "@/components/layout/user-provider";
 import { useGameSync } from "@/hooks/use-game-sync";
-// Plus besoin de useMatchmaking, on utilise les routes game directement
 import { api } from "@/trpc/react";
 import {
   type PlayerEntity,
@@ -20,40 +19,28 @@ import { type GameMode, GameStatus } from "@prisma/client";
 import type { User } from "next-auth";
 
 export function useGameController(gameId: string | null = null) {
-  const [refetchInterval, setRefetchInterval] = useState<number | null>(null);
   const koraEngine = useKoraEngine();
   const ui = useGameUI();
   const userData = useUserDataContext();
   const gameSync = useGameSync();
 
-  // État pour tracker si on a déjà initialisé cette partie
   const [initializedGameId, setInitializedGameId] = useState<string | null>(
     null,
   );
 
-  // Query pour récupérer les infos de partie directement dans le hook
   const { data: gameInfo } = api.game.getGame.useQuery(
     { gameId: gameId! },
     {
       enabled: !!gameId && gameId.startsWith("game-"),
-      ...(refetchInterval && { refetchInterval }),
+      refetchInterval: 2000,
+      refetchIntervalInBackground: false,
     },
   );
 
-  useEffect(() => {
-    if (gameInfo?.status === GameStatus.PLAYING && gameInfo.mode === "ONLINE") {
-      setRefetchInterval(2000);
-    } else {
-      setRefetchInterval(null);
-    }
-  }, [gameInfo?.status, gameInfo?.mode]);
-
   const joinGameMutation = api.game.joinGame.useMutation();
   const saveGameMutation = api.game.saveGame.useMutation();
-  // Gérer les sons du jeu
   useGameSounds(koraEngine.gameState);
 
-  // Configurer le callback de victoire
   useEffect(() => {
     if (!koraEngine.gameState) return;
 
@@ -62,7 +49,6 @@ export function useGameController(gameId: string | null = null) {
     });
   }, [koraEngine.gameState, koraEngine, ui.actions]);
 
-  // Configurer le sync automatique
   useEffect(() => {
     if (!userData || !koraEngine.gameState) return;
 
@@ -75,13 +61,11 @@ export function useGameController(gameId: string | null = null) {
         needsSync: true,
       };
 
-      // Sync immédiat
       void gameSync.syncGame(gameData);
     });
   }, [koraEngine.gameState, koraEngine, gameSync, userData]);
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
-  // Démarrer une nouvelle partie
   const startGame = useCallback(() => {
     if (!userData?.user) {
       toast.error("Vous devez être connecté pour jouer");
@@ -96,8 +80,16 @@ export function useGameController(gameId: string | null = null) {
       return;
     }
 
-    // Éviter la réinitialisation si on a déjà initialisé cette partie
     if (initializedGameId === gameId) {
+      const currentState = koraEngine.gameState;
+      if (
+        currentState &&
+        (currentState.version !== gameInfo.version ||
+          currentState.lastSyncedAt?.getTime() !==
+            gameInfo.lastSyncedAt?.getTime())
+      ) {
+        koraEngine.updateState(gameInfo);
+      }
       return;
     }
 
@@ -114,9 +106,6 @@ export function useGameController(gameId: string | null = null) {
     setInitializedGameId(gameId);
   }, [gameId, gameInfo, koraEngine, initializedGameId, ui]);
 
-  // Note: loadGame sera appelé dans l'useEffect principal plus bas
-
-  // Créer une nouvelle partie avec configuration complète
   const createGame = useCallback(
     (
       config: Pick<
@@ -182,10 +171,9 @@ export function useGameController(gameId: string | null = null) {
       }
 
       if (state) {
-        // Transformer le state pour la sauvegarde (sans les actions du moteur qui ne correspondent pas au schéma)
         const gameDataForSave = {
           ...state,
-          actions: [], // On initialise avec un tableau vide pour une nouvelle partie
+          actions: [],
         };
         saveGameMutation.mutate(gameDataForSave);
         return state.gameId;
@@ -196,7 +184,6 @@ export function useGameController(gameId: string | null = null) {
     [userData, koraEngine, saveGameMutation],
   );
 
-  // Rejoindre une partie multijoueur
   const joinGame = useCallback(
     async (gameIdToJoin?: string) => {
       const targetGameId = gameIdToJoin ?? gameId;
@@ -207,10 +194,8 @@ export function useGameController(gameId: string | null = null) {
       }
 
       try {
-        // Rejoindre en BDD
         await joinGameMutation.mutateAsync({ gameId: targetGameId });
 
-        // Ajouter le joueur dans l'engine local
         const userPlayer: PlayerEntity = {
           username: userData.user.username,
           type: "user",
@@ -222,7 +207,6 @@ export function useGameController(gameId: string | null = null) {
         const success = koraEngine.joinOnlineGame(userPlayer);
 
         if (success && koraEngine.gameState?.players.length === 2) {
-          // Démarrer la partie automatiquement quand les 2 joueurs sont présents
           koraEngine.startOnlineGame();
         }
 
@@ -237,9 +221,6 @@ export function useGameController(gameId: string | null = null) {
     [userData, joinGameMutation, gameId, koraEngine],
   );
 
-  // L'ancien joinGame est remplacé par le nouveau au-dessus
-
-  // Nouvelle partie rapide (réutilise le mode actuel)
   const newGame = useCallback(() => {
     if (koraEngine.gameState) {
       const players = [koraEngine.gameState.players[0]!];
@@ -272,7 +253,6 @@ export function useGameController(gameId: string | null = null) {
     }
   }, [koraEngine, ui.actions]);
 
-  // Jouer une carte
   const playCard = useCallback(() => {
     if (!selectedCardId || !koraEngine.gameState) return;
 
@@ -287,12 +267,10 @@ export function useGameController(gameId: string | null = null) {
     }
   }, [selectedCardId, koraEngine]);
 
-  // Sélectionner une carte
   const selectCard = useCallback((cardId: string) => {
     setSelectedCardId(cardId);
   }, []);
 
-  // Hover une carte
   const hoverCard = useCallback(
     (cardIndex: number | null) => {
       ui.actions.setHoveredCard(cardIndex);
@@ -300,7 +278,6 @@ export function useGameController(gameId: string | null = null) {
     [ui.actions],
   );
 
-  // Obtenir une carte par index
   const getCardByIndex = useCallback(
     (cardIndex: number): Card | null => {
       if (!koraEngine.gameState) return null;
@@ -315,7 +292,6 @@ export function useGameController(gameId: string | null = null) {
     [koraEngine.gameState],
   );
 
-  // Obtenir l'index de la carte sélectionnée
   const getSelectedCardIndex = useCallback((): number | null => {
     if (!selectedCardId || !koraEngine.gameState) return null;
 
@@ -330,7 +306,6 @@ export function useGameController(gameId: string | null = null) {
     return index >= 0 ? index : null;
   }, [selectedCardId, koraEngine.gameState]);
 
-  // Gestion des modes de jeu
   const selectGameMode = useCallback(
     (mode: GameMode | null) => {
       ui.actions.setSelectedGameMode(mode);
@@ -346,7 +321,6 @@ export function useGameController(gameId: string | null = null) {
     [ui.actions, koraEngine],
   );
 
-  // Effet pour déclencher automatiquement l'IA
   useEffect(() => {
     const state = koraEngine.gameState;
     if (!state) return;
@@ -358,7 +332,6 @@ export function useGameController(gameId: string | null = null) {
       state.playerTurnUsername === aiPlayer?.username &&
       !aiPlayer.isThinking
     ) {
-      // Petit délai pour l'UX
       const timer = setTimeout(() => {
         void koraEngine.triggerAITurn();
       }, 1000);
@@ -377,37 +350,26 @@ export function useGameController(gameId: string | null = null) {
     }
   }, [gameId, gameInfo, loadGame, koraEngine, ui.actions]);
 
-  // Logique de victoire gérée directement dans le game engine
-
   return {
-    // État du jeu direct
     gameState: koraEngine.gameState,
     currentUserId: userData?.user.username,
-    gameInfo, // Exposer gameInfo pour la page
-
-    // Interface utilisateur
     ui,
 
-    // Actions principales
     startGame,
     newGame,
     playCard,
     selectCard,
     hoverCard,
 
-    // Nouvelle gestion des parties
     createGame,
     joinGame,
 
-    // Utilitaires
     getCardByIndex,
     getSelectedCardIndex,
 
-    // Gestion des modes
     selectGameMode,
     setAIDifficulty,
 
-    // Accès direct au moteur
     engine: koraEngine,
   };
 }
