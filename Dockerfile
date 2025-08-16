@@ -29,8 +29,10 @@ COPY --from=builder /app/prisma ./prisma
 # Drop dev dependencies to slim the image
 RUN npm prune --omit=dev
 
-ENV PORT=3000
-EXPOSE 3000
+ENV PORT=8080
+EXPOSE 8080
+
+COPY start.sh ./start.sh
 
 CMD ["npm", "start"]
 
