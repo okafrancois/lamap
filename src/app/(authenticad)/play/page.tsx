@@ -165,20 +165,43 @@ export default function PlayPage() {
                       (p) => p.username !== userData.user.username,
                     )?.koras ?? 0,
                   betAmount: gameState?.currentBet ?? 0,
-                  korasWon: controller.engine.getKorasWonThisGame?.() ?? 0,
-                  victoryType: controller.engine.getVictoryType?.(
-                    userData.user.username,
-                  ) ?? {
-                    type: "normal",
-                    title: "Partie terminée",
-                    description: "Résultat non disponible",
+                  korasWon:
+                    Math.abs(
+                      (gameState?.players.find(
+                        (p) => p.username === userData.user.username,
+                      )?.koras ?? 0) -
+                        (gameState?.players.find(
+                          (p) => p.username !== userData.user.username,
+                        )?.koras ?? 0),
+                    ) / 2,
+                  victoryType: {
+                    type: gameState?.victoryType?.toLowerCase() ?? "normal",
+                    title:
+                      gameState?.victoryType === "NORMAL"
+                        ? "Partie terminée"
+                        : gameState?.victoryType === "AUTO_SUM"
+                          ? "Victoire automatique"
+                          : gameState?.victoryType === "AUTO_LOWEST"
+                            ? "Victoire automatique"
+                            : gameState?.victoryType === "AUTO_SEVENS"
+                              ? "Victoire aux 7"
+                              : gameState?.victoryType === "SIMPLE_KORA"
+                                ? "Kora simple"
+                                : gameState?.victoryType === "DOUBLE_KORA"
+                                  ? "Double kora"
+                                  : gameState?.victoryType === "TRIPLE_KORA"
+                                    ? "Triple kora"
+                                    : "Partie terminée",
+                    description:
+                      gameState?.endReason ?? "Résultat non disponible",
                     multiplier: "x1",
-                    special: false,
+                    special: gameState?.victoryType !== "NORMAL",
                   },
                   victoryMessage:
-                    controller.engine.getVictoryMessage?.(
-                      gameState?.winnerUsername === userData.user.username,
-                    ) ?? "",
+                    gameState?.endReason ??
+                    (gameState?.winnerUsername === userData.user.username
+                      ? "Vous avez gagné !"
+                      : "Vous avez perdu !"),
                 }
               : undefined
           }

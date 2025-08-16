@@ -84,6 +84,27 @@ export function useGameController(gameId: string | null = null) {
     });
   }, [koraEngine.gameState, koraEngine, ui.actions]);
 
+  // Détecter la fin de partie lors de la synchronisation
+  useEffect(() => {
+    if (!koraEngine.gameState) return;
+
+    // Si la partie est terminée et que la modal n'est pas encore affichée
+    if (
+      koraEngine.gameState.status === GameStatus.ENDED &&
+      !ui.showVictoryModal
+    ) {
+      // Attendre un peu pour s'assurer que toutes les données sont synchronisées
+      setTimeout(() => {
+        ui.actions.showVictory();
+      }, 500);
+    }
+  }, [
+    koraEngine.gameState?.status,
+    ui.showVictoryModal,
+    ui.actions,
+    koraEngine.gameState,
+  ]);
+
   useEffect(() => {
     if (!userData || !koraEngine.gameState) return;
 

@@ -583,7 +583,7 @@ export class KoraGameEngine {
     } else {
       this.state.players.find((p) => p.username === winnerId)!.koras +=
         betAmount;
-      this.state.players.find((p) => p.username === winnerId)!.koras -=
+      this.state.players.find((p) => p.username !== winnerId)!.koras -=
         betAmount;
     }
 
