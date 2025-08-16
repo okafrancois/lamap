@@ -32,8 +32,6 @@ RUN npm prune --omit=dev
 ENV PORT=8080
 EXPOSE 8080
 
-COPY start.sh ./start.sh
-
 CMD ["npm", "start"]
 
 
