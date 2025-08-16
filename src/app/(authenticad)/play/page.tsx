@@ -208,7 +208,12 @@ export default function PlayPage() {
           onCloseVictory={() => ui.actions.hideVictory()}
           onNewGame={() => {
             ui.actions.hideVictory();
-            controller.newGame();
+            // Dans une partie multijoueur, retourner à la sélection
+            if (gameState?.mode === "ONLINE") {
+              backToSelection();
+            } else {
+              controller.newGame();
+            }
           }}
           onBackToSelection={backToSelection}
           isWaitingForOpponent={currentStatus === "waiting_for_opponent"}

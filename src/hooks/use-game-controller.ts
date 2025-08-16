@@ -279,6 +279,14 @@ export function useGameController(gameId: string | null = null) {
 
   const newGame = useCallback(() => {
     if (koraEngine.gameState) {
+      // Pour les parties multijoueur, ne pas essayer de créer une nouvelle partie
+      if (koraEngine.gameState.mode === "ONLINE") {
+        console.log(
+          "Cannot create new game for multiplayer - returning to selection",
+        );
+        return;
+      }
+
       const players = [koraEngine.gameState.players[0]!];
 
       if (koraEngine.gameState.mode === "AI") {

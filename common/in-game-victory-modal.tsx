@@ -156,7 +156,7 @@ export function InGameVictoryModal({
               }}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
             >
-              Rejouer
+              Nouvelle partie
             </LibButton>
           </div>
         </div>
