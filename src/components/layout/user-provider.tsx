@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from "react";
 import type { Session } from "next-auth";
+import { useSession } from "next-auth/react";
 
 export const UserDataContext = createContext<{
   user: Session["user"];
@@ -15,14 +16,13 @@ export function useUserDataContext(): {
 
 interface UserProviderProps {
   children: React.ReactNode;
-  initialData: {
-    user: Session["user"];
-  } | null;
 }
 
-export function UserProvider({ children, initialData }: UserProviderProps) {
+export function UserProvider({ children }: UserProviderProps) {
+  const session = useSession();
+
   return (
-    <UserDataContext.Provider value={initialData}>
+    <UserDataContext.Provider value={session.data}>
       {children}
     </UserDataContext.Provider>
   );

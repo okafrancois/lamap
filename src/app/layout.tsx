@@ -8,6 +8,7 @@ import { NextAuthSessionProvider } from "@/components/providers/session-provider
 import { Toaster } from "sonner";
 import { auth } from "@/server/auth";
 import { UserProvider } from "@/components/layout/user-provider";
+import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
   title: "LaMap241",
@@ -25,21 +26,15 @@ export default async function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   const session = await auth();
 
-  const initialData = session?.user
-    ? {
-        user: session.user,
-      }
-    : null;
-
   return (
     <html lang="fr" className={`${geist.variable}`}>
       <body>
-        <NextAuthSessionProvider>
+        <SessionProvider session={session}>
           <TRPCReactProvider>
-            <UserProvider initialData={initialData}>{children}</UserProvider>
+            <UserProvider>{children}</UserProvider>
             <Toaster position="bottom-right" richColors />
           </TRPCReactProvider>
-        </NextAuthSessionProvider>
+        </SessionProvider>
       </body>
     </html>
   );

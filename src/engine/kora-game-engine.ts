@@ -539,6 +539,13 @@ export class KoraGameEngine {
   }
 
   private applyKoraMultiplier(winnerId: string, multiplier: number): void {
+    if (!this.state) {
+      console.warn(
+        "Cannot apply kora multiplier: engine state not initialized",
+      );
+      return;
+    }
+
     const betAmount = this.state.currentBet;
     const korasWon = betAmount * multiplier;
 
@@ -556,6 +563,11 @@ export class KoraGameEngine {
   }
 
   private endGame(winnerId: string): void {
+    if (!this.state) {
+      console.warn("Cannot end game: engine state not initialized");
+      return;
+    }
+
     this.state.status = GameStatus.ENDED;
     this.state.winnerUsername = winnerId;
 
@@ -587,6 +599,13 @@ export class KoraGameEngine {
   // ========== GESTION DES CARTES JOUABLES ==========
 
   private updatePlayableCards(): void {
+    if (!this.state) {
+      console.warn(
+        "Cannot update playable cards: engine state not initialized",
+      );
+      return;
+    }
+
     this.updatePlayerTurn();
     this.state.players.forEach((player) => {
       player.hand = player.hand?.map((card) => ({
@@ -645,11 +664,18 @@ export class KoraGameEngine {
   // ========== UTILITAIRES ==========
 
   private isPlayerTurn(player: PlayerEntity): boolean {
+    if (!this.state) {
+      return false;
+    }
     // Utiliser directement playerTurnUsername qui est mis à jour par updatePlayerTurn()
     return this.state.playerTurnUsername === player.username;
   }
 
   private updatePlayerTurn(): void {
+    if (!this.state) {
+      return;
+    }
+
     const currentRoundCards = this.state.playedCards.filter(
       (p) => p.round === this.state.currentRound,
     );
@@ -686,6 +712,11 @@ export class KoraGameEngine {
   }
 
   private log(message: string): void {
+    if (!this.state) {
+      console.warn("Cannot log message: engine state not initialized");
+      return;
+    }
+
     const timestamp = Date.now();
     const logEntry = { message, timestamp };
     this.state.gameLog.push(logEntry);
@@ -835,6 +866,10 @@ export class KoraGameEngine {
   }
 
   public getGameSummary(): string {
+    if (!this.state) {
+      return "🎮 État du Jeu Kora Battle\n═══════════════════════════\nStatus: Non initialisé\n═══════════════════════════";
+    }
+
     const state = this.state;
     return `
 🎮 État du Jeu Kora Battle
@@ -853,6 +888,13 @@ Koras Adversaire: ${state.players[1]!.koras}
   // ========== CAS SPÉCIAUX ET VICTOIRES AUTOMATIQUES ==========
 
   private handleAutomaticVictory(winnerId: string, reason: string): void {
+    if (!this.state) {
+      console.warn(
+        "Cannot handle automatic victory: engine state not initialized",
+      );
+      return;
+    }
+
     // Victoire automatique donne la mise de base
     const betAmount = this.state.currentBet;
 
@@ -887,6 +929,16 @@ Koras Adversaire: ${state.players[1]!.koras}
     multiplier: string;
     special: boolean;
   } {
+    if (!this.state) {
+      return {
+        type: "normal" as const,
+        title: "Partie non initialisée",
+        description: "État du jeu non disponible",
+        multiplier: "x1",
+        special: false,
+      };
+    }
+
     const recentLogs = (this.state.gameLog ?? []).slice(-10);
     const isPlayerWinner = this.state.winnerUsername === playerUsername;
 
@@ -1018,11 +1070,21 @@ Koras Adversaire: ${state.players[1]!.koras}
   }
 
   public setAIDifficulty(difficulty: AIDifficulty): void {
+    if (!this.state) {
+      console.warn("Cannot set AI difficulty: engine state not initialized");
+      return;
+    }
+
     this.state.players.find((p) => p.type === "ai")!.aiDifficulty = difficulty;
     this.notifyListeners();
   }
 
   public async triggerAITurn(aiPlayer: PlayerEntity): Promise<void> {
+    if (!this.state) {
+      console.warn("Cannot trigger AI turn: engine state not initialized");
+      return;
+    }
+
     if (this.state.status !== GameStatus.PLAYING) {
       return;
     }
@@ -1054,14 +1116,22 @@ Koras Adversaire: ${state.players[1]!.koras}
     this.state.players.find((p) => p.type === "ai")!.isThinking = true;
     this.notifyListeners();
 
-    // Délai de réflexion basé sur la difficulté
-    const thinkingTime =
-      this.state.players.find((p) => p.type === "ai")!.aiDifficulty === "easy"
-        ? 500
-        : this.state.players.find((p) => p.type === "ai")!.aiDifficulty ===
-            "medium"
-          ? 1000
-          : 1500;
+    // Délai de réflexion basé sur la difficulté et le nombre de cartes restantes
+    let thinkingTime = 0;
+
+    // Si l'IA n'a qu'une seule carte, jouer rapidement
+    if (aiPlayer.hand && aiPlayer.hand.length === 1) {
+      thinkingTime = 200; // Délai minimal pour la dernière carte
+    } else {
+      // Délai normal basé sur la difficulté
+      thinkingTime =
+        this.state.players.find((p) => p.type === "ai")!.aiDifficulty === "easy"
+          ? 500
+          : this.state.players.find((p) => p.type === "ai")!.aiDifficulty ===
+              "medium"
+            ? 1000
+            : 1500;
+    }
 
     await new Promise((resolve) => setTimeout(resolve, thinkingTime));
 
