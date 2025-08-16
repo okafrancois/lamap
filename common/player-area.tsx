@@ -74,6 +74,8 @@ export function PlayerArea({
         isWinner={gameState.winnerUsername === player.username}
         isThinking={player.isThinking}
         isOpponent={isOpponent}
+        playerKoras={player.koras}
+        isConnected={player.isConnected}
       />
 
       <PlayerDeck

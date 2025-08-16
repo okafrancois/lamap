@@ -5,6 +5,7 @@ import { BackgroundDecorations } from "./background-decorations";
 import { GameTable } from "./game-table";
 import { PlayerArea } from "./player-area";
 import { InGameVictoryModal } from "./in-game-victory-modal";
+import { CardBack } from "./deck";
 import type { Game } from "@/engine/kora-game-engine";
 import { GameStatus } from "@prisma/client";
 
@@ -83,8 +84,15 @@ export function GameBoard({
   onJoinGame,
   gameInfo,
 }: GameBoardProps) {
-  // Si pas de gameState, afficher un plateau vide avec message d'attente
+  // Générer un tableau de 5 indices pour les cartes retournées
+  const generateCardIndices = (count = 5) => {
+    return Array.from({ length: count }, (_, i) => i);
+  };
+
+  // Si pas de gameState ou partie en attente, afficher un plateau enrichi
   if (gameState?.status === GameStatus.WAITING || !gameState) {
+    const cardIndices = generateCardIndices(5);
+
     return (
       <div
         className={cn(
@@ -96,11 +104,31 @@ export function GameBoard({
         {/* Décorations d'arrière-plan */}
         <BackgroundDecorations />
 
-        {/* Zone adversaire vide */}
+        {/* Zone adversaire avec cartes retournées */}
         <div className="relative z-10 flex-shrink-0 px-2 py-1 sm:p-2">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-4">
+            {/* Avatar et infos adversaire */}
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-full bg-slate-600 text-white">
+                <span className="text-xs">?</span>
+              </div>
               <div className="text-sm text-white/70">Adversaire</div>
+            </div>
+
+            {/* Cartes retournées de l'adversaire */}
+            <div className="flex gap-1">
+              {cardIndices.map((index) => (
+                <div
+                  key={index}
+                  className="relative"
+                  style={{
+                    transform: `rotate(${Math.random() * 10 - 5}deg)`,
+                    zIndex: index,
+                  }}
+                >
+                  <CardBack width={24} height={32} />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -164,9 +192,37 @@ export function GameBoard({
           </div>
         </div>
 
-        {/* Zone joueur vide */}
-        <div className="relative min-h-max py-8 text-center">
-          <div className="text-sm text-white/70">Vos cartes</div>
+        {/* Zone joueur avec cartes retournées et infos */}
+        <div className="relative min-h-max py-8">
+          <div className="flex items-center justify-center gap-4">
+            {/* Cartes retournées du joueur */}
+            <div className="flex gap-1">
+              {cardIndices.map((index) => (
+                <div
+                  key={index}
+                  className="relative"
+                  style={{
+                    transform: `rotate(${Math.random() * 10 - 5}deg)`,
+                    zIndex: index,
+                  }}
+                >
+                  <CardBack width={24} height={32} />
+                </div>
+              ))}
+            </div>
+
+            {/* Avatar et infos du joueur connecté */}
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <span className="text-xs font-bold">
+                  {currentUserId?.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="text-sm font-medium text-white/90">
+                {currentUserId}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );

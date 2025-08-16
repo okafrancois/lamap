@@ -1328,7 +1328,12 @@ export function PlayerDeck({
                   void playSound("card_hover", { volume: 0.1 });
                   onCardHover?.(hovered ? index : null);
                 }}
-                className="h-full w-full shadow-md"
+                className={cn(
+                  "h-full w-full shadow-md",
+                  // Ajouter une rotation aléatoire pour les cartes cachées
+                  hidden && isOpponent && "rotate-1",
+                  hidden && !isOpponent && "-rotate-1",
+                )}
               />
             </div>
           );
