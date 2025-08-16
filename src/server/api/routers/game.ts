@@ -8,6 +8,7 @@ import {
   CreateMultiplayerGameSchema,
   type GameSchemaType,
 } from "./schemas";
+import crypto from "crypto";
 
 // ========== ROUTER ==========
 
@@ -46,7 +47,7 @@ export const gameRouter = createTRPCRouter({
             },
           },
           hostUsername: ctx.session.user.username,
-          seed: Math.random().toString(36),
+          seed: crypto.randomUUID(),
           players: [creatorPlayer], // Commencer avec le créateur
         },
       });
@@ -344,10 +345,11 @@ export const gameRouter = createTRPCRouter({
         ...game,
         players,
         playedCards,
-        gameLog: game.gameLog as unknown as Array<{
-          message: string;
-          timestamp: number;
-        }>,
+        gameLog:
+          (game.gameLog as unknown as Array<{
+            message: string;
+            timestamp: number;
+          }>) || [],
         actions: game.actions.map((action) => ({
           type: action.actionType as
             | "PLAY_CARD"

@@ -82,6 +82,7 @@ export class KoraGameEngine {
   constructor(gameData: Game) {
     this.state = {
       ...gameData,
+      gameLog: gameData.gameLog || [],
     };
   }
 
@@ -715,6 +716,10 @@ export class KoraGameEngine {
     if (!this.state) {
       console.warn("Cannot log message: engine state not initialized");
       return;
+    }
+
+    if (!this.state.gameLog) {
+      this.state.gameLog = [];
     }
 
     const timestamp = Date.now();
