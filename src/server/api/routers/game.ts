@@ -144,11 +144,12 @@ export const gameRouter = createTRPCRouter({
 
       return { success: true };
     }),
-  // Sauvegarder une partie
-  saveGame: protectedProcedure
+  // Créer une nouvelle partie
+  createGame: protectedProcedure
     .input(z.any())
     .mutation(async ({ ctx, input }) => {
       const gameData = input as GameSchemaType;
+
       // Vérifier que l'utilisateur est bien dans cette partie
       const isPlayerInGame = gameData.players.some(
         (p) => p.username === ctx.session.user.username,
@@ -158,20 +159,18 @@ export const gameRouter = createTRPCRouter({
         throw new Error("Utilisateur non autorisé pour cette partie");
       }
 
-      // Extraire les actions pour les gérer séparément
-      const { actions, ...gameDataWithoutActions } = gameData;
-
-      // Upsert la partie en base
-      const game = await ctx.db.game.upsert({
+      // Vérifier si la partie existe déjà
+      const existingGame = await ctx.db.game.findUnique({
         where: { gameId: input.gameId },
-        update: {
-          ...gameDataWithoutActions,
-          endedAt: gameData.status === GameStatus.ENDED ? new Date() : null,
-          lastSyncedAt: new Date(),
-          players: gameData.players,
-          playedCards: input.playedCards as unknown as Prisma.InputJsonValue,
-        },
-        create: {
+      });
+
+      if (existingGame) {
+        throw new Error("Une partie avec cet ID existe déjà");
+      }
+
+      // Créer une nouvelle partie
+      const game = await ctx.db.game.create({
+        data: {
           gameId: input.gameId,
           mode: input.mode,
           status: input.status,
@@ -201,6 +200,51 @@ export const gameRouter = createTRPCRouter({
               id: ctx.session.user.id,
             },
           },
+        },
+      });
+
+      return {
+        success: true,
+        gameId: game.gameId,
+        created: true,
+      };
+    }),
+
+  // Sauvegarder une partie
+  saveGame: protectedProcedure
+    .input(z.any())
+    .mutation(async ({ ctx, input }) => {
+      const gameData = input as GameSchemaType;
+      // Vérifier que l'utilisateur est bien dans cette partie
+      const isPlayerInGame = gameData.players.some(
+        (p) => p.username === ctx.session.user.username,
+      );
+
+      if (!isPlayerInGame) {
+        throw new Error("Utilisateur non autorisé pour cette partie");
+      }
+
+      // Extraire les actions pour les gérer séparément
+      const { actions, ...gameDataWithoutActions } = gameData;
+
+      // Vérifier que la partie existe
+      const existingGame = await ctx.db.game.findUnique({
+        where: { gameId: input.gameId },
+      });
+
+      if (!existingGame) {
+        throw new Error("Partie non trouvée");
+      }
+
+      // Mettre à jour la partie existante
+      const game = await ctx.db.game.update({
+        where: { gameId: input.gameId },
+        data: {
+          ...gameDataWithoutActions,
+          endedAt: gameData.status === GameStatus.ENDED ? new Date() : null,
+          lastSyncedAt: new Date(),
+          players: gameData.players,
+          playedCards: input.playedCards as unknown as Prisma.InputJsonValue,
         },
       });
 

@@ -74,6 +74,7 @@ export function useGameController(gameId: string | null = null) {
 
   const joinGameMutation = api.game.joinGame.useMutation();
   const saveGameMutation = api.game.saveGame.useMutation();
+  const createGameMutation = api.game.createGame.useMutation();
   useGameSounds(koraEngine.gameState);
 
   useEffect(() => {
@@ -237,11 +238,11 @@ export function useGameController(gameId: string | null = null) {
       }
 
       if (state) {
-        const gameDataForSave = {
+        const gameDataForCreate = {
           ...state,
           actions: [],
         };
-        saveGameMutation.mutate(gameDataForSave);
+        createGameMutation.mutate(gameDataForCreate);
         return state.gameId;
       }
 
