@@ -178,11 +178,11 @@ export const playCard = mutation({
 
       if (plays.length === 2) {
         const play1: Play = {
-          playerId: plays[0].playerId as any,
+          playerId: plays[0].playerId,
           card: plays[0].card as Card,
         };
         const play2: Play = {
-          playerId: plays[1].playerId as any,
+          playerId: plays[1].playerId,
           card: plays[1].card as Card,
         };
 

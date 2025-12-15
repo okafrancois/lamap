@@ -10,6 +10,7 @@
 
 import type * as game from "../game.js";
 import type * as matches from "../matches.js";
+import type * as matchmaking from "../matchmaking.js";
 import type * as users from "../users.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   game: typeof game;
   matches: typeof matches;
+  matchmaking: typeof matchmaking;
   users: typeof users;
 }>;
 
