@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { calculateWinnings } from "./economy";
 import {
   calculateKoraMultiplier,
   checkAutoWin,
@@ -38,6 +39,36 @@ export const startMatch = mutation({
     const autoWin2 = checkAutoWin(hand2);
 
     if (autoWin1) {
+      const totalBet = match.betAmount * 2;
+      const { winnings } = calculateWinnings(totalBet, 1);
+
+      const winner = await ctx.db.get(match.player1Id);
+      const loserId = match.player2Id || match.player1Id;
+      const loser = await ctx.db.get(loserId);
+
+      if (winner) {
+        await ctx.db.patch(match.player1Id, {
+          koraBalance: winner.koraBalance + winnings,
+          totalWins: winner.totalWins + 1,
+          totalKoraWon: winner.totalKoraWon + winnings,
+        });
+
+        await ctx.db.insert("transactions", {
+          userId: match.player1Id,
+          type: "win",
+          amount: winnings,
+          matchId: args.matchId,
+          description: `Gain de ${winnings} Kora (${autoWin1})`,
+          createdAt: Date.now(),
+        });
+      }
+
+      if (loser && !match.isVsAI) {
+        await ctx.db.patch(loserId, {
+          totalLosses: loser.totalLosses + 1,
+        });
+      }
+
       await ctx.db.patch(args.matchId, {
         status: "finished",
         winnerId: match.player1Id,
@@ -50,6 +81,37 @@ export const startMatch = mutation({
 
     if (autoWin2) {
       const winnerId = match.isVsAI ? match.player1Id : match.player2Id!;
+      const totalBet = match.betAmount * 2;
+      const { winnings } = calculateWinnings(totalBet, 1);
+
+      const winner = await ctx.db.get(winnerId);
+      const loserId =
+        match.player1Id === winnerId ? match.player2Id! : match.player1Id;
+      const loser = await ctx.db.get(loserId);
+
+      if (winner) {
+        await ctx.db.patch(winnerId, {
+          koraBalance: winner.koraBalance + winnings,
+          totalWins: winner.totalWins + 1,
+          totalKoraWon: winner.totalKoraWon + winnings,
+        });
+
+        await ctx.db.insert("transactions", {
+          userId: winnerId,
+          type: "win",
+          amount: winnings,
+          matchId: args.matchId,
+          description: `Gain de ${winnings} Kora (${autoWin2})`,
+          createdAt: Date.now(),
+        });
+      }
+
+      if (loser && !match.isVsAI) {
+        await ctx.db.patch(loserId, {
+          totalLosses: loser.totalLosses + 1,
+        });
+      }
+
       await ctx.db.patch(args.matchId, {
         status: "finished",
         winnerId,

@@ -36,6 +36,17 @@ export const joinQueue = mutation({
       .first();
 
     if (potentialMatch) {
+      const player1 = await ctx.db.get(args.userId);
+      const player2 = await ctx.db.get(potentialMatch.userId);
+
+      if (!player1 || !player2) {
+        throw new Error("Players not found");
+      }
+
+      if (player1.koraBalance < args.betAmount || player2.koraBalance < args.betAmount) {
+        throw new Error("Insufficient balance");
+      }
+
       const matchId = await ctx.db.insert("matches", {
         player1Id: args.userId,
         player2Id: potentialMatch.userId,
@@ -44,6 +55,34 @@ export const joinQueue = mutation({
         status: "waiting",
         koraMultiplier: 1,
         currentTurn: 0,
+        createdAt: Date.now(),
+      });
+
+      await ctx.db.patch(args.userId, {
+        koraBalance: player1.koraBalance - args.betAmount,
+        totalKoraLost: player1.totalKoraLost + args.betAmount,
+      });
+
+      await ctx.db.patch(potentialMatch.userId, {
+        koraBalance: player2.koraBalance - args.betAmount,
+        totalKoraLost: player2.totalKoraLost + args.betAmount,
+      });
+
+      await ctx.db.insert("transactions", {
+        userId: args.userId,
+        type: "bet",
+        amount: -args.betAmount,
+        matchId,
+        description: `Mise de ${args.betAmount} Kora pour le match`,
+        createdAt: Date.now(),
+      });
+
+      await ctx.db.insert("transactions", {
+        userId: potentialMatch.userId,
+        type: "bet",
+        amount: -args.betAmount,
+        matchId,
+        description: `Mise de ${args.betAmount} Kora pour le match`,
         createdAt: Date.now(),
       });
 
@@ -137,6 +176,15 @@ export const createMatchVsAI = mutation({
     difficulty: v.string(),
   },
   handler: async (ctx, args) => {
+    const player = await ctx.db.get(args.playerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+
+    if (player.koraBalance < args.betAmount) {
+      throw new Error("Insufficient balance");
+    }
+
     const matchId = await ctx.db.insert("matches", {
       player1Id: args.playerId,
       player2Id: undefined,
@@ -146,6 +194,20 @@ export const createMatchVsAI = mutation({
       status: "ready",
       koraMultiplier: 1,
       currentTurn: 0,
+      createdAt: Date.now(),
+    });
+
+    await ctx.db.patch(args.playerId, {
+      koraBalance: player.koraBalance - args.betAmount,
+      totalKoraLost: player.totalKoraLost + args.betAmount,
+    });
+
+    await ctx.db.insert("transactions", {
+      userId: args.playerId,
+      type: "bet",
+      amount: -args.betAmount,
+      matchId,
+      description: `Mise de ${args.betAmount} Kora pour le match vs IA`,
       createdAt: Date.now(),
     });
 
