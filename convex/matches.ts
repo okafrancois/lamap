@@ -1,6 +1,8 @@
 import { v } from "convex/values";
+import { api } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
+import { aiSelectCard, type Difficulty } from "./ai";
 import { calculateWinnings } from "./economy";
 import {
   calculateKoraMultiplier,
@@ -10,7 +12,6 @@ import {
   getTurnWinner,
   isValidPlay,
   type Card,
-  type Play,
 } from "./game";
 
 export const get = query({
@@ -129,9 +130,10 @@ export const startMatch = mutation({
     });
 
     if (match.isVsAI) {
+      const aiPlayerId = match.player2Id || match.player1Id;
       await ctx.db.insert("hands", {
         matchId: args.matchId,
-        playerId: match.player2Id || (match.player1Id as any),
+        playerId: aiPlayerId,
         cards: hand2,
       });
     } else {
@@ -147,6 +149,12 @@ export const startMatch = mutation({
       currentTurn: 1,
       currentPlayerId: match.player1Id,
     });
+
+    if (match.isVsAI) {
+      await ctx.scheduler.runAfter(500, api.matches.playAICard, {
+        matchId: args.matchId,
+      });
+    }
 
     return { autoWin: false };
   },
@@ -223,13 +231,21 @@ export const playCard = mutation({
     });
 
     if (match.currentTurn === 1) {
+      const nextPlayerId =
+        match.isVsAI ? match.player1Id
+        : match.player1Id === args.playerId ? match.player2Id!
+        : match.player1Id;
+
       await ctx.db.patch(args.matchId, {
         leadSuit: cardToPlay.suit,
-        currentPlayerId:
-          match.isVsAI ? match.player1Id
-          : match.player1Id === args.playerId ? match.player2Id!
-          : match.player1Id,
+        currentPlayerId: nextPlayerId,
       });
+
+      if (match.isVsAI && nextPlayerId === match.player1Id) {
+        await ctx.scheduler.runAfter(500, api.matches.playAICard, {
+          matchId: args.matchId,
+        });
+      }
     } else {
       const plays = await ctx.db
         .query("plays")
@@ -239,11 +255,11 @@ export const playCard = mutation({
         .collect();
 
       if (plays.length === 2) {
-        const play1: Play = {
+        const play1 = {
           playerId: plays[0].playerId,
           card: plays[0].card as Card,
         };
-        const play2: Play = {
+        const play2 = {
           playerId: plays[1].playerId,
           card: plays[1].card as Card,
         };
@@ -280,6 +296,39 @@ export const playCard = mutation({
             else if (multiplier === 2) winType = "kora";
           }
 
+          const totalBet = match.betAmount * 2;
+          const { winnings } = calculateWinnings(totalBet, multiplier);
+
+          const winner = await ctx.db.get(finalWinner);
+          const loserId =
+            match.player1Id === finalWinner ?
+              match.player2Id!
+            : match.player1Id;
+          const loser = await ctx.db.get(loserId);
+
+          if (winner) {
+            await ctx.db.patch(finalWinner, {
+              koraBalance: winner.koraBalance + winnings,
+              totalWins: winner.totalWins + 1,
+              totalKoraWon: winner.totalKoraWon + winnings,
+            });
+
+            await ctx.db.insert("transactions", {
+              userId: finalWinner,
+              type: "win",
+              amount: winnings,
+              matchId: args.matchId,
+              description: `Gain de ${winnings} Kora (${winType})`,
+              createdAt: Date.now(),
+            });
+          }
+
+          if (loser && !match.isVsAI) {
+            await ctx.db.patch(loserId, {
+              totalLosses: loser.totalLosses + 1,
+            });
+          }
+
           await ctx.db.patch(args.matchId, {
             status: "finished",
             winnerId: finalWinner,
@@ -293,6 +342,202 @@ export const playCard = mutation({
             currentPlayerId: winner.playerId as Id<"users">,
             leadSuit: undefined,
           });
+
+          if (match.isVsAI && winner.playerId !== args.playerId) {
+            await ctx.scheduler.runAfter(500, api.matches.playAICard, {
+              matchId: args.matchId,
+            });
+          }
+        }
+      }
+    }
+
+    return { success: true };
+  },
+});
+
+export const playAICard = mutation({
+  args: {
+    matchId: v.id("matches"),
+  },
+  handler: async (ctx, args) => {
+    const match = await ctx.db.get(args.matchId);
+    if (!match || !match.isVsAI) {
+      return;
+    }
+
+    if (match.status !== "playing") {
+      return;
+    }
+
+    const aiPlayerId = match.player2Id || match.player1Id;
+    if (match.currentPlayerId !== aiPlayerId) {
+      return;
+    }
+
+    const aiHand = await ctx.db
+      .query("hands")
+      .withIndex("by_match", (q) => q.eq("matchId", args.matchId))
+      .filter((q) => q.eq(q.field("playerId"), aiPlayerId))
+      .first();
+
+    if (!aiHand || aiHand.cards.length === 0) {
+      return;
+    }
+
+    const turnResults = await ctx.db
+      .query("turnResults")
+      .withIndex("by_match", (q) => q.eq("matchId", args.matchId))
+      .collect();
+
+    const gameHistory = turnResults.map((tr) => ({
+      turn: tr.turn,
+      winnerId: tr.winnerId,
+      winningCard: tr.winningCard as Card,
+    }));
+
+    const difficulty = (match.aiDifficulty || "medium") as Difficulty;
+    const selectedCard = aiSelectCard(
+      aiHand.cards as Card[],
+      match.leadSuit || null,
+      match.currentTurn,
+      difficulty,
+      gameHistory
+    );
+
+    const cardIndex = aiHand.cards.findIndex(
+      (c) => c.suit === selectedCard.suit && c.value === selectedCard.value
+    );
+
+    if (cardIndex === -1) {
+      return;
+    }
+
+    const updatedCards = [...aiHand.cards];
+    updatedCards.splice(cardIndex, 1);
+
+    await ctx.db.patch(aiHand._id, {
+      cards: updatedCards,
+    });
+
+    const leadSuit =
+      match.currentTurn === 1 ? selectedCard.suit : match.leadSuit!;
+
+    await ctx.db.insert("plays", {
+      matchId: args.matchId,
+      turn: match.currentTurn,
+      playerId: aiPlayerId,
+      card: selectedCard,
+      playedAt: Date.now(),
+    });
+
+    if (match.currentTurn === 1) {
+      await ctx.db.patch(args.matchId, {
+        leadSuit: selectedCard.suit,
+        currentPlayerId: match.player1Id,
+      });
+    } else {
+      const plays = await ctx.db
+        .query("plays")
+        .withIndex("by_match_turn", (q) =>
+          q.eq("matchId", args.matchId).eq("turn", match.currentTurn)
+        )
+        .collect();
+
+      if (plays.length === 2) {
+        const play1 = {
+          playerId: plays[0].playerId,
+          card: plays[0].card as Card,
+        };
+        const play2 = {
+          playerId: plays[1].playerId,
+          card: plays[1].card as Card,
+        };
+
+        const winner = getTurnWinner(play1, play2, leadSuit);
+
+        await ctx.db.insert("turnResults", {
+          matchId: args.matchId,
+          turn: match.currentTurn,
+          winnerId: winner.playerId as Id<"users">,
+          winningCard: winner.card,
+        });
+
+        const isLastTurn = match.currentTurn === 5;
+        if (isLastTurn) {
+          const turnResults = await ctx.db
+            .query("turnResults")
+            .withIndex("by_match", (q) => q.eq("matchId", args.matchId))
+            .collect();
+
+          const finalWinner = turnResults[turnResults.length - 1].winnerId;
+          const multiplier = calculateKoraMultiplier(
+            turnResults.map((tr) => ({
+              turn: tr.turn,
+              winnerId: tr.winnerId,
+              winningCard: tr.winningCard as Card,
+            }))
+          );
+
+          let winType = "normal";
+          if (multiplier > 1) {
+            if (multiplier === 8) winType = "triple_kora";
+            else if (multiplier === 4) winType = "double_kora";
+            else if (multiplier === 2) winType = "kora";
+          }
+
+          const totalBet = match.betAmount * 2;
+          const { winnings } = calculateWinnings(totalBet, multiplier);
+
+          const winner = await ctx.db.get(finalWinner);
+          const loserId =
+            match.player1Id === finalWinner ?
+              match.player2Id!
+            : match.player1Id;
+          const loser = await ctx.db.get(loserId);
+
+          if (winner) {
+            await ctx.db.patch(finalWinner, {
+              koraBalance: winner.koraBalance + winnings,
+              totalWins: winner.totalWins + 1,
+              totalKoraWon: winner.totalKoraWon + winnings,
+            });
+
+            await ctx.db.insert("transactions", {
+              userId: finalWinner,
+              type: "win",
+              amount: winnings,
+              matchId: args.matchId,
+              description: `Gain de ${winnings} Kora (${winType})`,
+              createdAt: Date.now(),
+            });
+          }
+
+          if (loser && !match.isVsAI) {
+            await ctx.db.patch(loserId, {
+              totalLosses: loser.totalLosses + 1,
+            });
+          }
+
+          await ctx.db.patch(args.matchId, {
+            status: "finished",
+            winnerId: finalWinner,
+            winType,
+            koraMultiplier: multiplier,
+            finishedAt: Date.now(),
+          });
+        } else {
+          await ctx.db.patch(args.matchId, {
+            currentTurn: match.currentTurn + 1,
+            currentPlayerId: winner.playerId as Id<"users">,
+            leadSuit: undefined,
+          });
+
+          if (match.isVsAI && winner.playerId === match.player1Id) {
+            await ctx.scheduler.runAfter(500, api.matches.playAICard, {
+              matchId: args.matchId,
+            });
+          }
         }
       }
     }
