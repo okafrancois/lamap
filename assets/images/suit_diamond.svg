@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-color="#1A1A1A" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- ♦️ CARREAU -->
+  <g transform="translate(50, 50)" filter="url(#shadow)">
+    <path d="M0 -45 L28 0 L0 45 L-28 0 Z" fill="#B4443E"/>
+    <!-- Contour intérieur -->
+    <path d="M0 -35 L21 0 L0 35 L-21 0 Z" fill="none" stroke="#D4635D" stroke-width="1.5" opacity="0.4"/>
+    <!-- Reflet -->
+    <path d="M0 -30 L-15 0 L0 8 Z" fill="#D4635D" opacity="0.3"/>
+  </g>
+</svg>

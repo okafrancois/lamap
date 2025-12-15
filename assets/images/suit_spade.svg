@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-color="#1A1A1A" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- ♠️ PIQUE -->
+  <g transform="translate(50, 50)" filter="url(#shadow)">
+    <path d="M0 -40 
+             C-12 -22 -32 -10 -32 14 
+             C-32 30 -17 38 0 26 
+             C17 38 32 30 32 14 
+             C32 -10 12 -22 0 -40 Z" 
+          fill="#1A1A1A"/>
+    <path d="M0 22 L-12 48 Q0 38 12 48 Z" fill="#1A1A1A"/>
+    <!-- Reflet subtil -->
+    <ellipse cx="-10" cy="-5" rx="8" ry="10" fill="#3A3A3A" opacity="0.25"/>
+  </g>
+</svg>

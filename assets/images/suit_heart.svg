@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <filter id="shadow">
+      <feDropShadow dx="1" dy="2" stdDeviation="1.5" flood-color="#1A1A1A" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- ♥️ COEUR -->
+  <g transform="translate(50, 50)" filter="url(#shadow)">
+    <path d="M0 -8 
+             C-6 -28 -35 -28 -35 -2 
+             C-35 22 0 45 0 45 
+             C0 45 35 22 35 -2 
+             C35 -28 6 -28 0 -8 Z" 
+          fill="#B4443E"/>
+    <!-- Reflet -->
+    <ellipse cx="-12" cy="-10" rx="9" ry="11" fill="#D4635D" opacity="0.35"/>
+  </g>
+</svg>

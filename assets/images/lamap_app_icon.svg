@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Icône App Mobile LaMap - Format carré 512x512 -->
+  
+  <!-- Fond carré arrondi (style iOS/Android) -->
+  <rect x="0" y="0" width="512" height="512" rx="100" ry="100" fill="#B4443E"/>
+  
+  <!-- Forme de carte inclinée -->
+  <g transform="translate(256, 240) rotate(-8)">
+    <rect x="-120" y="-160" width="240" height="320" rx="20" ry="20" fill="#F5F2ED"/>
+    <rect x="-105" y="-145" width="210" height="290" rx="14" ry="14" 
+          fill="none" stroke="#A68258" stroke-width="4"/>
+  </g>
+  
+  <!-- Trèfle central -->
+  <g transform="translate(256, 220)">
+    <circle cx="0" cy="-35" r="40" fill="#1A1A1A"/>
+    <circle cx="-38" cy="10" r="40" fill="#1A1A1A"/>
+    <circle cx="38" cy="10" r="40" fill="#1A1A1A"/>
+    <path d="M0 38 L-24 110 L0 85 L24 110 Z" fill="#1A1A1A"/>
+    <!-- Accent rouge -->
+    <circle cx="0" cy="-35" r="12" fill="#B4443E"/>
+  </g>
+  
+  <!-- Texte "lamap" en bas -->
+  <text x="256" y="460" 
+        font-family="Georgia, serif" 
+        font-size="52" 
+        font-weight="bold" 
+        fill="#F5F2ED"
+        text-anchor="middle"
+        letter-spacing="3">lamap</text>
+</svg>
