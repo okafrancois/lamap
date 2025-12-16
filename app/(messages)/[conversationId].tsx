@@ -29,6 +29,17 @@ export default function ConversationScreen() {
   );
   const myUserId = user?._id;
 
+  const isValidConversationId = conversationId && 
+    conversationId !== "sso-callback" && 
+    !conversationId.startsWith("_") &&
+    conversationId.length > 10;
+
+  useEffect(() => {
+    if (conversationId && !isValidConversationId) {
+      router.replace("/(tabs)/messages");
+    }
+  }, [conversationId, isValidConversationId, router]);
+
   const conversation = useQuery(
     (api as any).messaging.getConversations,
     myUserId ? { userId: myUserId } : "skip"
@@ -36,7 +47,7 @@ export default function ConversationScreen() {
 
   const messages = useQuery(
     (api as any).messaging.getMessages,
-    conversationId ? { conversationId: conversationId as any } : "skip"
+    isValidConversationId && conversationId ? { conversationId: conversationId as any } : "skip"
   );
 
   const sendMessage = useMutation((api as any).messaging.sendMessage);
@@ -46,13 +57,13 @@ export default function ConversationScreen() {
   const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    if (conversationId && myUserId) {
+    if (isValidConversationId && conversationId && myUserId) {
       markAsRead({
         conversationId: conversationId as any,
         userId: myUserId,
       }).catch(console.error);
     }
-  }, [conversationId, myUserId, markAsRead]);
+  }, [isValidConversationId, conversationId, myUserId, markAsRead]);
 
   useEffect(() => {
     if (messages && messages.length > 0 && scrollViewRef.current) {
@@ -63,7 +74,7 @@ export default function ConversationScreen() {
   }, [messages]);
 
   const handleSend = async () => {
-    if (!messageText.trim() || !conversationId || !myUserId || sending) {
+    if (!messageText.trim() || !isValidConversationId || !conversationId || !myUserId || sending) {
       return;
     }
 
@@ -190,6 +201,10 @@ export default function ConversationScreen() {
       paddingHorizontal: 20,
     },
   });
+
+  if (!isValidConversationId || !conversationId) {
+    return null;
+  }
 
   if (!conversation) {
     return (
