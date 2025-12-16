@@ -2,8 +2,9 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { useSound } from "@/hooks/useSound";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -18,21 +19,35 @@ export default function MatchmakingScreen() {
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
   const { status, opponent, gameId, joinQueue, leaveQueue, timeInQueue } =
     useMatchmaking();
+  const { playSound } = useSound();
   const pulseScale = useSharedValue(1);
+  const previousStatus = useRef<string | undefined>(undefined);
 
   const bet = betAmount ? parseInt(betAmount, 10) : 0;
 
   useEffect(() => {
     if (bet > 0 && status === "idle") {
-      joinQueue(bet, "XAF").catch((error) => {
-        Alert.alert(
-          "Erreur de connexion",
-          "Impossible de rejoindre la file d'attente. Vérifiez votre connexion et réessayez."
-        );
-        console.error("Error joining queue:", error);
-      });
+      joinQueue(bet, "XAF")
+        .then(() => {
+          playSound("confirmation");
+        })
+        .catch((error) => {
+          Alert.alert(
+            "Erreur de connexion",
+            "Impossible de rejoindre la file d'attente. Vérifiez votre connexion et réessayez."
+          );
+          console.error("Error joining queue:", error);
+        });
     }
-  }, [bet, status, joinQueue]);
+  }, [bet, status, joinQueue, playSound]);
+
+  // Son quand un adversaire est trouvé
+  useEffect(() => {
+    if (previousStatus.current !== "matched" && status === "matched") {
+      playSound("gameStart");
+    }
+    previousStatus.current = status;
+  }, [status, playSound]);
 
   useEffect(() => {
     if (status === "searching") {

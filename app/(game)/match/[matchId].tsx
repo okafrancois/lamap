@@ -33,6 +33,12 @@ export default function MatchScreen() {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [previousTurnResults, setPreviousTurnResults] = useState<any[]>([]);
+  const [previousIsMyTurn, setPreviousIsMyTurn] = useState<boolean | undefined>(
+    undefined
+  );
+  const [previousGameStatus, setPreviousGameStatus] = useState<
+    string | undefined
+  >(undefined);
 
   useEffect(() => {
     if (game?.status === "ENDED") {
@@ -72,11 +78,31 @@ export default function MatchScreen() {
     }
   }, [game?.status, matchId, startGame]);
 
+  // Son quand la partie démarre
+  useEffect(() => {
+    if (previousGameStatus !== "PLAYING" && game?.status === "PLAYING") {
+      playSound("gameStart");
+    }
+    setPreviousGameStatus(game?.status);
+  }, [game?.status, previousGameStatus, playSound]);
+
+  // Son quand le tour change
+  useEffect(() => {
+    if (
+      previousIsMyTurn !== undefined &&
+      previousIsMyTurn !== isMyTurn &&
+      game?.status === "PLAYING"
+    ) {
+      playSound("turnChange");
+    }
+    setPreviousIsMyTurn(isMyTurn);
+  }, [isMyTurn, previousIsMyTurn, game?.status, playSound]);
+
   const handleCardSelect = useCallback(
     (card: Card) => {
       if (canPlayCard(card)) {
         setSelectedCard(card);
-        playSound("cardPlay");
+        playSound("cardSelect");
       }
     },
     [canPlayCard, playSound]

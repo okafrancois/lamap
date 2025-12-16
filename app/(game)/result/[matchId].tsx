@@ -35,12 +35,27 @@ export default function ResultScreen() {
   const cardOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.8);
 
+  // Son de fin de partie et son de victoire/défaite
   useEffect(() => {
     if (game) {
       const isWinner = game.winnerId === myUserId;
+
+      // Son de fin de partie
+      playSound("gameEnd");
+
+      // Son selon le type de victoire/défaite
       if (isWinner) {
-        if (game.victoryType && game.victoryType.includes("kora")) {
+        if (game.victoryType === "triple_kora") {
+          playSound("koraTriple");
+        } else if (game.victoryType === "double_kora") {
+          playSound("koraDouble");
+        } else if (game.victoryType === "simple_kora") {
           playSound("kora");
+        } else if (
+          game.victoryType === "auto_sum" ||
+          game.victoryType === "auto_sevens"
+        ) {
+          playSound("autoVictory");
         } else {
           playSound("victory");
         }
@@ -66,6 +81,9 @@ export default function ResultScreen() {
       const stepValue = winnings / steps;
       const stepDuration = duration / steps;
 
+      // Jouer le son de gain d'argent au début de l'animation
+      playSound("winMoney");
+
       let current = 0;
       const interval = setInterval(() => {
         current += stepValue;
@@ -79,7 +97,7 @@ export default function ResultScreen() {
 
       return () => clearInterval(interval);
     }
-  }, [isWinner, winnings]);
+  }, [isWinner, winnings, playSound]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     opacity: cardOpacity.value,

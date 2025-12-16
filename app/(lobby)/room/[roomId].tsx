@@ -5,9 +5,10 @@ import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { useSound } from "@/hooks/useSound";
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -28,6 +29,7 @@ export default function RoomScreen() {
   const myUserId = user?._id;
   const { setMatchReady } = useMatchmaking();
   const startGame = useMutation(api.games.startGame);
+  const { playSound } = useSound();
 
   const game = useQuery(
     api.games.getGame,
@@ -36,17 +38,24 @@ export default function RoomScreen() {
 
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(false);
+  const previousGameStatus = useRef<string | undefined>(undefined);
 
   const player1Opacity = useSharedValue(0);
   const player1Scale = useSharedValue(0.8);
   const player2Opacity = useSharedValue(0);
   const player2Scale = useSharedValue(0.8);
 
+  // Son quand la partie démarre (détection du changement de status)
   useEffect(() => {
-    if (game?.status === "PLAYING") {
+    if (
+      previousGameStatus.current !== "PLAYING" &&
+      game?.status === "PLAYING"
+    ) {
+      playSound("gameStart");
       router.replace(`/(game)/match/${roomId}`);
     }
-  }, [game?.status, roomId, router]);
+    previousGameStatus.current = game?.status;
+  }, [game?.status, roomId, router, playSound]);
 
   useEffect(() => {
     player1Opacity.value = withDelay(100, withTiming(1, { duration: 300 }));
@@ -79,6 +88,7 @@ export default function RoomScreen() {
     try {
       await setMatchReady(game.gameId);
       setIsReady(true);
+      playSound("confirmation");
 
       if (game.status === "WAITING" && game.players.length >= 2) {
         await startGame({ gameId: game.gameId });
