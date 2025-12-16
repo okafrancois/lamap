@@ -1,86 +1,73 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { useSignIn } from '@clerk/clerk-expo';
-import { useRouter } from 'expo-router';
-import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/theme';
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
+import { useOAuth } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 
 export default function LoginScreen() {
-  const { signIn, setActive, isLoaded } = useSignIn();
+  useWarmUpBrowser();
   const router = useRouter();
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const onSignInPress = async () => {
-    if (!isLoaded) {
-      return;
-    }
+  const { startOAuthFlow: startGoogleOAuth } = useOAuth({
+    strategy: "oauth_google",
+  });
+  const { startOAuthFlow: startFacebookOAuth } = useOAuth({
+    strategy: "oauth_facebook",
+  });
 
-    setLoading(true);
+  const handleOAuth = async (strategy: "google" | "facebook") => {
     try {
-      const completeSignIn = await signIn.create({
-        identifier,
-        password,
-      });
+      setLoading(strategy);
+      const startOAuthFlow =
+        strategy === "google" ? startGoogleOAuth : startFacebookOAuth;
 
-      await setActive({ session: completeSignIn.createdSessionId });
-      router.replace('/(tabs)');
+      const { createdSessionId, setActive } = await startOAuthFlow();
+
+      if (createdSessionId) {
+        await setActive!({ session: createdSessionId });
+        router.replace("/(tabs)");
+      }
     } catch (err: any) {
-      Alert.alert('Erreur', err.errors?.[0]?.message || 'Une erreur est survenue');
+      Alert.alert(
+        "Erreur",
+        err.errors?.[0]?.message ||
+          "Une erreur est survenue lors de la connexion"
+      );
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Connexion</Text>
         <Text style={styles.subtitle}>Connectez-vous pour jouer</Text>
 
-        <View style={styles.form}>
-          <TextInput
-            style={styles.input}
-            placeholder="Email ou téléphone"
-            placeholderTextColor={Colors.derived.blueLight}
-            value={identifier}
-            onChangeText={setIdentifier}
-            autoCapitalize="none"
-            keyboardType="email-address"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Mot de passe"
-            placeholderTextColor={Colors.derived.blueLight}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
+        <View style={styles.options}>
+          <Button
+            title="Continuer avec Google"
+            onPress={() => handleOAuth("google")}
+            loading={loading === "google"}
+            disabled={!!loading}
+            variant="primary"
+            style={styles.oauthButton}
           />
 
           <Button
-            title="Se connecter"
-            onPress={onSignInPress}
-            loading={loading}
-            disabled={!identifier || !password}
+            title="Continuer avec Facebook"
+            onPress={() => handleOAuth("facebook")}
+            loading={loading === "facebook"}
+            disabled={!!loading}
+            variant="secondary"
+            style={styles.oauthButton}
           />
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>Pas encore de compte ? </Text>
-            <Text
-              style={styles.link}
-              onPress={() => router.push('/(auth)/register')}
-            >
-              S'inscrire
-            </Text>
-          </View>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -91,45 +78,26 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.derived.blueLight,
-    marginBottom: 32,
+    textAlign: "center",
+    marginBottom: 48,
   },
-  form: {
+  options: {
     gap: 16,
   },
-  input: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 8,
-    padding: 16,
-    color: Colors.derived.white,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: Colors.derived.blueLight,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-  },
-  footerText: {
-    color: Colors.derived.blueLight,
-    fontSize: 14,
-  },
-  link: {
-    color: Colors.primary.gold,
-    fontSize: 14,
-    fontWeight: '600',
+  oauthButton: {
+    minHeight: 56,
   },
 });
-
