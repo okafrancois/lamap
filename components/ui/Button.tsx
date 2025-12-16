@@ -8,7 +8,7 @@ interface ButtonProps {
   variant?: 'primary' | 'secondary' | 'ghost';
   disabled?: boolean;
   loading?: boolean;
-  style?: ViewStyle;
+  style?: ViewStyle | ViewStyle[];
 }
 
 export function Button({ 
@@ -25,7 +25,7 @@ export function Button({
     variant === 'secondary' && styles.secondary,
     variant === 'ghost' && styles.ghost,
     disabled && styles.disabled,
-    style,
+    ...(Array.isArray(style) ? style : style ? [style] : []),
   ];
 
   const textStyle = [

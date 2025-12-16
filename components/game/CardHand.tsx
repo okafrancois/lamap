@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring } from 'react-native-reanimated';
 import { PlayingCard } from './PlayingCard';
 import { type Card } from '@/convex/game';
 import { isValidPlay } from '@/convex/game';
@@ -44,23 +45,39 @@ export function CardHand({
 
   return (
     <View style={styles.container}>
-      {cards.map((card, index) => (
-        <View
-          key={`${card.suit}-${card.value}-${index}`}
-          style={[
-            styles.cardWrapper,
-            selectedCard && selectedCard.suit === card.suit && selectedCard.value === card.value && styles.selectedWrapper,
-          ]}
-        >
-          <PlayingCard
-            suit={card.suit}
-            value={card.value}
-            state={getCardState(card)}
-            onPress={() => handleCardPress(card)}
-            size="medium"
-          />
-        </View>
-      ))}
+      {cards.map((card, index) => {
+        const translateY = useSharedValue(50);
+        const opacity = useSharedValue(0);
+
+        React.useEffect(() => {
+          translateY.value = withDelay(index * 50, withSpring(0, { damping: 15 }));
+          opacity.value = withDelay(index * 50, withSpring(1, { damping: 15 }));
+        }, []);
+
+        const animatedStyle = useAnimatedStyle(() => ({
+          transform: [{ translateY: translateY.value }],
+          opacity: opacity.value,
+        }));
+
+        return (
+          <Animated.View
+            key={`${card.suit}-${card.value}-${index}`}
+            style={[
+              styles.cardWrapper,
+              animatedStyle,
+              selectedCard && selectedCard.suit === card.suit && selectedCard.value === card.value && styles.selectedWrapper,
+            ]}
+          >
+            <PlayingCard
+              suit={card.suit}
+              value={card.value}
+              state={getCardState(card)}
+              onPress={() => handleCardPress(card)}
+              size="medium"
+            />
+          </Animated.View>
+        );
+      })}
     </View>
   );
 }

@@ -1,21 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useMatchmaking } from '@/hooks/useMatchmaking';
-import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/theme';
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 const DIFFICULTIES = [
-  { value: 'easy', label: 'Facile' },
-  { value: 'medium', label: 'Moyen' },
-  { value: 'hard', label: 'Difficile' },
+  { value: "easy", label: "Facile" },
+  { value: "medium", label: "Moyen" },
+  { value: "hard", label: "Difficile" },
 ];
 
 export default function SelectDifficultyScreen() {
   const router = useRouter();
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
   const { createMatchVsAI } = useMatchmaking();
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
@@ -23,10 +25,13 @@ export default function SelectDifficultyScreen() {
 
     setLoading(true);
     try {
-      const matchId = await createMatchVsAI(parseInt(betAmount, 10), selectedDifficulty);
+      const matchId = await createMatchVsAI(
+        parseInt(betAmount, 10),
+        selectedDifficulty
+      );
       router.replace(`/(game)/match/${matchId}`);
     } catch (error) {
-      console.error('Error creating match vs AI:', error);
+      console.error("Error creating match vs AI:", error);
     } finally {
       setLoading(false);
     }
@@ -36,9 +41,7 @@ export default function SelectDifficultyScreen() {
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}>Choisir la difficulté</Text>
-        <Text style={styles.subtitle}>
-          Mise: {betAmount} Kora
-        </Text>
+        <Text style={styles.subtitle}>Mise: {betAmount} Kora</Text>
 
         <View style={styles.options}>
           {DIFFICULTIES.map((difficulty) => (
@@ -46,11 +49,16 @@ export default function SelectDifficultyScreen() {
               key={difficulty.value}
               title={difficulty.label}
               onPress={() => setSelectedDifficulty(difficulty.value)}
-              variant={selectedDifficulty === difficulty.value ? 'primary' : 'secondary'}
-              style={[
-                styles.difficultyButton,
-                selectedDifficulty === difficulty.value && styles.selectedDifficulty,
-              ]}
+              variant={
+                selectedDifficulty === difficulty.value ?
+                  "primary"
+                : "secondary"
+              }
+              style={
+                selectedDifficulty === difficulty.value ?
+                  [styles.difficultyButton, styles.selectedDifficulty]
+                : styles.difficultyButton
+              }
             />
           ))}
         </View>
@@ -82,22 +90,22 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
     color: Colors.primary.gold,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 48,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   options: {
     gap: 16,
@@ -120,4 +128,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-

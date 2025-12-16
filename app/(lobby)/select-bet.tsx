@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Colors } from '@/constants/theme';
-import { Id } from '@/convex/_generated/dataModel';
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 const BET_AMOUNTS = [10, 50, 100, 500];
 
@@ -18,7 +18,7 @@ export default function SelectBetScreen() {
   const myUserId = userId ? (userId as any as Id<"users">) : null;
   const user = useQuery(
     api.users.getCurrentUser,
-    myUserId ? { clerkId: userId! } : 'skip'
+    myUserId ? { clerkId: userId! } : "skip"
   );
   const [selectedBet, setSelectedBet] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ export default function SelectBetScreen() {
 
     setLoading(true);
     try {
-      if (vsAI === 'true') {
+      if (vsAI === "true") {
         router.push(`/(lobby)/select-difficulty?betAmount=${selectedBet}`);
       } else {
         router.push(`/(lobby)/matchmaking?betAmount=${selectedBet}`);
@@ -57,12 +57,13 @@ export default function SelectBetScreen() {
                 key={amount}
                 title={`${amount} Kora`}
                 onPress={() => setSelectedBet(amount)}
-                variant={selectedBet === amount ? 'primary' : 'secondary'}
+                variant={selectedBet === amount ? "primary" : "secondary"}
                 disabled={!canAfford}
-                style={[
-                  styles.betButton,
-                  selectedBet === amount && styles.selectedBet,
-                ]}
+                style={
+                  selectedBet === amount ?
+                    [styles.betButton, styles.selectedBet]
+                  : styles.betButton
+                }
               />
             );
           })}
@@ -105,21 +106,21 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
     color: Colors.primary.gold,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 48,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   betOptions: {
     gap: 16,
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary.gold,
   },
   selectedInfo: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   actions: {
@@ -146,4 +147,3 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
 });
-

@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { SUIT_COLORS, type Card } from "@/convex/game";
 import { Image } from "expo-image";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,6 +9,13 @@ import {
   View,
   ViewStyle,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 
 interface PlayingCardProps {
   suit: Card["suit"];
@@ -43,6 +50,43 @@ export function PlayingCard({
   const suitImage = SUIT_IMAGES[suit];
   const isPlayable = state === "playable" || state === "selected";
   const isSelected = state === "selected";
+  const isPlayed = state === "played";
+
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(50);
+  const rotateY = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 300 });
+    translateY.value = withSpring(0, { damping: 15 });
+  }, [opacity, translateY]);
+
+  useEffect(() => {
+    if (isSelected) {
+      scale.value = withSpring(1.05, { damping: 10 });
+    } else {
+      scale.value = withSpring(1, { damping: 10 });
+    }
+  }, [isSelected, scale]);
+
+  useEffect(() => {
+    if (isPlayed) {
+      rotateY.value = withSequence(
+        withTiming(90, { duration: 200 }),
+        withTiming(0, { duration: 200 })
+      );
+    }
+  }, [isPlayed, rotateY]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale.value },
+      { translateY: translateY.value },
+      { rotateY: `${rotateY.value}deg` },
+    ],
+    opacity: opacity.value,
+  }));
 
   const suitIconSize =
     size === "small" ? 14
@@ -67,7 +111,6 @@ export function PlayingCard({
         : state === "playable" ? Colors.primary.gold
         : Colors.primary.blue,
       borderWidth: isSelected ? 3 : 2,
-      transform: [{ scale: isSelected ? 1.05 : 1 }],
       shadowColor: isSelected ? Colors.primary.gold : Colors.derived.black,
       shadowOffset: { width: 0, height: isSelected ? 4 : 2 },
       shadowOpacity: isSelected ? 0.5 : 0.2,
@@ -77,7 +120,7 @@ export function PlayingCard({
   ];
 
   const content = (
-    <View style={cardStyle}>
+    <Animated.View style={[cardStyle, animatedStyle]}>
       <View style={styles.topCorner}>
         <Text style={[styles.value, { color: suitColor }]}>{value}</Text>
         <Image
@@ -129,7 +172,7 @@ export function PlayingCard({
           {value}
         </Text>
       </View>
-    </View>
+    </Animated.View>
   );
 
   if (state === "played" || !onPress || !isPlayable) {
