@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSound } from "@/hooks/useSound";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -34,10 +34,12 @@ export default function ResultScreen() {
   const [displayedWinnings, setDisplayedWinnings] = useState(0);
   const cardOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.8);
+  const soundPlayedRef = useRef(false);
+  const counterStartedRef = useRef(false);
 
-  // Son de victoire/défaite uniquement (pas de gameEnd pour éviter le double son)
+  // Son de victoire/défaite uniquement (une seule fois)
   useEffect(() => {
-    if (game) {
+    if (game && !soundPlayedRef.current) {
       const isWinner = game.winnerId === myUserId;
 
       // Son selon le type de victoire/défaite
@@ -59,6 +61,8 @@ export default function ResultScreen() {
       } else {
         playSound("defeat");
       }
+
+      soundPlayedRef.current = true;
     }
   }, [game, myUserId, playSound]);
 
@@ -72,7 +76,9 @@ export default function ResultScreen() {
   const winnings = myPlayer?.balance || 0;
 
   useEffect(() => {
-    if (isWinner && winnings > 0) {
+    if (isWinner && winnings > 0 && !counterStartedRef.current) {
+      counterStartedRef.current = true;
+
       const duration = 1500;
       const steps = 30;
       const stepValue = winnings / steps;
