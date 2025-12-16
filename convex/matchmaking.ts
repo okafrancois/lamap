@@ -362,10 +362,6 @@ export const setMatchReady = mutation({
       throw new Error("Game not found");
     }
 
-    if (game.status !== "WAITING") {
-      throw new Error("Game is not in waiting state");
-    }
-
     const isPlayer1 = game.players[0]?.userId === args.playerId;
     const isPlayer2 = game.players[1]?.userId === args.playerId;
 
@@ -373,12 +369,13 @@ export const setMatchReady = mutation({
       throw new Error("Player not in game");
     }
 
-    if (game.status === "WAITING") {
-      await ctx.db.patch(game._id, {
-        status: "WAITING",
-        lastUpdatedAt: Date.now(),
-      } as any);
+    if (game.status !== "WAITING") {
+      return { success: true, alreadyStarted: true };
     }
+
+    await ctx.db.patch(game._id, {
+      lastUpdatedAt: Date.now(),
+    } as any);
 
     return { success: true };
   },

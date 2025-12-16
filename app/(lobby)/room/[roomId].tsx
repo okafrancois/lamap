@@ -1,15 +1,13 @@
 import { Avatar } from "@/components/ui/Avatar";
-import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
-import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useSound } from "@/hooks/useSound";
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -27,7 +25,6 @@ export default function RoomScreen() {
     userId ? { clerkUserId: userId } : "skip"
   );
   const myUserId = user?._id;
-  const { setMatchReady } = useMatchmaking();
   const startGame = useMutation(api.games.startGame);
   const { playSound } = useSound();
 
@@ -36,9 +33,10 @@ export default function RoomScreen() {
     roomId ? { gameId: roomId } : "skip"
   );
 
-  const [isReady, setIsReady] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const previousGameStatus = useRef<string | undefined>(undefined);
+  const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasStartedTimerRef = useRef(false);
 
   const player1Opacity = useSharedValue(0);
   const player1Scale = useSharedValue(0.8);
@@ -56,6 +54,58 @@ export default function RoomScreen() {
     }
     previousGameStatus.current = game?.status;
   }, [game?.status, roomId, router, playSound]);
+
+  // Démarrage automatique 3 secondes après le match
+  useEffect(() => {
+    if (
+      game?.status === "WAITING" &&
+      game.players.length >= 2 &&
+      !hasStartedTimerRef.current
+    ) {
+      hasStartedTimerRef.current = true;
+      setCountdown(3);
+
+      const interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      const timeout = setTimeout(async () => {
+        try {
+          await startGame({ gameId: game.gameId });
+        } catch (error) {
+          console.error("Error starting game:", error);
+          hasStartedTimerRef.current = false;
+          setCountdown(null);
+        }
+        clearInterval(interval);
+      }, 3000);
+
+      startTimerRef.current = timeout;
+
+      return () => {
+        clearTimeout(timeout);
+        clearInterval(interval);
+      };
+    }
+  }, [game?.status, game?.players.length, game?.gameId, startGame]);
+
+  // Réinitialiser le timer si le statut change
+  useEffect(() => {
+    if (game?.status !== "WAITING") {
+      if (startTimerRef.current) {
+        clearTimeout(startTimerRef.current);
+        startTimerRef.current = null;
+      }
+      hasStartedTimerRef.current = false;
+      setCountdown(null);
+    }
+  }, [game?.status]);
 
   useEffect(() => {
     player1Opacity.value = withDelay(100, withTiming(1, { duration: 300 }));
@@ -82,28 +132,6 @@ export default function RoomScreen() {
     transform: [{ scale: player2Scale.value }],
   }));
 
-  const handleReady = async () => {
-    if (!game) return;
-    setLoading(true);
-    try {
-      await setMatchReady(game.gameId);
-      setIsReady(true);
-      playSound("confirmation");
-
-      if (game.status === "WAITING" && game.players.length >= 2) {
-        await startGame({ gameId: game.gameId });
-      }
-    } catch (error) {
-      Alert.alert(
-        "Erreur",
-        "Impossible de confirmer votre statut. Veuillez réessayer."
-      );
-      console.error("Error setting ready:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (!game) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
@@ -125,7 +153,6 @@ export default function RoomScreen() {
           <Animated.View style={[styles.playerCard, player1AnimatedStyle]}>
             <Avatar name={me?.username || "Vous"} size={60} />
             <Text style={styles.playerName}>{me?.username || "Vous"}</Text>
-            {isReady && <Badge label="Prêt" variant="success" />}
           </Animated.View>
 
           <Text style={styles.vs}>VS</Text>
@@ -144,24 +171,23 @@ export default function RoomScreen() {
           </Animated.View>
         </View>
 
-        {!isReady && (
+        {countdown !== null && countdown > 0 && (
           <View style={styles.readySection}>
-            <Button
-              title="Je suis prêt"
-              onPress={handleReady}
-              loading={loading}
-              style={styles.readyButton}
-            />
-          </View>
-        )}
-
-        {isReady && (
-          <View style={styles.readySection}>
-            <Text style={styles.waitingText}>
-              En attente de l&apos;adversaire...
+            <Text style={styles.countdownText}>
+              Démarrage dans {countdown}...
             </Text>
           </View>
         )}
+
+        {game.players.length >= 2 &&
+          countdown === null &&
+          game.status === "WAITING" && (
+            <View style={styles.readySection}>
+              <Text style={styles.waitingText}>
+                Préparation de la partie...
+              </Text>
+            </View>
+          )}
 
         <Button
           title="Quitter"
@@ -233,13 +259,16 @@ const styles = StyleSheet.create({
     marginTop: 12,
     textAlign: "center",
   },
+  countdownText: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: Colors.primary.gold,
+    textAlign: "center",
+    marginTop: 12,
+  },
   readySection: {
     alignItems: "center",
     marginBottom: 24,
-  },
-  readyButton: {
-    minWidth: 200,
-    minHeight: 56,
   },
   leaveButton: {
     marginTop: 16,
