@@ -1,4 +1,7 @@
 import { Colors } from "@/constants/theme";
+import { Spacing } from "@/constants/spacing";
+import { AnimationDurations, AnimationValues } from "@/constants/animations";
+import { getCardShadow, getPlayableCardShadow } from "@/utils/shadows";
 import { Image } from "expo-image";
 import React, { useEffect } from "react";
 import {
@@ -13,6 +16,8 @@ import Animated, {
   useSharedValue,
   withSequence,
   withTiming,
+  withRepeat,
+  Easing,
 } from "react-native-reanimated";
 
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -26,10 +31,11 @@ interface PlayingCardProps {
   size?: "small" | "medium" | "large";
 }
 
+// Dimensions selon le guide de style (uniformes pour joueur et adversaire)
 const CARD_SIZES = {
-  small: { width: 60, height: 84 },
-  medium: { width: 80, height: 112 },
-  large: { width: 100, height: 140 },
+  small: { width: 60, height: 84 },   // 60px × 84px
+  medium: { width: 80, height: 112 }, // 80px × 112px
+  large: { width: 100, height: 140 }, // 100px × 140px
 };
 
 const SUIT_COLORS: Record<Suit, string> = {
@@ -66,27 +72,55 @@ export const PlayingCard = React.memo(function PlayingCard({
   const translateY = useSharedValue(50);
   const rotateY = useSharedValue(0);
 
-  useEffect(() => {
-    opacity.value = withTiming(1, { duration: 200 });
-    translateY.value = withTiming(0, { duration: 200 });
-  }, [opacity, translateY]);
+      useEffect(() => {
+        opacity.value = withTiming(1, { 
+          duration: AnimationDurations.fast,
+          easing: Easing.out(Easing.ease),
+        });
+        translateY.value = withTiming(0, { 
+          duration: AnimationDurations.fast,
+          easing: Easing.out(Easing.ease),
+        });
+      }, [opacity, translateY]);
 
-  useEffect(() => {
-    if (isSelected) {
-      scale.value = withTiming(1.05, { duration: 150 });
-    } else {
-      scale.value = withTiming(1, { duration: 150 });
-    }
-  }, [isSelected, scale]);
+      useEffect(() => {
+        if (isSelected) {
+          scale.value = withTiming(1.05, { 
+            duration: AnimationDurations.fast,
+            easing: Easing.out(Easing.ease),
+          });
+        } else {
+          scale.value = withTiming(1, { 
+            duration: AnimationDurations.fast,
+            easing: Easing.out(Easing.ease),
+          });
+        }
+      }, [isSelected, scale]);
 
-  useEffect(() => {
-    if (isPlayed) {
-      rotateY.value = withSequence(
-        withTiming(90, { duration: 100 }),
-        withTiming(0, { duration: 100 })
-      );
-    }
-  }, [isPlayed, rotateY]);
+      useEffect(() => {
+        if (isPlayed) {
+          rotateY.value = withSequence(
+            withTiming(90, { duration: 100 }),
+            withTiming(0, { duration: 100 })
+          );
+        }
+      }, [isPlayed, rotateY]);
+      
+      // Animation Card Pulse pour les cartes jouables
+      useEffect(() => {
+        if (state === 'playable' && !isSelected) {
+          // Animation d'ombre pulsante
+          const pulseAnimation = withRepeat(
+            withSequence(
+              withTiming(1.2, { duration: AnimationValues.cardPulse.duration / 2 }),
+              withTiming(1, { duration: AnimationValues.cardPulse.duration / 2 })
+            ),
+            -1,
+            true
+          );
+          scale.value = pulseAnimation;
+        }
+      }, [state, isSelected, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -106,29 +140,31 @@ export const PlayingCard = React.memo(function PlayingCard({
     : size === "medium" ? 52
     : 68;
 
-  const cardStyle: ViewStyle[] = [
-    styles.card,
-    {
-      width: cardSize.width,
-      height: cardSize.height,
-      backgroundColor:
-        state === "disabled" ?
-          "#D1D1D1" // Subtle gray for disabled
-        : Colors.derived.white,
-      borderColor:
-        isSelected ? Colors.primary.gold
-        : state === "playable" ? Colors.primary.gold
-        : state === "disabled" ?
-          "#A0A0A0" // Gray border for disabled
-        : Colors.primary.blue,
-      borderWidth: isSelected ? 3 : 2,
-      shadowColor: isSelected ? Colors.primary.gold : Colors.derived.black,
-      shadowOffset: { width: 0, height: isSelected ? 4 : 2 },
-      shadowOpacity: isSelected ? 0.5 : 0.2,
-      shadowRadius: isSelected ? 8 : 4,
-      opacity: 1, // Keep full opacity to avoid transparency
-    },
-  ];
+      const cardStyle: ViewStyle[] = [
+        styles.card,
+        {
+          width: cardSize.width,
+          height: cardSize.height,
+          backgroundColor:
+            state === "disabled" ?
+              Colors.light.muted
+            : Colors.light.card,
+          borderColor:
+            isSelected ? Colors.light.primary
+            : state === "playable" ? Colors.light.primary
+            : state === "disabled" ?
+              Colors.light.border
+            : Colors.light.border,
+          borderWidth: isSelected ? 3 : 2,
+          borderRadius: Spacing.radius.lg, // rounded-lg (8px)
+          ...(state === "playable" && !isSelected 
+            ? getPlayableCardShadow(Colors.light.primary)
+            : isSelected 
+            ? getCardShadow(Colors.light.primary)
+            : getCardShadow()),
+          opacity: 1,
+        },
+      ];
 
   const content = (
     <Animated.View style={[cardStyle, animatedStyle]}>
@@ -208,11 +244,10 @@ export const PlayingCard = React.memo(function PlayingCard({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 12,
+    borderRadius: Spacing.radius.lg,
     padding: 8,
     justifyContent: "space-between",
     alignItems: "center",
-    elevation: 4,
   },
   topCorner: {
     alignSelf: "flex-start",

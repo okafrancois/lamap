@@ -1,75 +1,117 @@
-import { Colors } from "@/constants/theme";
-import { ViewStyle } from "react-native";
+import { Platform } from "react-native";
 
-export type ShadowPreset = "sm" | "md" | "lg" | "xl" | "premium";
-
-const shadowPresets: Record<ShadowPreset, ViewStyle> = {
-  sm: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  xl: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  premium: {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 10,
-  },
-};
-
-export function getShadow(preset: ShadowPreset = "md"): ViewStyle {
-  return shadowPresets[preset];
+export interface ShadowStyle {
+  shadowColor?: string;
+  shadowOffset?: { width: number; height: number };
+  shadowOpacity?: number;
+  shadowRadius?: number;
+  elevation?: number; // Android
 }
 
-export function getCardShadow(isSelected = false): ViewStyle {
-  if (isSelected) {
+/**
+ * Ombre standard pour les cartes
+ */
+export function getCardShadow(color: string = "#000000"): ShadowStyle {
+  if (Platform.OS === "android") {
     return {
-      shadowColor: Colors.light.primary,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.5,
-      shadowRadius: 8,
-      elevation: 8,
+      elevation: 4,
     };
   }
+
   return {
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   };
 }
 
-export function getGameCardShadow(): ViewStyle {
+/**
+ * Ombre grande pour les cartes
+ */
+export function getLargeCardShadow(color: string = "#000000"): ShadowStyle {
+  if (Platform.OS === "android") {
+    return {
+      elevation: 8,
+    };
+  }
+
   return {
-    shadowColor: "#000000",
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  };
+}
+
+/**
+ * Ombre pour les boutons
+ */
+export function getButtonShadow(color: string = "#000000"): ShadowStyle {
+  if (Platform.OS === "android") {
+    return {
+      elevation: 2,
+    };
+  }
+
+  return {
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  };
+}
+
+/**
+ * Ombre pour les boutons hover/active
+ */
+export function getButtonShadowHover(color: string = "#000000"): ShadowStyle {
+  if (Platform.OS === "android") {
+    return {
+      elevation: 4,
+    };
+  }
+
+  return {
+    shadowColor: color,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
+    shadowRadius: 8,
+  };
+}
+
+/**
+ * Ombre pour les modals
+ */
+export function getModalShadow(color: string = "#000000"): ShadowStyle {
+  if (Platform.OS === "android") {
+    return {
+      elevation: 12,
+    };
+  }
+
+  return {
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+  };
+}
+
+/**
+ * Ombre pour les cartes jouables (avec effet pulse)
+ */
+export function getPlayableCardShadow(color: string = "#B4443E"): ShadowStyle {
+  if (Platform.OS === "android") {
+    return {
+      elevation: 6,
+    };
+  }
+
+  return {
+    shadowColor: color,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   };
 }

@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { Colors } from '@/constants/theme';
+import { Typography } from '@/constants/typography';
+import { Spacing } from '@/constants/spacing';
 
 interface BadgeProps {
   label: string;
@@ -37,39 +39,38 @@ export function Badge({ label, variant = 'default', style, textStyle }: BadgePro
 
 const styles = StyleSheet.create({
   badge: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 20,
+    paddingVertical: 2, // py-0.5 (équivalent à 2px)
+    paddingHorizontal: 8, // px-2
+    borderRadius: Spacing.radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   kora: {
-    backgroundColor: Colors.primary.gold,
+    backgroundColor: Colors.light.secondary,
   },
   default: {
-    backgroundColor: Colors.derived.blueLight,
+    backgroundColor: Colors.light.muted,
   },
   success: {
-    backgroundColor: Colors.primary.red,
+    backgroundColor: Colors.light.primary,
   },
   warning: {
-    backgroundColor: Colors.derived.redLight,
+    backgroundColor: Colors.light.destructive,
   },
   text: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...Typography.gameXS,
   },
   koraText: {
-    color: Colors.derived.black,
+    color: Colors.light.secondaryForeground,
   },
   defaultText: {
-    color: Colors.derived.white,
+    color: Colors.light.mutedForeground,
   },
   successText: {
-    color: Colors.derived.white,
+    color: Colors.light.primaryForeground,
   },
   warningText: {
-    color: Colors.derived.white,
+    color: Colors.light.destructiveForeground,
   },
 });
 
