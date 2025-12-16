@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { useColors } from "@/hooks/useColors";
 import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
-import { useOAuth } from "@clerk/clerk-expo";
+import { useSSO } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
@@ -12,21 +12,14 @@ export default function RegisterScreen() {
   useWarmUpBrowser();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
-
-  const { startOAuthFlow: startGoogleOAuth } = useOAuth({
-    strategy: "oauth_google",
-  });
-  const { startOAuthFlow: startFacebookOAuth } = useOAuth({
-    strategy: "oauth_facebook",
-  });
+  const { startSSOFlow } = useSSO();
 
   const handleOAuth = async (strategy: "google" | "facebook") => {
     try {
       setLoading(strategy);
-      const startOAuthFlow =
-        strategy === "google" ? startGoogleOAuth : startFacebookOAuth;
-
-      const { createdSessionId, setActive } = await startOAuthFlow();
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy: `oauth_${strategy}`,
+      });
 
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
