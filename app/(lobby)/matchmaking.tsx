@@ -1,8 +1,11 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useSound } from "@/hooks/useSound";
+import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
@@ -18,6 +21,11 @@ export default function MatchmakingScreen() {
   const colors = useColors();
   const router = useRouter();
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
+  const { userId } = useAuth();
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkUserId: userId } : "skip"
+  );
   const { status, opponent, gameId, joinQueue, leaveQueue, timeInQueue } =
     useMatchmaking();
   const { playSound } = useSound();
@@ -25,10 +33,11 @@ export default function MatchmakingScreen() {
   const previousStatus = useRef<string | undefined>(undefined);
 
   const bet = betAmount ? parseInt(betAmount, 10) : 0;
+  const currency = (user?.currency || "XAF") as "EUR" | "XAF";
 
   useEffect(() => {
-    if (bet > 0 && status === "idle") {
-      joinQueue(bet, "XAF")
+    if (bet > 0 && status === "idle" && user) {
+      joinQueue(bet, currency)
         .then(() => {
           playSound("confirmation");
         })
@@ -145,7 +154,9 @@ export default function MatchmakingScreen() {
               <ActivityIndicator size="large" color={colors.secondary} />
             </Animated.View>
             <Text style={styles.title}>Recherche d&apos;adversaire...</Text>
-            <Text style={styles.subtitle}>Mise: {bet} Kora</Text>
+            <Text style={styles.subtitle}>
+              Mise: {bet} {currency}
+            </Text>
             <Text style={styles.timeText}>
               Temps écoulé: {formatTime(timeInQueue)}
             </Text>
@@ -163,7 +174,9 @@ export default function MatchmakingScreen() {
             <Text style={styles.foundTitle}>Adversaire trouvé !</Text>
             <Avatar name={opponent.username} size={80} />
             <Text style={styles.opponentName}>{opponent.username}</Text>
-            <Text style={styles.subtitle}>Mise: {bet} Kora</Text>
+            <Text style={styles.subtitle}>
+              Mise: {bet} {currency}
+            </Text>
           </>
         )}
 

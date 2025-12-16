@@ -1,4 +1,4 @@
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "./useAuth";
 
@@ -15,10 +15,23 @@ export function useEconomy() {
     myUserId ? { userId: myUserId } : "skip"
   );
 
+  const redeemRechargeCodeMutation = useMutation(api.recharge.redeemRechargeCode);
+
+  const redeemCode = async (code: string) => {
+    if (!myUserId) {
+      throw new Error("User not authenticated");
+    }
+    return await redeemRechargeCodeMutation({
+      userId: myUserId,
+      code,
+    });
+  };
+
   return {
     balance: user?.balance || 0,
     currency: user?.currency || "XAF",
     transactions: transactions || [],
+    redeemCode,
   };
 }
 

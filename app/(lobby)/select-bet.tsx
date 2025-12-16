@@ -106,7 +106,7 @@ export default function SelectBetScreen() {
             return (
               <Button
                 key={amount}
-                title={`${amount} Kora`}
+                title={`${amount} ${user?.currency || "XAF"}`}
                 onPress={() => setSelectedBet(amount)}
                 variant={selectedBet === amount ? "primary" : "secondary"}
                 disabled={!canAfford}
@@ -124,7 +124,7 @@ export default function SelectBetScreen() {
           <View style={styles.selectedInfo}>
             <Badge
               label={`Mise sélectionnée: ${selectedBet} ${user?.currency || "XAF"}`}
-              variant="kora"
+              variant="default"
             />
           </View>
         )}

@@ -1,4 +1,4 @@
-import { Stack } from 'expo-router';
+import { Stack } from "expo-router";
 
 export default function GameLayout() {
   return (
@@ -8,7 +8,13 @@ export default function GameLayout() {
       }}
     >
       <Stack.Screen name="match/[matchId]" />
+      <Stack.Screen
+        name="chat/[gameId]"
+        options={{
+          presentation: "modal",
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
-

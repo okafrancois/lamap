@@ -106,7 +106,7 @@ export const calculateWinnings = (
   totalBet: number,
   multiplier: number
 ): { winnings: number; platformFee: number } => {
-  const platformFee = totalBet * 0.1;
+  const platformFee = totalBet * 0.02;
   const winnings = (totalBet - platformFee) * multiplier;
   return { winnings, platformFee };
 };

@@ -189,7 +189,7 @@ export default function HomeScreen() {
           </Text>
           <Badge
             label={user?.currency || "XAF"}
-            variant="kora"
+            variant="default"
             style={styles.badge}
           />
         </View>

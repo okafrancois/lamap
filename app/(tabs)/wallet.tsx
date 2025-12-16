@@ -1,15 +1,64 @@
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useEconomy } from "@/hooks/useEconomy";
-import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useQuery } from "convex/react";
+import React, { useState } from "react";
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WalletScreen() {
   const colors = useColors();
-  const { isSignedIn } = useAuth();
-  const { balance, currency, transactions } = useEconomy();
+  const { isSignedIn, userId } = useAuth();
+  const { balance, currency, transactions, redeemCode } = useEconomy();
+  const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
+  const [rechargeCode, setRechargeCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
+  
+  const codeInfoQuery = useQuery(
+    api.recharge.getRechargeCode,
+    rechargeCode.trim().length >= 3 ? { code: rechargeCode.trim() } : "skip"
+  );
+
+  const codeInfo = codeInfoQuery ? {
+    amount: codeInfoQuery.amount,
+    currency: codeInfoQuery.currency,
+    isValid: codeInfoQuery.isValid,
+  } : null;
+
+  const handleRedeemCode = async () => {
+    if (!codeInfo || !rechargeCode.trim()) return;
+
+    setRedeeming(true);
+    try {
+      await redeemCode(rechargeCode.trim());
+      Alert.alert(
+        "Recharge réussie",
+        `Votre compte a été crédité de ${codeInfo.amount.toLocaleString()} ${codeInfo.currency}`
+      );
+      setRechargeModalVisible(false);
+      setRechargeCode("");
+    } catch (error: any) {
+      Alert.alert("Erreur", error.message || "Impossible d'utiliser ce code");
+    } finally {
+      setRedeeming(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setRechargeModalVisible(false);
+    setRechargeCode("");
+  };
 
   const styles = StyleSheet.create({
     container: {
@@ -129,6 +178,63 @@ export default function WalletScreen() {
     text: {
       color: colors.text,
     },
+    rechargeButton: {
+      marginTop: 16,
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 24,
+      width: "100%",
+      maxWidth: 400,
+    },
+    modalTitle: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    modalSubtitle: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      marginBottom: 24,
+    },
+    codeInput: {
+      backgroundColor: colors.background,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 16,
+      color: colors.text,
+      marginBottom: 16,
+      textTransform: "uppercase",
+      letterSpacing: 2,
+    },
+    codeInfo: {
+      backgroundColor: colors.muted,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    codeInfoText: {
+      fontSize: 14,
+      color: colors.text,
+      marginBottom: 4,
+    },
+    codeInfoAmount: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.secondary,
+    },
+    modalActions: {
+      gap: 12,
+    },
   });
 
   if (!isSignedIn) {
@@ -146,7 +252,13 @@ export default function WalletScreen() {
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde</Text>
             <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
-            <Badge label={currency} variant="kora" style={styles.badge} />
+            <Badge label={currency} variant="default" style={styles.badge} />
+            <Button
+              title="Recharger"
+              onPress={() => setRechargeModalVisible(true)}
+              variant="primary"
+              style={styles.rechargeButton}
+            />
           </View>
 
           <View style={styles.section}>
@@ -198,6 +310,83 @@ export default function WalletScreen() {
           </View>
         </View>
       </ScrollView>
+
+      <Modal
+        visible={rechargeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Recharger mon compte</Text>
+            <Text style={styles.modalSubtitle}>
+              Entrez votre code de recharge
+            </Text>
+
+            <TextInput
+              style={styles.codeInput}
+              value={rechargeCode}
+              onChangeText={(text) => {
+                setRechargeCode(text.toUpperCase().replace(/[^A-Z0-9]/g, ""));
+              }}
+              placeholder="ABC123XYZ"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="characters"
+              maxLength={20}
+              editable={!redeeming}
+            />
+
+            {codeInfoQuery === null && rechargeCode.trim().length >= 3 && (
+              <Text style={[styles.modalSubtitle, { color: colors.primary, marginTop: -16, marginBottom: 16 }]}>
+                Code invalide ou introuvable
+              </Text>
+            )}
+
+            {codeInfoQuery && !codeInfoQuery.isValid && (
+              <Text style={[styles.modalSubtitle, { color: colors.primary, marginTop: -16, marginBottom: 16 }]}>
+                {codeInfoQuery.isUsed ? "Ce code a déjà été utilisé" : codeInfoQuery.isExpired ? "Ce code a expiré" : "Ce code n'est plus actif"}
+              </Text>
+            )}
+
+            {codeInfo && codeInfo.isValid && (
+              <View style={styles.codeInfo}>
+                <Text style={styles.codeInfoText}>Montant à recharger :</Text>
+                <Text style={styles.codeInfoAmount}>
+                  {codeInfo.amount.toLocaleString()} {codeInfo.currency}
+                </Text>
+              </View>
+            )}
+
+            <View style={styles.modalActions}>
+              {codeInfo && codeInfo.isValid ? (
+                <>
+                  <Button
+                    title={`Recharger ${codeInfo.amount.toLocaleString()} ${codeInfo.currency}`}
+                    onPress={handleRedeemCode}
+                    variant="primary"
+                    loading={redeeming}
+                    disabled={redeeming}
+                  />
+                  <Button
+                    title="Annuler"
+                    onPress={handleCloseModal}
+                    variant="ghost"
+                    disabled={redeeming}
+                  />
+                </>
+              ) : (
+                <Button
+                  title="Annuler"
+                  onPress={handleCloseModal}
+                  variant="ghost"
+                  disabled={redeeming}
+                />
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

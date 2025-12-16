@@ -43,9 +43,22 @@ export function ResultModal({
 
   const isWinner = game.winnerId === myUserId;
   const myPlayer = game.players.find((p) => p.userId === myUserId);
-  const winnings = myPlayer?.balance || 0;
   const totalBet = game.bet.amount * 2;
-  const platformFee = totalBet * 0.1;
+  const platformFee = totalBet * 0.02;
+  
+  // Calculate actual winnings from the game
+  let winnings = 0;
+  if (isWinner) {
+    if (game.victoryType === "triple_kora") {
+      winnings = (totalBet - platformFee) * 8;
+    } else if (game.victoryType === "double_kora") {
+      winnings = (totalBet - platformFee) * 4;
+    } else if (game.victoryType === "simple_kora") {
+      winnings = (totalBet - platformFee) * 2;
+    } else {
+      winnings = totalBet - platformFee;
+    }
+  }
 
   useEffect(() => {
     if (visible) {
@@ -247,25 +260,27 @@ export function ResultModal({
             {isWinner ? "🎉 Victoire !" : "😔 Défaite"}
           </Text>
 
-          <View style={styles.winTypeContainer}>
-            <Badge
-              label={winTypeLabel}
-              variant={isWinner ? "kora" : "default"}
-              style={styles.winTypeBadge}
-            />
-            {game.victoryType && game.victoryType.includes("kora") && (
+          {isWinner && (
+            <View style={styles.winTypeContainer}>
               <Badge
-                label={
-                  game.victoryType === "triple_kora" ? "x8"
-                  : game.victoryType === "double_kora" ?
-                    "x4"
-                  : "x2"
-                }
-                variant="kora"
-                style={styles.multiplierBadge}
+                label={winTypeLabel}
+                variant={isWinner ? "kora" : "default"}
+                style={styles.winTypeBadge}
               />
-            )}
-          </View>
+              {game.victoryType && game.victoryType.includes("kora") && (
+                <Badge
+                  label={
+                    game.victoryType === "triple_kora" ? "x8"
+                    : game.victoryType === "double_kora" ?
+                      "x4"
+                    : "x2"
+                  }
+                  variant="kora"
+                  style={styles.multiplierBadge}
+                />
+              )}
+            </View>
+          )}
 
           {game.bet.amount > 0 && (
             <View style={styles.statsContainer}>
@@ -275,10 +290,10 @@ export function ResultModal({
                   {totalBet} {game.bet.currency}
                 </Text>
               </View>
-              {isWinner && (
+              {isWinner ? (
                 <>
                   <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>Commission (10%)</Text>
+                    <Text style={styles.statLabel}>Commission (2%)</Text>
                     <Text style={styles.statValue}>
                       -{platformFee} {game.bet.currency}
                     </Text>
@@ -296,6 +311,13 @@ export function ResultModal({
                     </Text>
                   </View>
                 </>
+              ) : (
+                <View style={[styles.statRow, styles.totalRow]}>
+                  <Text style={styles.totalLabel}>Perte</Text>
+                  <Text style={[styles.totalValue, { color: colors.primary }]}>
+                    -{game.bet.amount} {game.bet.currency}
+                  </Text>
+                </View>
               )}
             </View>
           )}

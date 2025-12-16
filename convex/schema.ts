@@ -105,6 +105,17 @@ const messagesTable = defineTable({
   .index("by_conversation", ["conversationId", "timestamp"])
   .index("by_sender", ["senderId"]);
 
+const rechargeCodesTable = defineTable({
+  code: v.string(),
+  amount: v.number(),
+  currency: v.string(),
+  usedBy: v.optional(v.id("users")),
+  usedAt: v.optional(v.number()),
+  createdAt: v.number(),
+  expiresAt: v.optional(v.number()),
+  isActive: v.boolean(),
+}).index("by_code", ["code"]);
+
 export default defineSchema({
   numbers: numbersTable,
   users: usersTable,
@@ -114,4 +125,5 @@ export default defineSchema({
   matchmakingQueue: matchmakingQueueTable,
   conversations: conversationsTable,
   messages: messagesTable,
+  rechargeCodes: rechargeCodesTable,
 });

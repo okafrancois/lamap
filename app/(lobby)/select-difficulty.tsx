@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/Button";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
-import { useRouter } from "expo-router";
+import { useQuery } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,11 +18,20 @@ const DIFFICULTIES = [
 export default function SelectDifficultyScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
+  const { userId } = useAuth();
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkUserId: userId } : "skip"
+  );
   const { createMatchVsAI } = useMatchmaking();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
     null
   );
   const [loading, setLoading] = useState(false);
+
+  const bet = betAmount ? parseInt(betAmount, 10) : 0;
+  const currency = (user?.currency || "XAF") as "EUR" | "XAF";
 
   const handleStart = async () => {
     if (!selectedDifficulty) return;
@@ -27,9 +39,9 @@ export default function SelectDifficultyScreen() {
     setLoading(true);
     try {
       const gameId = await createMatchVsAI(
-        0,
+        bet,
         selectedDifficulty as "easy" | "medium" | "hard",
-        "XAF"
+        currency
       );
       router.replace(`/(game)/match/${gameId}`);
     } catch (error) {

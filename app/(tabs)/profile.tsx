@@ -87,10 +87,10 @@ export default function ProfileScreen() {
       color: colors.mutedForeground,
       textAlign: "center",
     },
-    koraSection: {
+    balanceSection: {
       marginBottom: 24,
     },
-    koraCard: {
+    balanceCard: {
       backgroundColor: colors.card,
       borderRadius: 16,
       padding: 24,
@@ -98,12 +98,12 @@ export default function ProfileScreen() {
       borderWidth: 2,
       borderColor: colors.secondary,
     },
-    koraLabel: {
+    balanceLabel: {
       fontSize: 16,
       color: colors.mutedForeground,
       marginBottom: 8,
     },
-    koraAmount: {
+    balanceAmount: {
       fontSize: 36,
       fontWeight: "700",
       color: colors.secondary,
@@ -145,15 +145,15 @@ export default function ProfileScreen() {
             {user?.email && <Text style={styles.email}>{user.email}</Text>}
           </View>
 
-          <View style={styles.koraSection}>
-            <View style={styles.koraCard}>
-              <Text style={styles.koraLabel}>Solde</Text>
-              <Text style={styles.koraAmount}>
+          <View style={styles.balanceSection}>
+            <View style={styles.balanceCard}>
+              <Text style={styles.balanceLabel}>Solde</Text>
+              <Text style={styles.balanceAmount}>
                 {user?.balance?.toLocaleString() || 0}
               </Text>
               <Badge
                 label={user?.currency || "XAF"}
-                variant="kora"
+                variant="default"
                 style={styles.badge}
               />
             </View>

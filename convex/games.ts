@@ -359,7 +359,7 @@ export const startGame = mutation({
       const winnerId = getPlayerId(winnerPlayer);
       const betAmount = game.bet.amount;
       const totalBet = betAmount * 2;
-      const platformFee = totalBet * 0.1;
+      const platformFee = totalBet * 0.02;
       const winnings = totalBet - platformFee;
 
       const updatedPlayers = game.players.map((p, idx) => ({
@@ -374,7 +374,10 @@ export const startGame = mutation({
       // Determine victory type from reason
       let victoryType: "auto_sevens" | "auto_sum" | "auto_lowest" | null = null;
       if (autoVictory.reason) {
-        if (autoVictory.reason.includes("cartes de 7") || autoVictory.reason.includes("7")) {
+        if (
+          autoVictory.reason.includes("cartes de 7") ||
+          autoVictory.reason.includes("7")
+        ) {
           victoryType = "auto_sevens";
         } else if (autoVictory.reason.includes("Somme la plus faible")) {
           victoryType = "auto_lowest";
@@ -609,7 +612,7 @@ export const playCard = mutation({
           const koraType = getKoraType(consecutiveThrees);
           const betAmount = game.bet.amount;
           const totalBet = betAmount * 2;
-          const platformFee = totalBet * 0.1;
+          const platformFee = totalBet * 0.02;
           const korasWon = (totalBet - platformFee) * multiplier;
 
           gameState.players = gameState.players.map((p) => ({
@@ -660,7 +663,7 @@ export const playCard = mutation({
         // End game
         const betAmount = game.bet.amount;
         const totalBet = betAmount * 2;
-        const platformFee = totalBet * 0.1;
+        const platformFee = totalBet * 0.02;
         const winnings = totalBet - platformFee;
 
         gameState.status = "ENDED" as const;
@@ -928,7 +931,7 @@ export const playCardInternal = internalMutation({
           const koraType = getKoraType(consecutiveThrees);
           const betAmount = game.bet.amount;
           const totalBet = betAmount * 2;
-          const platformFee = totalBet * 0.1;
+          const platformFee = totalBet * 0.02;
           const korasWon = (totalBet - platformFee) * multiplier;
 
           gameState.players = gameState.players.map((p) => ({
@@ -977,7 +980,7 @@ export const playCardInternal = internalMutation({
       if (game.currentRound >= 5 || anyPlayerOutOfCards) {
         const betAmount = game.bet.amount;
         const totalBet = betAmount * 2;
-        const platformFee = totalBet * 0.1;
+        const platformFee = totalBet * 0.02;
         const winnings = totalBet - platformFee;
 
         gameState.status = "ENDED" as const;

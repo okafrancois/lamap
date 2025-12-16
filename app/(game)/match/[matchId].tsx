@@ -1,5 +1,4 @@
 import { CardHand, type Card } from "@/components/game/CardHand";
-import { GameChatDrawer } from "@/components/game/GameChatDrawer";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { Badge } from "@/components/ui/Badge";
@@ -48,7 +47,6 @@ export default function MatchScreen() {
   const [previousGameStatus, setPreviousGameStatus] = useState<
     string | undefined
   >(undefined);
-  const [chatVisible, setChatVisible] = useState(false);
   const [resultModalVisible, setResultModalVisible] = useState(false);
 
   useEffect(() => {
@@ -296,7 +294,7 @@ export default function MatchScreen() {
           )}
           {game.mode === "ONLINE" && (
             <TouchableOpacity
-              onPress={() => setChatVisible(true)}
+              onPress={() => router.push(`/(game)/chat/${matchId}`)}
               style={styles.chatButton}
             >
               <IconSymbol
@@ -351,12 +349,6 @@ export default function MatchScreen() {
           disabled={isPlaying}
         />
       </View>
-
-      <GameChatDrawer
-        gameId={matchId}
-        visible={chatVisible}
-        onClose={() => setChatVisible(false)}
-      />
 
       {game.status === "ENDED" && (
         <ResultModal
