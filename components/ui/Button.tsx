@@ -8,16 +8,18 @@ import {
   Text,
   TextStyle,
   TouchableOpacity,
+  View,
   ViewStyle,
 } from "react-native";
 
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "oauth";
   size?: "sm" | "default" | "lg";
   disabled?: boolean;
   loading?: boolean;
+  icon?: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
   textStyle?: TextStyle | TextStyle[];
   accessibilityLabel?: string;
@@ -31,6 +33,7 @@ export function Button({
   size = "default",
   disabled = false,
   loading = false,
+  icon,
   style,
   textStyle: customTextStyle,
   accessibilityLabel,
@@ -77,6 +80,9 @@ export function Button({
       destructive: {
         backgroundColor: colors.destructive,
       },
+      oauth: {
+        backgroundColor: "#FFFFFF",
+      },
     };
 
     return [
@@ -107,6 +113,9 @@ export function Button({
       },
       destructive: {
         color: colors.destructiveForeground,
+      },
+      oauth: {
+        color: "#1A1A1A",
       },
     };
 
@@ -155,7 +164,11 @@ export function Button({
             : colors.primary
           }
         />
-      : <Text style={textStyle}>{title}</Text>}
+      : <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+          {icon}
+          <Text style={textStyle}>{title}</Text>
+        </View>
+      }
     </TouchableOpacity>
   );
 }
