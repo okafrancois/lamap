@@ -371,6 +371,18 @@ export const startGame = mutation({
           : p.balance - betAmount,
       }));
 
+      // Determine victory type from reason
+      let victoryType: "auto_sevens" | "auto_sum" | "auto_lowest" | null = null;
+      if (autoVictory.reason) {
+        if (autoVictory.reason.includes("cartes de 7") || autoVictory.reason.includes("7")) {
+          victoryType = "auto_sevens";
+        } else if (autoVictory.reason.includes("Somme la plus faible")) {
+          victoryType = "auto_lowest";
+        } else if (autoVictory.reason.includes("Somme < 21")) {
+          victoryType = "auto_sum";
+        }
+      }
+
       // Credit winnings to winner (only if human player)
       if (winnerPlayer?.userId) {
         const winner = await ctx.db.get(winnerPlayer.userId);
@@ -394,7 +406,7 @@ export const startGame = mutation({
         players: updatedPlayers,
         winnerId: winnerId,
         endReason: autoVictory.reason,
-        victoryType: "automatic",
+        victoryType: victoryType,
         history: [
           ...game.history,
           {

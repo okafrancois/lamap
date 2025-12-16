@@ -82,7 +82,7 @@ export function calculateHandSum(cards: Card[]): number {
 export function canPlayCard(
   cardId: string,
   player: Player,
-  game: Game,
+  game: Game
 ): boolean {
   if (game.status !== "PLAYING") return false;
   if (game.currentTurnPlayerId !== getPlayerId(player)) return false;
@@ -97,7 +97,7 @@ export function canPlayCard(
 
   // Get current round cards
   const currentRoundCards = game.playedCards.filter(
-    (p) => p.round === game.currentRound,
+    (p) => p.round === game.currentRound
   );
 
   if (currentRoundCards.length === 0) {
@@ -136,7 +136,7 @@ export function updatePlayableCards(game: Game): Game {
 export function determineRoundWinner(
   firstCard: PlayedCard,
   secondCard: PlayedCard,
-  hasHandPlayerId: Id<"users"> | string,
+  hasHandPlayerId: Id<"users"> | string
 ): Id<"users"> | string {
   if (firstCard.card.suit === secondCard.card.suit) {
     // Same suit: compare values
@@ -153,7 +153,7 @@ export function determineRoundWinner(
 
 export function checkAutomaticVictory(
   firstPlayerHand: Card[],
-  secondPlayerHand: Card[],
+  secondPlayerHand: Card[]
 ): {
   hasVictory: boolean;
   winnerId: string | null;
@@ -161,21 +161,19 @@ export function checkAutomaticVictory(
   playerIndex: 0 | 1 | null;
 } {
   const firstPlayerSevens = firstPlayerHand.filter(
-    (card) => card.rank === "7",
+    (card) => card.rank === "7"
   ).length;
   const secondPlayerSevens = secondPlayerHand.filter(
-    (card) => card.rank === "7",
+    (card) => card.rank === "7"
   ).length;
 
   // Check for 3+ sevens
   if (firstPlayerSevens >= 3 || secondPlayerSevens >= 3) {
     if (firstPlayerSevens >= 3 && secondPlayerSevens >= 3) {
       const playerIndex =
-        firstPlayerSevens > secondPlayerSevens
-          ? 0
-          : firstPlayerSevens < secondPlayerSevens
-            ? 1
-            : 0;
+        firstPlayerSevens > secondPlayerSevens ? 0
+        : firstPlayerSevens < secondPlayerSevens ? 1
+        : 0;
       return {
         hasVictory: true,
         winnerId: null,
@@ -273,7 +271,7 @@ export function getKoraType(consecutiveThrees: number): string {
 
 export function updatePlayerTurn(game: Game): Id<"users"> | string | null {
   const currentRoundCards = game.playedCards.filter(
-    (p) => p.round === game.currentRound,
+    (p) => p.round === game.currentRound
   );
 
   if (currentRoundCards.length === 0) {
@@ -281,7 +279,7 @@ export function updatePlayerTurn(game: Game): Id<"users"> | string | null {
   } else if (currentRoundCards.length === 1) {
     const firstPlayerId = currentRoundCards[0].playerId;
     const otherPlayer = game.players.find(
-      (p) => getPlayerId(p) !== firstPlayerId,
+      (p) => getPlayerId(p) !== firstPlayerId
     );
     return otherPlayer ? getPlayerId(otherPlayer) : null;
   } else {
@@ -294,7 +292,7 @@ export function updatePlayerTurn(game: Game): Id<"users"> | string | null {
 export function validatePlayCardAction(
   cardId: string,
   playerId: Id<"users"> | string,
-  game: Game,
+  game: Game
 ): { valid: boolean; error?: string } {
   if (game.status !== "PLAYING") {
     return { valid: false, error: "La partie n'est pas en cours" };
@@ -320,11 +318,11 @@ export function validatePlayCardAction(
 
   // Check if card already played this round
   const roundCards = game.playedCards.filter(
-    (p) => p.round === game.currentRound,
+    (p) => p.round === game.currentRound
   );
   const cardAlreadyPlayed = roundCards.some(
     (playedCard) =>
-      playedCard.card.id === cardId && playedCard.playerId === playerId,
+      playedCard.card.id === cardId && playedCard.playerId === playerId
   );
 
   if (cardAlreadyPlayed) {
@@ -356,7 +354,7 @@ export function getAIBotId(difficulty: "easy" | "medium" | "hard"): string {
 }
 
 export function getAIBotUsername(
-  difficulty: "easy" | "medium" | "hard",
+  difficulty: "easy" | "medium" | "hard"
 ): string {
   return AI_BOT_NAMES[difficulty];
 }
@@ -382,7 +380,7 @@ export function addHistoryEntry(
     | "player_joined"
     | "player_left",
   playerId?: Id<"users"> | string,
-  data?: GameHistory["data"],
+  data?: GameHistory["data"]
 ): Game {
   const entry: GameHistory = {
     action: action as any,
