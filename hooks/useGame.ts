@@ -12,7 +12,11 @@ export function useGame(matchId: Id<"matches">) {
   );
   const myUserId = user?._id;
 
-  const match = useQuery(api.matches.get, { matchId });
+  // Always call useQuery hooks in the same order
+  const match = useQuery(
+    api.matches.get,
+    matchId ? { matchId } : "skip"
+  );
   const myHand = useQuery(
     api.matches.getMyHand,
     matchId && myUserId

@@ -17,8 +17,9 @@ import { SUIT_SYMBOLS } from '@/convex/game';
 export default function MatchScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
-  const gameMatchId = matchId as Id<"matches">;
   
+  // All hooks must be called before any conditional returns
+  const gameMatchId = matchId ? (matchId as Id<"matches">) : (null as unknown as Id<"matches">);
   const { match, myHand, currentPlays, turnResults, isMyTurn, playCard, canPlayCard } = useGame(gameMatchId);
   const startMatch = useMutation(api.matches.startMatch);
   
@@ -32,7 +33,7 @@ export default function MatchScreen() {
   }, [match?.status, matchId, router]);
 
   useEffect(() => {
-    if (match?.status === 'ready' && !match.currentTurn) {
+    if (match?.status === 'ready' && !match.currentTurn && gameMatchId) {
       startMatch({ matchId: gameMatchId }).catch((error) => {
         Alert.alert('Erreur', 'Impossible de démarrer le match');
         console.error(error);
@@ -59,6 +60,15 @@ export default function MatchScreen() {
       setIsPlaying(false);
     }
   };
+
+  // Conditional rendering after all hooks are called
+  if (!matchId) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <Text style={styles.loadingText}>Match ID manquant</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (!match) {
     return (
