@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withDelay, withSpring } from 'react-native-reanimated';
+import { isValidPlay, type Card } from '@/convex/game';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
 import { PlayingCard } from './PlayingCard';
-import { type Card } from '@/convex/game';
-import { isValidPlay } from '@/convex/game';
 
 interface CardHandProps {
   cards: Card[];
@@ -12,6 +11,47 @@ interface CardHandProps {
   onCardSelect: (card: Card) => void;
   selectedCard?: Card | null;
   disabled?: boolean;
+}
+
+interface AnimatedCardProps {
+  card: Card;
+  index: number;
+  state: 'playable' | 'disabled' | 'selected';
+  onPress: () => void;
+  isSelected: boolean;
+}
+
+function AnimatedCard({ card, index, state, onPress, isSelected }: AnimatedCardProps) {
+  const translateY = useSharedValue(50);
+  const opacity = useSharedValue(0);
+
+  React.useEffect(() => {
+    translateY.value = withDelay(index * 50, withSpring(0, { damping: 15 }));
+    opacity.value = withDelay(index * 50, withSpring(1, { damping: 15 }));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        styles.cardWrapper,
+        animatedStyle,
+        isSelected && styles.selectedWrapper,
+      ]}
+    >
+      <PlayingCard
+        suit={card.suit}
+        value={card.value}
+        state={state}
+        onPress={onPress}
+        size="medium"
+      />
+    </Animated.View>
+  );
 }
 
 export function CardHand({
@@ -45,39 +85,16 @@ export function CardHand({
 
   return (
     <View style={styles.container}>
-      {cards.map((card, index) => {
-        const translateY = useSharedValue(50);
-        const opacity = useSharedValue(0);
-
-        React.useEffect(() => {
-          translateY.value = withDelay(index * 50, withSpring(0, { damping: 15 }));
-          opacity.value = withDelay(index * 50, withSpring(1, { damping: 15 }));
-        }, []);
-
-        const animatedStyle = useAnimatedStyle(() => ({
-          transform: [{ translateY: translateY.value }],
-          opacity: opacity.value,
-        }));
-
-        return (
-          <Animated.View
-            key={`${card.suit}-${card.value}-${index}`}
-            style={[
-              styles.cardWrapper,
-              animatedStyle,
-              selectedCard && selectedCard.suit === card.suit && selectedCard.value === card.value && styles.selectedWrapper,
-            ]}
-          >
-            <PlayingCard
-              suit={card.suit}
-              value={card.value}
-              state={getCardState(card)}
-              onPress={() => handleCardPress(card)}
-              size="medium"
-            />
-          </Animated.View>
-        );
-      })}
+      {cards.map((card, index) => (
+        <AnimatedCard
+          key={`${card.suit}-${card.value}-${index}`}
+          card={card}
+          index={index}
+          state={getCardState(card)}
+          onPress={() => handleCardPress(card)}
+          isSelected={!!(selectedCard && selectedCard.suit === card.suit && selectedCard.value === card.value)}
+        />
+      ))}
     </View>
   );
 }

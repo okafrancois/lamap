@@ -1,6 +1,5 @@
-import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
-import { Id } from "./_generated/dataModel";
+import { mutation, query } from "./_generated/server";
 
 export const joinQueue = mutation({
   args: {
@@ -185,9 +184,32 @@ export const createMatchVsAI = mutation({
       throw new Error("Insufficient balance");
     }
 
+    let aiUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", "SYSTEM_AI"))
+      .first();
+
+    if (!aiUser) {
+      const aiUserId = await ctx.db.insert("users", {
+        clerkId: "SYSTEM_AI",
+        username: "IA LaMap",
+        koraBalance: 1000000,
+        totalWins: 0,
+        totalLosses: 0,
+        totalKoraWon: 0,
+        totalKoraLost: 0,
+        createdAt: Date.now(),
+      });
+      aiUser = await ctx.db.get(aiUserId);
+    }
+
+    if (!aiUser) {
+        throw new Error("Failed to get AI user");
+    }
+
     const matchId = await ctx.db.insert("matches", {
       player1Id: args.playerId,
-      player2Id: undefined,
+      player2Id: aiUser._id,
       isVsAI: true,
       aiDifficulty: args.difficulty,
       betAmount: args.betAmount,
