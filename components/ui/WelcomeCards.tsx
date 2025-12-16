@@ -65,7 +65,7 @@ function AnimatedCard({
 
   const screenWidth = Dimensions.get("window").width;
   const cardWidth = 100;
-  const spacing = cardWidth * 0.5;
+  const spacing = cardWidth * 0.6;
   const totalWidth = (totalCards - 1) * spacing + cardWidth;
   const startX = (screenWidth - totalWidth) / 2 - 20;
   const cardX = startX + index * spacing;
@@ -108,7 +108,7 @@ function AnimatedCard({
         true
       );
     }, floatDelay);
-  }, []);
+  }, [floatRotate, floatY, index, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -128,7 +128,7 @@ function AnimatedCard({
         animatedStyle,
       ]}
     >
-      <PlayingCard suit={suit} rank={rank} state="playable" size="large" />
+      <PlayingCard suit={suit} rank={rank} state="playable" size="xxl" />
     </Animated.View>
   );
 }
@@ -156,9 +156,6 @@ const styles = StyleSheet.create({
   container: {
     position: "absolute",
     bottom: -40,
-    left: -20,
-    right: -20,
-    height: 150,
     zIndex: 0,
   },
   cardWrapper: {

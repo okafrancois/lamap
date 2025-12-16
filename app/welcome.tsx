@@ -211,20 +211,20 @@ export default function WelcomeScreen() {
     title: {
       fontSize: 48,
       fontWeight: "700",
-      color: "#A68258",
+      color: colors.primary,
       textAlign: "center",
       marginBottom: 16,
       letterSpacing: 1,
     },
     tagline: {
       fontSize: 18,
-      color: "#1A1A1A",
+      color: colors.accent,
       textAlign: "center",
       lineHeight: 26,
       opacity: 0.8,
     },
     taglineHighlight: {
-      color: "#B4443E",
+      color: colors.primary,
       fontWeight: "600",
     },
     buttons: {
@@ -239,7 +239,7 @@ export default function WelcomeScreen() {
     },
     footerText: {
       fontSize: 12,
-      color: "#1A1A1A",
+      color: colors.accent,
       opacity: 0.5,
       textAlign: "center",
     },
@@ -270,7 +270,9 @@ export default function WelcomeScreen() {
               loading={loading === "google"}
               disabled={!!loading}
               variant="oauth"
-              icon={<Ionicons name="logo-google" size={20} color="#1A1A1A" />}
+              icon={
+                <Ionicons name="logo-google" size={20} color={colors.accent} />
+              }
               style={styles.oauthButton}
             />
           </Animated.View>
@@ -280,8 +282,14 @@ export default function WelcomeScreen() {
               onPress={() => handleOAuth("facebook")}
               loading={loading === "facebook"}
               disabled={!!loading}
-              variant="secondary"
-              icon={<Ionicons name="logo-facebook" size={20} color="#FFFFFF" />}
+              variant="primary"
+              icon={
+                <Ionicons
+                  name="logo-facebook"
+                  size={20}
+                  color={colors.accentForeground}
+                />
+              }
               style={styles.oauthButton}
             />
           </Animated.View>
