@@ -101,6 +101,70 @@ export const joinQueue = mutation({
         gameId,
       });
 
+      // Créer la partie dans la table games
+      const now = Date.now();
+      const players: any[] = [
+        {
+          userId: args.userId,
+          username: player1.username,
+          type: "user",
+          isConnected: true,
+          avatar: player1.avatarUrl,
+          balance: 0,
+        },
+        {
+          userId: potentialMatch.userId,
+          username: player2.username,
+          type: "user",
+          isConnected: true,
+          avatar: player2.avatarUrl,
+          balance: 0,
+        },
+      ];
+
+      const gameData = {
+        gameId,
+        seed,
+        version: 1,
+        status: "WAITING" as const,
+        currentRound: 1,
+        maxRounds: 5,
+        hasHandPlayerId: null as any,
+        currentTurnPlayerId: null as any,
+        players,
+        playedCards: [],
+        bet: {
+          amount: args.betAmount,
+          currency: args.currency,
+        },
+        winnerId: null as any,
+        endReason: null as string | null,
+        history: [
+          {
+            action: "game_created" as const,
+            timestamp: now,
+            playerId: args.userId,
+            data: {
+              message: `Partie créée entre ${player1.username} et ${player2.username}`,
+            },
+          },
+        ],
+        mode: "ONLINE" as const,
+        maxPlayers: 2,
+        aiDifficulty: null as string | null,
+        roomName: undefined,
+        isPrivate: false,
+        hostId: args.userId,
+        joinCode: undefined,
+        startedAt: now,
+        endedAt: null as number | null,
+        lastUpdatedAt: now,
+        victoryType: null as string | null,
+        rematchGameId: undefined,
+      };
+
+      await ctx.db.insert("games", gameData as any);
+
       return { matched: true, gameId, queueId: queueEntry };
     }
 
