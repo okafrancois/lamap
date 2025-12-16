@@ -35,13 +35,10 @@ export default function ResultScreen() {
   const cardOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.8);
 
-  // Son de fin de partie et son de victoire/défaite
+  // Son de victoire/défaite uniquement (pas de gameEnd pour éviter le double son)
   useEffect(() => {
     if (game) {
       const isWinner = game.winnerId === myUserId;
-
-      // Son de fin de partie
-      playSound("gameEnd");
 
       // Son selon le type de victoire/défaite
       if (isWinner) {

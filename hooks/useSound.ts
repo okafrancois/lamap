@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -55,52 +55,55 @@ const SOUND_MAP: Record<SoundType, any> = {
 };
 
 export function useSound() {
-  const [sounds, setSounds] = useState<Record<string, Audio.Sound>>({});
   const [isLoaded, setIsLoaded] = useState(false);
-  const soundsRef = useRef<Record<string, Audio.Sound>>({});
-
-  const unloadSounds = useCallback(async () => {
-    try {
-      for (const sound of Object.values(soundsRef.current)) {
-        await sound.unloadAsync();
-      }
-      soundsRef.current = {};
-      setSounds({});
-    } catch (error) {
-      console.warn("Failed to unload sounds:", error);
-    }
-  }, []);
+  const playersRef = useRef<
+    Record<string, ReturnType<typeof createAudioPlayer>>
+  >({});
 
   const loadSounds = useCallback(async () => {
     try {
       // Configurer le mode audio pour permettre la lecture en arrière-plan
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
       });
 
-      const loadedSounds: Record<string, Audio.Sound> = {};
+      const loadedPlayers: Record<
+        string,
+        ReturnType<typeof createAudioPlayer>
+      > = {};
 
-      // Charger tous les sons
+      // Créer un player pour chaque son
       for (const [type, source] of Object.entries(SOUND_MAP)) {
         try {
-          const { sound } = await Audio.Sound.createAsync(source, {
-            volume: 0.7,
-            shouldPlay: false,
-          });
-          loadedSounds[type] = sound;
+          const player = createAudioPlayer(source);
+          // Configurer le volume
+          player.volume = 0.7;
+          loadedPlayers[type] = player;
         } catch (error) {
           console.warn(`Failed to load sound ${type}:`, error);
         }
       }
 
-      soundsRef.current = loadedSounds;
-      setSounds(loadedSounds);
+      playersRef.current = loadedPlayers;
       setIsLoaded(true);
     } catch (error) {
       console.warn("Failed to initialize audio:", error);
       setIsLoaded(false);
+    }
+  }, []);
+
+  const unloadSounds = useCallback(async () => {
+    try {
+      for (const player of Object.values(playersRef.current)) {
+        try {
+          player.release();
+        } catch {
+          // Ignorer les erreurs de release
+        }
+      }
+      playersRef.current = {};
+    } catch (error) {
+      console.warn("Failed to unload sounds:", error);
     }
   }, []);
 
@@ -114,12 +117,17 @@ export function useSound() {
   const playSound = async (type: SoundType) => {
     try {
       // Jouer le son audio si disponible
-      const sound = sounds[type];
-      if (sound && isLoaded) {
+      const player = playersRef.current[type];
+      if (player && isLoaded) {
         try {
-          await sound.replayAsync();
-        } catch (error) {
-          console.warn(`Failed to play sound ${type}:`, error);
+          // Réinitialiser la position et jouer
+          player.seekTo(0);
+          player.play();
+        } catch (error: any) {
+          // Ignorer les erreurs silencieusement
+          if (!error?.message?.includes("Seeking interrupted")) {
+            console.warn(`Failed to play sound ${type}:`, error);
+          }
         }
       }
 
