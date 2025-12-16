@@ -48,6 +48,13 @@ export default function RootLayout() {
                 name="(messages)"
                 options={{ headerShown: false }}
               />
+              <Stack.Screen
+                name="settings"
+                options={{
+                  presentation: "modal",
+                  headerShown: false,
+                }}
+              />
             </Stack>
             <StatusBar style="auto" />
           </ThemeProvider>

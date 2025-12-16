@@ -1,6 +1,5 @@
 import { CardHand, type Card } from "@/components/game/CardHand";
 import { GameChatDrawer } from "@/components/game/GameChatDrawer";
-import { PlayingCard } from "@/components/game/PlayingCard";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { Badge } from "@/components/ui/Badge";
@@ -9,6 +8,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
+import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -40,6 +40,7 @@ export default function MatchScreen() {
   } = useGame(matchId || null);
   const startGame = useMutation(api.games.startGame);
   const { playSound } = useSound();
+  const { gameMode } = useSettings();
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -213,10 +214,6 @@ export default function MatchScreen() {
       flex: 1,
       padding: 16,
     },
-    opponentArea: {
-      alignItems: "center",
-      marginBottom: 24,
-    },
     centerArea: {
       flex: 1,
       justifyContent: "center",
@@ -224,19 +221,6 @@ export default function MatchScreen() {
     },
     leadSuitContainer: {
       marginBottom: 8,
-    },
-    myArea: {
-      alignItems: "center",
-      marginTop: 24,
-    },
-    playerLabel: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    playedCard: {
-      marginVertical: 8,
     },
     turnHistory: {
       backgroundColor: colors.card,
@@ -311,13 +295,6 @@ export default function MatchScreen() {
     );
   }
 
-  const opponent = game.players.find((p) => p.userId !== myUserId);
-  const currentRoundCards = currentPlays || [];
-  const myCard = currentRoundCards.find((pc) => pc.playerId === myUserId)?.card;
-  const opponentCard = currentRoundCards.find(
-    (pc) => pc.playerId !== myUserId
-  )?.card;
-
   const hasHandPlayer = game.players.find((p) => {
     const playerId = p.userId || p.botId;
     return playerId === game.hasHandPlayerId;
@@ -355,22 +332,6 @@ export default function MatchScreen() {
       </View>
 
       <View style={styles.playArea}>
-        <View style={styles.opponentArea}>
-          <Text style={styles.playerLabel}>
-            {opponent?.username || "Adversaire"}
-          </Text>
-          {opponentCard && (
-            <View style={styles.playedCard}>
-              <PlayingCard
-                suit={opponentCard.suit}
-                rank={opponentCard.rank}
-                state="played"
-                size="medium"
-              />
-            </View>
-          )}
-        </View>
-
         <View style={styles.centerArea}>
           {hasHandPlayer && (
             <View style={styles.leadSuitContainer}>
@@ -384,26 +345,14 @@ export default function MatchScreen() {
             results={turnResults}
             myPlayerId={myUserId}
             game={game}
+            currentPlays={currentPlays}
+            currentRound={game.currentRound}
           />
-        </View>
-
-        <View style={styles.myArea}>
-          {myCard && (
-            <View style={styles.playedCard}>
-              <PlayingCard
-                suit={myCard.suit}
-                rank={myCard.rank}
-                state="played"
-                size="small"
-              />
-            </View>
-          )}
-          <Text style={styles.playerLabel}>Vous</Text>
         </View>
       </View>
 
       <View style={styles.handArea}>
-        {isMyTurn && !myCard && (
+        {isMyTurn && (
           <View style={styles.turnIndicator}>
             <Text style={styles.yourTurnText}>C&apos;est votre tour !</Text>
           </View>
@@ -417,14 +366,14 @@ export default function MatchScreen() {
         )}
         <CardHand
           cards={myHand}
-          isMyTurn={isMyTurn && !myCard}
+          isMyTurn={isMyTurn}
           onCardSelect={handleCardSelect}
           onCardDoubleTap={handleDoubleTapCard}
           selectedCard={selectedCard}
-          disabled={isPlaying || !!myCard}
+          disabled={isPlaying}
+          gameMode={gameMode}
         />
-
-        {selectedCard && isMyTurn && !myCard && (
+        {selectedCard && isMyTurn && gameMode === "safe" && (
           <View style={styles.playButtonContainer}>
             <Button
               title="Jouer cette carte"

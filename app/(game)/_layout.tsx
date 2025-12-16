@@ -8,7 +8,6 @@ export default function GameLayout() {
       }}
     >
       <Stack.Screen name="match/[matchId]" />
-      <Stack.Screen name="result/[matchId]" />
     </Stack>
   );
 }

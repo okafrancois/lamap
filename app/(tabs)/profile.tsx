@@ -114,6 +114,7 @@ export default function ProfileScreen() {
     },
     actionsSection: {
       marginTop: 24,
+      gap: 12,
     },
     text: {
       color: colors.text,
@@ -150,11 +151,20 @@ export default function ProfileScreen() {
               <Text style={styles.koraAmount}>
                 {user?.balance?.toLocaleString() || 0}
               </Text>
-              <Badge label={user?.currency || "XAF"} variant="kora" style={styles.badge} />
+              <Badge
+                label={user?.currency || "XAF"}
+                variant="kora"
+                style={styles.badge}
+              />
             </View>
           </View>
 
           <View style={styles.actionsSection}>
+            <Button
+              title="Paramètres"
+              onPress={() => router.push("/settings")}
+              variant="outline"
+            />
             <Button
               title="Déconnexion"
               onPress={handleSignOut}

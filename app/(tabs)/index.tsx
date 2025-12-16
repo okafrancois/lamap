@@ -154,7 +154,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>LaMap241</Text>
+          <Text style={styles.title}>Lamap</Text>
           <Text style={styles.subtitle}>Jeu de cartes compétitif</Text>
         </View>
 
