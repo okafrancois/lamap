@@ -6,8 +6,8 @@ import { TurnHistory } from "@/components/game/TurnHistory";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
+import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useSound } from "@/hooks/useSound";
 import { useMutation } from "convex/react";
@@ -24,6 +24,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchScreen() {
+  const colors = useColors();
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
 
@@ -164,6 +165,125 @@ export default function MatchScreen() {
     [isPlaying, playCard, playSound]
   );
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    loadingText: {
+      color: colors.text,
+      marginTop: 16,
+      fontSize: 16,
+    },
+    header: {
+      padding: 16,
+      backgroundColor: colors.card,
+      borderBottomWidth: 2,
+      borderBottomColor: colors.secondary,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    headerRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    turnIndicator: {
+      alignItems: "center",
+    },
+    turnText: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    betInfo: {
+      alignItems: "center",
+    },
+    chatButton: {
+      padding: 8,
+    },
+    betText: {
+      fontSize: 16,
+      color: colors.secondary,
+      fontWeight: "600",
+    },
+    playArea: {
+      flex: 1,
+      padding: 16,
+    },
+    opponentArea: {
+      alignItems: "center",
+      marginBottom: 24,
+    },
+    centerArea: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    leadSuitContainer: {
+      marginBottom: 8,
+    },
+    myArea: {
+      alignItems: "center",
+      marginTop: 24,
+    },
+    playerLabel: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    playedCard: {
+      marginVertical: 8,
+    },
+    turnHistory: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 12,
+      minWidth: 200,
+    },
+    historyTitle: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    historyItem: {
+      fontSize: 12,
+      color: colors.mutedForeground,
+      marginBottom: 4,
+    },
+    handArea: {
+      padding: 16,
+      backgroundColor: colors.card,
+      borderTopWidth: 2,
+      borderTopColor: colors.secondary,
+    },
+    yourTurnText: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.secondary,
+      marginBottom: 8,
+    },
+    waitingText: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+      marginBottom: 8,
+    },
+    playButtonContainer: {
+      marginTop: 16,
+      alignItems: "center",
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 16,
+    },
+  });
+
   // Conditional rendering after all hooks are called
   if (!matchId) {
     return (
@@ -176,7 +296,7 @@ export default function MatchScreen() {
   if (!game) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <ActivityIndicator size="large" color={Colors.primary.gold} />
+        <ActivityIndicator size="large" color={colors.secondary} />
         <Text style={styles.loadingText}>Chargement de la partie...</Text>
       </SafeAreaView>
     );
@@ -186,7 +306,7 @@ export default function MatchScreen() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <Text style={styles.title}>Préparation de la partie...</Text>
-        <ActivityIndicator size="large" color={Colors.primary.gold} />
+        <ActivityIndicator size="large" color={colors.secondary} />
       </SafeAreaView>
     );
   }
@@ -227,7 +347,7 @@ export default function MatchScreen() {
               <IconSymbol
                 name="message.fill"
                 size={24}
-                color={Colors.primary.gold}
+                color={colors.secondary}
               />
             </TouchableOpacity>
           )}
@@ -341,122 +461,3 @@ export default function MatchScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  loadingText: {
-    color: Colors.derived.white,
-    marginTop: 16,
-    fontSize: 16,
-  },
-  header: {
-    padding: 16,
-    backgroundColor: Colors.primary.blue,
-    borderBottomWidth: 2,
-    borderBottomColor: Colors.primary.gold,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  turnIndicator: {
-    alignItems: "center",
-  },
-  turnText: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    marginBottom: 8,
-  },
-  betInfo: {
-    alignItems: "center",
-  },
-  chatButton: {
-    padding: 8,
-  },
-  betText: {
-    fontSize: 16,
-    color: Colors.primary.gold,
-    fontWeight: "600",
-  },
-  playArea: {
-    flex: 1,
-    padding: 16,
-  },
-  opponentArea: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  centerArea: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  leadSuitContainer: {
-    marginBottom: 8,
-  },
-  myArea: {
-    alignItems: "center",
-    marginTop: 24,
-  },
-  playerLabel: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginBottom: 8,
-  },
-  playedCard: {
-    marginVertical: 8,
-  },
-  turnHistory: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 12,
-    padding: 12,
-    minWidth: 200,
-  },
-  historyTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginBottom: 8,
-  },
-  historyItem: {
-    fontSize: 12,
-    color: Colors.derived.blueLight,
-    marginBottom: 4,
-  },
-  handArea: {
-    padding: 16,
-    backgroundColor: Colors.primary.blue,
-    borderTopWidth: 2,
-    borderTopColor: Colors.primary.gold,
-  },
-  yourTurnText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    marginBottom: 8,
-  },
-  waitingText: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-    marginBottom: 8,
-  },
-  playButtonContainer: {
-    marginTop: 16,
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    marginBottom: 16,
-  },
-});

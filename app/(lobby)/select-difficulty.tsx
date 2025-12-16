@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/useColors";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -13,6 +13,7 @@ const DIFFICULTIES = [
 ];
 
 export default function SelectDifficultyScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { createMatchVsAI } = useMatchmaking();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
@@ -37,6 +38,52 @@ export default function SelectDifficultyScreen() {
       setLoading(false);
     }
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 18,
+      color: colors.secondary,
+      textAlign: "center",
+      marginBottom: 48,
+      fontWeight: "600",
+    },
+    options: {
+      gap: 16,
+      marginBottom: 32,
+    },
+    difficultyButton: {
+      minHeight: 64,
+    },
+    selectedDifficulty: {
+      borderWidth: 3,
+      borderColor: colors.secondary,
+    },
+    actions: {
+      gap: 12,
+    },
+    startButton: {
+      minHeight: 56,
+    },
+    backButton: {
+      marginTop: 8,
+    },
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -83,49 +130,3 @@ export default function SelectDifficultyScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.primary.gold,
-    textAlign: "center",
-    marginBottom: 48,
-    fontWeight: "600",
-  },
-  options: {
-    gap: 16,
-    marginBottom: 32,
-  },
-  difficultyButton: {
-    minHeight: 64,
-  },
-  selectedDifficulty: {
-    borderWidth: 3,
-    borderColor: Colors.primary.gold,
-  },
-  actions: {
-    gap: 12,
-  },
-  startButton: {
-    minHeight: 56,
-  },
-  backButton: {
-    marginTop: 8,
-  },
-});

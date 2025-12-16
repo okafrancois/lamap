@@ -1,76 +1,76 @@
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { Colors } from '@/constants/theme';
-import { Typography } from '@/constants/typography';
-import { Spacing } from '@/constants/spacing';
+import { Spacing } from "@/constants/spacing";
+import { Typography } from "@/constants/typography";
+import { useColors } from "@/hooks/useColors";
+import React from "react";
+import { Text, TextStyle, View, ViewStyle } from "react-native";
 
 interface BadgeProps {
   label: string;
-  variant?: 'kora' | 'default' | 'success' | 'warning';
+  variant?: "kora" | "default" | "success" | "warning";
   style?: ViewStyle;
   textStyle?: TextStyle;
 }
 
-export function Badge({ label, variant = 'default', style, textStyle }: BadgeProps) {
-  const badgeStyle = [
-    styles.badge,
-    variant === 'kora' && styles.kora,
-    variant === 'default' && styles.default,
-    variant === 'success' && styles.success,
-    variant === 'warning' && styles.warning,
-    style,
-  ];
+export function Badge({
+  label,
+  variant = "default",
+  style,
+  textStyle,
+}: BadgeProps) {
+  const colors = useColors();
+  const getBadgeStyle = (): ViewStyle => {
+    const baseStyle: ViewStyle = {
+      paddingVertical: 2,
+      paddingHorizontal: 8,
+      borderRadius: Spacing.radius.full,
+      alignItems: "center",
+      justifyContent: "center",
+    };
 
-  const labelStyle = [
-    styles.text,
-    variant === 'kora' && styles.koraText,
-    variant === 'default' && styles.defaultText,
-    variant === 'success' && styles.successText,
-    variant === 'warning' && styles.warningText,
-    textStyle,
-  ];
+    const variantStyles: Record<string, ViewStyle> = {
+      kora: {
+        backgroundColor: colors.secondary,
+      },
+      default: {
+        backgroundColor: colors.muted,
+      },
+      success: {
+        backgroundColor: colors.primary,
+      },
+      warning: {
+        backgroundColor: colors.destructive,
+      },
+    };
+
+    return { ...baseStyle, ...variantStyles[variant] };
+  };
+
+  const getTextStyle = (): TextStyle => {
+    const baseStyle: TextStyle = {
+      ...Typography.gameXS,
+    };
+
+    const variantTextStyles: Record<string, TextStyle> = {
+      kora: {
+        color: colors.secondaryForeground,
+      },
+      default: {
+        color: colors.mutedForeground,
+      },
+      success: {
+        color: colors.primaryForeground,
+      },
+      warning: {
+        color: colors.destructiveForeground,
+      },
+    };
+
+    return { ...baseStyle, ...variantTextStyles[variant] };
+  };
 
   return (
-    <View style={badgeStyle}>
-      <Text style={labelStyle}>{label}</Text>
+    <View style={[getBadgeStyle(), style]}>
+      <Text style={[getTextStyle(), textStyle]}>{label}</Text>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  badge: {
-    paddingVertical: 2, // py-0.5 (équivalent à 2px)
-    paddingHorizontal: 8, // px-2
-    borderRadius: Spacing.radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  kora: {
-    backgroundColor: Colors.light.secondary,
-  },
-  default: {
-    backgroundColor: Colors.light.muted,
-  },
-  success: {
-    backgroundColor: Colors.light.primary,
-  },
-  warning: {
-    backgroundColor: Colors.light.destructive,
-  },
-  text: {
-    ...Typography.gameXS,
-  },
-  koraText: {
-    color: Colors.light.secondaryForeground,
-  },
-  defaultText: {
-    color: Colors.light.mutedForeground,
-  },
-  successText: {
-    color: Colors.light.primaryForeground,
-  },
-  warningText: {
-    color: Colors.light.destructiveForeground,
-  },
-});
-

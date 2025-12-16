@@ -1,8 +1,8 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -17,6 +17,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RoomScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const { userId } = useAuth();
@@ -132,10 +133,85 @@ export default function RoomScreen() {
     transform: [{ scale: player2Scale.value }],
   }));
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    loadingText: {
+      color: colors.text,
+      marginTop: 16,
+      fontSize: 16,
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 18,
+      color: colors.secondary,
+      textAlign: "center",
+      marginBottom: 48,
+      fontWeight: "600",
+    },
+    players: {
+      alignItems: "center",
+      marginBottom: 48,
+    },
+    playerCard: {
+      alignItems: "center",
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 24,
+      minWidth: 200,
+      marginVertical: 16,
+    },
+    playerName: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      marginTop: 12,
+    },
+    vs: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.secondary,
+      marginVertical: 16,
+    },
+    waitingText: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+      marginTop: 12,
+      textAlign: "center",
+    },
+    countdownText: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.secondary,
+      textAlign: "center",
+      marginTop: 12,
+    },
+    readySection: {
+      alignItems: "center",
+      marginBottom: 24,
+    },
+    leaveButton: {
+      marginTop: 16,
+    },
+  });
+
   if (!game) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <ActivityIndicator size="large" color={Colors.primary.gold} />
+        <ActivityIndicator size="large" color={colors.secondary} />
         <Text style={styles.loadingText}>Chargement de la salle...</Text>
       </SafeAreaView>
     );
@@ -164,7 +240,7 @@ export default function RoomScreen() {
                 <Text style={styles.playerName}>{opponent.username}</Text>
               </>
             : <>
-                <ActivityIndicator size="small" color={Colors.primary.gold} />
+                <ActivityIndicator size="small" color={colors.secondary} />
                 <Text style={styles.waitingText}>En attente...</Text>
               </>
             }
@@ -199,78 +275,3 @@ export default function RoomScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  loadingText: {
-    color: Colors.derived.white,
-    marginTop: 16,
-    fontSize: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.primary.gold,
-    textAlign: "center",
-    marginBottom: 48,
-    fontWeight: "600",
-  },
-  players: {
-    alignItems: "center",
-    marginBottom: 48,
-  },
-  playerCard: {
-    alignItems: "center",
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 16,
-    padding: 24,
-    minWidth: 200,
-    marginVertical: 16,
-  },
-  playerName: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginTop: 12,
-  },
-  vs: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    marginVertical: 16,
-  },
-  waitingText: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-    marginTop: 12,
-    textAlign: "center",
-  },
-  countdownText: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    textAlign: "center",
-    marginTop: 12,
-  },
-  readySection: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  leaveButton: {
-    marginTop: 16,
-  },
-});

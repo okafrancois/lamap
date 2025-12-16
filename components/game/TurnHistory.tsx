@@ -1,4 +1,4 @@
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/useColors";
 import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -35,6 +35,7 @@ function AnimatedTurnResult({
   myPlayerId: string;
   game?: any;
 }) {
+  const colors = useColors();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
@@ -66,6 +67,32 @@ function AnimatedTurnResult({
   const myCard = isWin ? winnerCard : loserCard;
   const opCard = isWin ? loserCard : winnerCard;
 
+  const badgeStyles = StyleSheet.create({
+    badge: {
+      backgroundColor: colors.secondary,
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      alignItems: "center",
+      justifyContent: "center",
+      position: "absolute",
+      top: "50%",
+      marginTop: -12,
+      zIndex: 10,
+      borderWidth: 2,
+      borderColor: colors.background,
+    },
+    winBadge: {
+      backgroundColor: colors.secondary,
+      borderColor: colors.secondary,
+    },
+    badgeText: {
+      color: colors.secondaryForeground,
+      fontSize: 12,
+      fontWeight: "700",
+    },
+  });
+
   return (
     <Animated.View style={[styles.column, animatedStyle]}>
       <View style={styles.cardContainer}>
@@ -77,8 +104,8 @@ function AnimatedTurnResult({
         />
       </View>
 
-      <View style={[styles.badge, isWin && styles.winBadge]}>
-        <Text style={styles.badgeText}>{result.turn}</Text>
+      <View style={[badgeStyles.badge, isWin && badgeStyles.winBadge]}>
+        <Text style={badgeStyles.badgeText}>{result.turn}</Text>
       </View>
 
       <View style={styles.cardContainer}>
@@ -130,29 +157,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cardContainer: {
-    opacity: 0.9, // Slight fade for history
-  },
-  badge: {
-    backgroundColor: Colors.primary.gold,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    position: "absolute",
-    top: "50%",
-    marginTop: -12,
-    zIndex: 10,
-    borderWidth: 2,
-    borderColor: Colors.derived.blueDark,
-  },
-  winBadge: {
-    backgroundColor: Colors.primary.gold,
-    borderColor: Colors.primary.gold,
-  },
-  badgeText: {
-    color: Colors.derived.blueDark,
-    fontSize: 12,
-    fontWeight: "700",
+    opacity: 0.9,
   },
 });

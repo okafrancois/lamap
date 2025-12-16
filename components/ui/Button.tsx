@@ -1,6 +1,6 @@
 import { Spacing } from "@/constants/spacing";
-import { Colors } from "@/constants/theme";
 import { Typography } from "@/constants/typography";
+import { useColors } from "@/hooks/useColors";
 import { getButtonShadow, getButtonShadowHover } from "@/utils/shadows";
 import React, { useState } from "react";
 import {
@@ -36,6 +36,7 @@ export function Button({
   accessibilityLabel,
   accessibilityHint,
 }: ButtonProps) {
+  const colors = useColors();
   const [isPressed, setIsPressed] = useState(false);
 
   const getButtonStyles = (): ViewStyle[] => {
@@ -60,21 +61,21 @@ export function Button({
 
     const variantStyles: Record<string, ViewStyle> = {
       primary: {
-        backgroundColor: Colors.light.primary,
+        backgroundColor: colors.primary,
       },
       secondary: {
-        backgroundColor: Colors.light.secondary,
+        backgroundColor: colors.secondary,
       },
       outline: {
         backgroundColor: "transparent",
         borderWidth: 1,
-        borderColor: Colors.light.border,
+        borderColor: colors.border,
       },
       ghost: {
         backgroundColor: "transparent",
       },
       destructive: {
-        backgroundColor: Colors.light.destructive,
+        backgroundColor: colors.destructive,
       },
     };
 
@@ -93,19 +94,19 @@ export function Button({
 
     const variantTextStyles: Record<string, TextStyle> = {
       primary: {
-        color: Colors.light.primaryForeground,
+        color: colors.primaryForeground,
       },
       secondary: {
-        color: Colors.light.secondaryForeground,
+        color: colors.secondaryForeground,
       },
       outline: {
-        color: Colors.light.foreground,
+        color: colors.foreground,
       },
       ghost: {
-        color: Colors.light.foreground,
+        color: colors.foreground,
       },
       destructive: {
-        color: Colors.light.destructiveForeground,
+        color: colors.destructiveForeground,
       },
     };
 
@@ -150,8 +151,8 @@ export function Button({
               variant === "destructive" ||
               variant === "secondary"
             ) ?
-              Colors.light.primaryForeground
-            : Colors.light.primary
+              colors.primaryForeground
+            : colors.primary
           }
         />
       : <Text style={textStyle}>{title}</Text>}

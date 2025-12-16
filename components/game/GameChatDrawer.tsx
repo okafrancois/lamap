@@ -1,6 +1,6 @@
-import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useMutation, useQuery } from "convex/react";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -34,6 +34,7 @@ export function GameChatDrawer({
   visible,
   onClose,
 }: GameChatDrawerProps) {
+  const colors = useColors();
   const { userId } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
@@ -102,6 +103,125 @@ export function GameChatDrawer({
       setSending(false);
     }
   };
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      justifyContent: "flex-end",
+    },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+    },
+    backdropTouchable: {
+      flex: 1,
+    },
+    drawer: {
+      backgroundColor: colors.background,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      maxHeight: "80%",
+      paddingBottom: Platform.OS === "ios" ? 0 : 20,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    closeButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: colors.card,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    closeButtonText: {
+      fontSize: 18,
+      color: colors.text,
+      fontWeight: "700",
+    },
+    messagesContainer: {
+      flex: 1,
+    },
+    messagesContent: {
+      padding: 16,
+      paddingBottom: 8,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 48,
+    },
+    emptyText: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+    },
+    messageWrapper: {
+      flexDirection: "row",
+      marginBottom: 12,
+      alignItems: "flex-end",
+    },
+    myMessageWrapper: {
+      flexDirection: "row-reverse",
+    },
+    messageAvatar: {
+      marginHorizontal: 8,
+    },
+    messageBubble: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 12,
+      maxWidth: "70%",
+    },
+    myMessageBubble: {
+      backgroundColor: colors.secondary,
+    },
+    messageUsername: {
+      fontSize: 12,
+      color: colors.mutedForeground,
+      marginBottom: 4,
+      fontWeight: "600",
+    },
+    messageText: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    myMessageText: {
+      color: colors.secondaryForeground,
+    },
+    inputContainer: {
+      flexDirection: "row",
+      padding: 16,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+      gap: 12,
+      alignItems: "flex-end",
+    },
+    input: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      color: colors.text,
+      fontSize: 14,
+      maxHeight: 100,
+    },
+    sendButton: {
+      minHeight: 44,
+      paddingHorizontal: 20,
+    },
+  });
 
   if (!visible) {
     return null;
@@ -194,7 +314,7 @@ export function GameChatDrawer({
               value={messageText}
               onChangeText={setMessageText}
               placeholder="Tapez un message..."
-              placeholderTextColor={Colors.derived.blueLight}
+              placeholderTextColor={colors.mutedForeground}
               multiline
               maxLength={200}
               onSubmitEditing={handleSend}
@@ -212,122 +332,3 @@ export function GameChatDrawer({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-  },
-  backdropTouchable: {
-    flex: 1,
-  },
-  drawer: {
-    backgroundColor: Colors.derived.blueDark,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: "80%",
-    paddingBottom: Platform.OS === "ios" ? 0 : 20,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.primary.blue,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.derived.white,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Colors.primary.blue,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  closeButtonText: {
-    fontSize: 18,
-    color: Colors.derived.white,
-    fontWeight: "700",
-  },
-  messagesContainer: {
-    flex: 1,
-  },
-  messagesContent: {
-    padding: 16,
-    paddingBottom: 8,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 48,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-  },
-  messageWrapper: {
-    flexDirection: "row",
-    marginBottom: 12,
-    alignItems: "flex-end",
-  },
-  myMessageWrapper: {
-    flexDirection: "row-reverse",
-  },
-  messageAvatar: {
-    marginHorizontal: 8,
-  },
-  messageBubble: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 16,
-    padding: 12,
-    maxWidth: "70%",
-  },
-  myMessageBubble: {
-    backgroundColor: Colors.primary.gold,
-  },
-  messageUsername: {
-    fontSize: 12,
-    color: Colors.derived.blueLight,
-    marginBottom: 4,
-    fontWeight: "600",
-  },
-  messageText: {
-    fontSize: 14,
-    color: Colors.derived.white,
-  },
-  myMessageText: {
-    color: Colors.derived.blueDark,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: Colors.primary.blue,
-    gap: 12,
-    alignItems: "flex-end",
-  },
-  input: {
-    flex: 1,
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    color: Colors.derived.white,
-    fontSize: 14,
-    maxHeight: 100,
-  },
-  sendButton: {
-    minHeight: 44,
-    paddingHorizontal: 20,
-  },
-});

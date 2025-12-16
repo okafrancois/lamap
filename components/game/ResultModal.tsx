@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
 import React, { useEffect, useRef, useState } from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
@@ -31,6 +31,7 @@ export function ResultModal({
   onClose,
   onGoHome,
 }: ResultModalProps) {
+  const colors = useColors();
   const { playSound } = useSound();
   const [displayedWinnings, setDisplayedWinnings] = useState(0);
   const soundPlayedRef = useRef(false);
@@ -136,6 +137,96 @@ export function ResultModal({
     opacity: modalOpacity.value * 0.5,
   }));
 
+  const styles = StyleSheet.create({
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+    },
+    container: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+    },
+    resultCard: {
+      borderRadius: 16,
+      padding: 24,
+      width: "100%",
+      maxWidth: 400,
+      borderWidth: 3,
+    },
+    winnerCard: {
+      backgroundColor: colors.card,
+      borderColor: colors.secondary,
+    },
+    loserCard: {
+      backgroundColor: colors.card,
+      borderColor: colors.primary,
+    },
+    resultTitle: {
+      fontSize: 36,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 16,
+    },
+    winTypeContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      gap: 8,
+      marginBottom: 24,
+    },
+    winTypeBadge: {
+      marginHorizontal: 4,
+    },
+    multiplierBadge: {
+      marginHorizontal: 4,
+    },
+    statsContainer: {
+      gap: 12,
+      marginBottom: 24,
+    },
+    statRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    totalRow: {
+      borderTopWidth: 2,
+      borderTopColor: colors.secondary,
+      borderBottomWidth: 0,
+      marginTop: 8,
+      paddingTop: 16,
+    },
+    statLabel: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+    },
+    statValue: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    totalLabel: {
+      fontSize: 20,
+      fontWeight: "700",
+      color: colors.secondary,
+    },
+    totalValue: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.secondary,
+    },
+    actions: {
+      gap: 12,
+    },
+    button: {
+      minHeight: 56,
+    },
+  });
+
   return (
     <Modal
       visible={visible}
@@ -228,93 +319,3 @@ export function ResultModal({
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  resultCard: {
-    borderRadius: 16,
-    padding: 24,
-    width: "100%",
-    maxWidth: 400,
-    borderWidth: 3,
-  },
-  winnerCard: {
-    backgroundColor: Colors.primary.blue,
-    borderColor: Colors.primary.gold,
-  },
-  loserCard: {
-    backgroundColor: Colors.primary.blue,
-    borderColor: Colors.primary.red,
-  },
-  resultTitle: {
-    fontSize: 36,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  winTypeContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-    marginBottom: 24,
-  },
-  winTypeBadge: {
-    marginHorizontal: 4,
-  },
-  multiplierBadge: {
-    marginHorizontal: 4,
-  },
-  statsContainer: {
-    gap: 12,
-    marginBottom: 24,
-  },
-  statRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.derived.blueLight,
-  },
-  totalRow: {
-    borderTopWidth: 2,
-    borderTopColor: Colors.primary.gold,
-    borderBottomWidth: 0,
-    marginTop: 8,
-    paddingTop: 16,
-  },
-  statLabel: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.derived.white,
-  },
-  totalLabel: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-  },
-  totalValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-  },
-  actions: {
-    gap: 12,
-  },
-  button: {
-    minHeight: 56,
-  },
-});

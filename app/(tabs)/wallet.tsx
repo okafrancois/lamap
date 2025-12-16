@@ -1,14 +1,135 @@
 import { Badge } from "@/components/ui/Badge";
-import { Colors } from "@/constants/theme";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useEconomy } from "@/hooks/useEconomy";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WalletScreen() {
+  const colors = useColors();
   const { isSignedIn } = useAuth();
   const { balance, currency, transactions } = useEconomy();
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    content: {
+      padding: 24,
+    },
+    balanceCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 24,
+      alignItems: "center",
+      marginBottom: 24,
+      borderWidth: 2,
+      borderColor: colors.secondary,
+    },
+    balanceLabel: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+      marginBottom: 8,
+    },
+    balanceAmount: {
+      fontSize: 48,
+      fontWeight: "700",
+      color: colors.secondary,
+      marginBottom: 12,
+    },
+    badge: {
+      marginTop: 8,
+    },
+    statsContainer: {
+      flexDirection: "row",
+      gap: 16,
+      marginBottom: 24,
+    },
+    statCard: {
+      flex: 1,
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      alignItems: "center",
+    },
+    statLabel: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      marginBottom: 8,
+    },
+    statValue: {
+      fontSize: 24,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    section: {
+      marginTop: 8,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 16,
+    },
+    emptyState: {
+      padding: 32,
+      alignItems: "center",
+    },
+    emptyText: {
+      color: colors.mutedForeground,
+      fontSize: 14,
+    },
+    transactionsList: {
+      gap: 12,
+    },
+    transactionItem: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    transactionWin: {
+      borderLeftWidth: 4,
+      borderLeftColor: colors.secondary,
+    },
+    transactionLoss: {
+      borderLeftWidth: 4,
+      borderLeftColor: colors.primary,
+    },
+    transactionContent: {
+      flex: 1,
+    },
+    transactionDescription: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    transactionDate: {
+      fontSize: 12,
+      color: colors.mutedForeground,
+    },
+    transactionAmount: {
+      fontSize: 16,
+      fontWeight: "700",
+    },
+    amountWin: {
+      color: colors.secondary,
+    },
+    amountLoss: {
+      color: colors.primary,
+    },
+    text: {
+      color: colors.text,
+    },
+  });
 
   if (!isSignedIn) {
     return (
@@ -80,123 +201,3 @@ export default function WalletScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    padding: 24,
-  },
-  balanceCard: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: Colors.primary.gold,
-  },
-  balanceLabel: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-    marginBottom: 8,
-  },
-  balanceAmount: {
-    fontSize: 48,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    marginBottom: 12,
-  },
-  badge: {
-    marginTop: 8,
-  },
-  statsContainer: {
-    flexDirection: "row",
-    gap: 16,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 12,
-    padding: 16,
-    alignItems: "center",
-  },
-  statLabel: {
-    fontSize: 14,
-    color: Colors.derived.blueLight,
-    marginBottom: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: Colors.derived.white,
-  },
-  section: {
-    marginTop: 8,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginBottom: 16,
-  },
-  emptyState: {
-    padding: 32,
-    alignItems: "center",
-  },
-  emptyText: {
-    color: Colors.derived.blueLight,
-    fontSize: 14,
-  },
-  transactionsList: {
-    gap: 12,
-  },
-  transactionItem: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  transactionWin: {
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary.gold,
-  },
-  transactionLoss: {
-    borderLeftWidth: 4,
-    borderLeftColor: Colors.primary.red,
-  },
-  transactionContent: {
-    flex: 1,
-  },
-  transactionDescription: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginBottom: 4,
-  },
-  transactionDate: {
-    fontSize: 12,
-    color: Colors.derived.blueLight,
-  },
-  transactionAmount: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  amountWin: {
-    color: Colors.primary.gold,
-  },
-  amountLoss: {
-    color: Colors.primary.red,
-  },
-  text: {
-    color: Colors.derived.white,
-  },
-});

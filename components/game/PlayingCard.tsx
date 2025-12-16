@@ -1,6 +1,6 @@
 import { AnimationDurations } from "@/constants/animations";
 import { Spacing } from "@/constants/spacing";
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/useColors";
 import { getCardShadow, getPlayableCardShadow } from "@/utils/shadows";
 import { Image } from "expo-image";
 import React, { useEffect } from "react";
@@ -58,6 +58,7 @@ export const PlayingCard = React.memo(function PlayingCard({
   onPress,
   size = "medium",
 }: PlayingCardProps) {
+  const colors = useColors();
   const cardSize = CARD_SIZES[size];
   const suitColor = SUIT_COLORS[suit];
   const suitImage = SUIT_IMAGES[suit];
@@ -128,18 +129,17 @@ export const PlayingCard = React.memo(function PlayingCard({
     {
       width: cardSize.width,
       height: cardSize.height,
-      backgroundColor:
-        state === "disabled" ? Colors.light.muted : Colors.light.card,
+      backgroundColor: state === "disabled" ? colors.muted : colors.card,
       borderColor:
-        isSelected ? Colors.light.primary
-        : state === "playable" ? Colors.light.primary
-        : state === "disabled" ? Colors.light.border
-        : Colors.light.border,
+        isSelected ? colors.primary
+        : state === "playable" ? colors.primary
+        : state === "disabled" ? colors.border
+        : colors.border,
       borderWidth: isSelected ? 3 : 2,
       borderRadius: Spacing.radius.lg, // rounded-lg (8px)
       ...(state === "playable" && !isSelected ?
-        getPlayableCardShadow(Colors.light.primary)
-      : isSelected ? getCardShadow(Colors.light.primary)
+        getPlayableCardShadow(colors.primary)
+      : isSelected ? getCardShadow(colors.primary)
       : getCardShadow()),
       opacity: 1,
     },

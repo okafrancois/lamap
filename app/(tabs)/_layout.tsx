@@ -3,13 +3,12 @@ import React, { useEffect } from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { Colors } from "@/constants/theme";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useSyncUser } from "@/hooks/useSyncUser";
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const colors = useColors();
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
@@ -35,12 +34,12 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "dark"].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? "dark"].tabIconDefault,
+        tabBarActiveTintColor: colors.tint,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.derived.blueDark,
-          borderTopColor: Colors.primary.blue,
+          backgroundColor: colors.background,
+          borderTopColor: colors.border,
         },
         tabBarButton: HapticTab,
       }}

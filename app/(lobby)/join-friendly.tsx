@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -9,6 +9,7 @@ import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function JoinFriendlyScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { userId } = useAuth();
   const user = useQuery(
@@ -26,7 +27,10 @@ export default function JoinFriendlyScreen() {
 
   const handleJoin = async () => {
     if (!userId || !user?._id) {
-      Alert.alert("Erreur", "Vous devez être connecté pour rejoindre une partie");
+      Alert.alert(
+        "Erreur",
+        "Vous devez être connecté pour rejoindre une partie"
+      );
       return;
     }
 
@@ -56,6 +60,71 @@ export default function JoinFriendlyScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 18,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      marginBottom: 48,
+    },
+    inputSection: {
+      marginBottom: 32,
+    },
+    inputLabel: {
+      fontSize: 16,
+      color: colors.text,
+      marginBottom: 12,
+      fontWeight: "600",
+    },
+    input: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.secondary,
+      textAlign: "center",
+      letterSpacing: 4,
+      borderWidth: 2,
+      borderColor: colors.secondary,
+      marginBottom: 16,
+    },
+    matchInfo: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 8,
+    },
+    matchInfoText: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      marginBottom: 4,
+    },
+    joinButton: {
+      minHeight: 56,
+      marginBottom: 16,
+    },
+    backButton: {
+      marginTop: 8,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
@@ -69,9 +138,16 @@ export default function JoinFriendlyScreen() {
           <TextInput
             style={styles.input}
             value={joinCode}
-            onChangeText={(text) => setJoinCode(text.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))}
+            onChangeText={(text) =>
+              setJoinCode(
+                text
+                  .toUpperCase()
+                  .replace(/[^A-Z0-9]/g, "")
+                  .slice(0, 6)
+              )
+            }
             placeholder="ABC123"
-            placeholderTextColor={Colors.derived.blueLight}
+            placeholderTextColor={colors.mutedForeground}
             maxLength={6}
             autoCapitalize="characters"
             autoCorrect={false}
@@ -106,69 +182,3 @@ export default function JoinFriendlyScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-    marginBottom: 48,
-  },
-  inputSection: {
-    marginBottom: 32,
-  },
-  inputLabel: {
-    fontSize: 16,
-    color: Colors.derived.white,
-    marginBottom: 12,
-    fontWeight: "600",
-  },
-  input: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    textAlign: "center",
-    letterSpacing: 4,
-    borderWidth: 2,
-    borderColor: Colors.primary.gold,
-    marginBottom: 16,
-  },
-  matchInfo: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 8,
-  },
-  matchInfoText: {
-    fontSize: 14,
-    color: Colors.derived.blueLight,
-    marginBottom: 4,
-  },
-  joinButton: {
-    minHeight: 56,
-    marginBottom: 16,
-  },
-  backButton: {
-    marginTop: 8,
-  },
-});
-

@@ -1,7 +1,7 @@
 import { Avatar } from "@/components/ui/Avatar";
-import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MessagesScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { userId } = useAuth();
   const user = useQuery(
@@ -29,10 +30,103 @@ export default function MessagesScreen() {
     myUserId ? { userId: myUserId } : "skip"
   );
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerTitle: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: colors.text,
+    },
+    scrollView: {
+      flex: 1,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 48,
+    },
+    emptyContainer: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 48,
+      paddingHorizontal: 24,
+    },
+    emptyText: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    emptySubtext: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      textAlign: "center",
+    },
+    conversationsList: {
+      padding: 16,
+    },
+    conversationItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+    },
+    conversationContent: {
+      flex: 1,
+      marginLeft: 12,
+    },
+    conversationHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4,
+    },
+    conversationName: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    conversationTime: {
+      fontSize: 12,
+      color: colors.mutedForeground,
+    },
+    conversationPreview: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+    },
+    badge: {
+      backgroundColor: colors.primary,
+      borderRadius: 12,
+      minWidth: 24,
+      height: 24,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 8,
+      marginLeft: 8,
+    },
+    badgeText: {
+      fontSize: 12,
+      fontWeight: "700",
+      color: colors.primaryForeground,
+    },
+  });
+
   if (!myUserId) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <ActivityIndicator size="large" color={Colors.primary.gold} />
+        <ActivityIndicator size="large" color={colors.secondary} />
       </SafeAreaView>
     );
   }
@@ -68,7 +162,7 @@ export default function MessagesScreen() {
       <ScrollView style={styles.scrollView}>
         {conversations === undefined ?
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary.gold} />
+            <ActivityIndicator size="large" color={colors.secondary} />
           </View>
         : conversations.length === 0 ?
           <View style={styles.emptyContainer}>
@@ -119,96 +213,3 @@ export default function MessagesScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  header: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.primary.blue,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: Colors.derived.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 48,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 48,
-    paddingHorizontal: 24,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginBottom: 8,
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-  },
-  conversationsList: {
-    padding: 16,
-  },
-  conversationItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-  },
-  conversationContent: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  conversationHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  conversationName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: Colors.derived.white,
-  },
-  conversationTime: {
-    fontSize: 12,
-    color: Colors.derived.blueLight,
-  },
-  conversationPreview: {
-    fontSize: 14,
-    color: Colors.derived.blueLight,
-  },
-  badge: {
-    backgroundColor: Colors.primary.red,
-    borderRadius: 12,
-    minWidth: 24,
-    height: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    marginLeft: 8,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: Colors.derived.white,
-  },
-});

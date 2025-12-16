@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useColors } from "@/hooks/useColors";
 import { useMutation, useQuery } from "convex/react";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
@@ -10,6 +10,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CreateFriendlyScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { userId } = useAuth();
   const user = useQuery(
@@ -62,6 +63,78 @@ export default function CreateFriendlyScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 18,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      marginBottom: 48,
+    },
+    createSection: {
+      marginBottom: 32,
+    },
+    createButton: {
+      minHeight: 64,
+    },
+    codeSection: {
+      alignItems: "center",
+      marginBottom: 32,
+    },
+    codeLabel: {
+      fontSize: 18,
+      color: colors.mutedForeground,
+      marginBottom: 16,
+    },
+    codeContainer: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 24,
+      borderWidth: 3,
+      borderColor: colors.secondary,
+      marginBottom: 24,
+      minWidth: 200,
+    },
+    codeText: {
+      fontSize: 32,
+      fontWeight: "700",
+      color: colors.secondary,
+      letterSpacing: 4,
+      textAlign: "center",
+    },
+    copyButton: {
+      minHeight: 56,
+      marginBottom: 16,
+    },
+    instructions: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      marginBottom: 24,
+    },
+    roomButton: {
+      minHeight: 56,
+    },
+    backButton: {
+      marginTop: 16,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
@@ -113,75 +186,3 @@ export default function CreateFriendlyScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-    marginBottom: 48,
-  },
-  createSection: {
-    marginBottom: 32,
-  },
-  createButton: {
-    minHeight: 64,
-  },
-  codeSection: {
-    alignItems: "center",
-    marginBottom: 32,
-  },
-  codeLabel: {
-    fontSize: 18,
-    color: Colors.derived.blueLight,
-    marginBottom: 16,
-  },
-  codeContainer: {
-    backgroundColor: Colors.primary.blue,
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 3,
-    borderColor: Colors.primary.gold,
-    marginBottom: 24,
-    minWidth: 200,
-  },
-  codeText: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    letterSpacing: 4,
-    textAlign: "center",
-  },
-  copyButton: {
-    minHeight: 56,
-    marginBottom: 16,
-  },
-  instructions: {
-    fontSize: 14,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  roomButton: {
-    minHeight: 56,
-  },
-  backButton: {
-    marginTop: 16,
-  },
-});

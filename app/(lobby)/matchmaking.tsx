@@ -1,6 +1,6 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/useColors";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useSound } from "@/hooks/useSound";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -15,6 +15,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchmakingScreen() {
+  const colors = useColors();
   const router = useRouter();
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
   const { status, opponent, gameId, joinQueue, leaveQueue, timeInQueue } =
@@ -82,13 +83,66 @@ export default function MatchmakingScreen() {
     return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 24,
+    },
+    searchIcon: {
+      marginBottom: 32,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 16,
+    },
+    foundTitle: {
+      fontSize: 28,
+      fontWeight: "700",
+      color: colors.secondary,
+      textAlign: "center",
+      marginBottom: 24,
+    },
+    subtitle: {
+      fontSize: 18,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    timeText: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      marginBottom: 32,
+    },
+    opponentName: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: colors.text,
+      marginTop: 16,
+      marginBottom: 8,
+    },
+    cancelButton: {
+      marginTop: 32,
+      minWidth: 200,
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         {status === "searching" && (
           <>
             <Animated.View style={[styles.searchIcon, pulseAnimatedStyle]}>
-              <ActivityIndicator size="large" color={Colors.primary.gold} />
+              <ActivityIndicator size="large" color={colors.secondary} />
             </Animated.View>
             <Text style={styles.title}>Recherche d&apos;adversaire...</Text>
             <Text style={styles.subtitle}>Mise: {bet} Kora</Text>
@@ -115,7 +169,7 @@ export default function MatchmakingScreen() {
 
         {status === "idle" && (
           <>
-            <ActivityIndicator size="large" color={Colors.primary.gold} />
+            <ActivityIndicator size="large" color={colors.secondary} />
             <Text style={styles.title}>Préparation...</Text>
           </>
         )}
@@ -123,56 +177,3 @@ export default function MatchmakingScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  searchIcon: {
-    marginBottom: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  foundTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: Colors.primary.gold,
-    textAlign: "center",
-    marginBottom: 24,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  timeText: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-    marginBottom: 32,
-  },
-  opponentName: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: Colors.derived.white,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  cancelButton: {
-    marginTop: 32,
-    minWidth: 200,
-  },
-});

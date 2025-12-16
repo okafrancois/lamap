@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/Button";
-import { Colors } from "@/constants/theme";
+import { useColors } from "@/hooks/useColors";
 import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
 import { useOAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
@@ -8,6 +8,7 @@ import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
+  const colors = useColors();
   useWarmUpBrowser();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -42,6 +43,51 @@ export default function LoginScreen() {
     }
   };
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      padding: 24,
+    },
+    title: {
+      fontSize: 32,
+      fontWeight: "700",
+      color: colors.text,
+      textAlign: "center",
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize: 16,
+      color: colors.mutedForeground,
+      textAlign: "center",
+      marginBottom: 48,
+    },
+    options: {
+      gap: 16,
+    },
+    oauthButton: {
+      minHeight: 56,
+    },
+    footer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      marginTop: 24,
+    },
+    footerText: {
+      color: colors.mutedForeground,
+      fontSize: 14,
+    },
+    link: {
+      color: colors.secondary,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+  });
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
@@ -54,10 +100,8 @@ export default function LoginScreen() {
             onPress={() => handleOAuth("google")}
             loading={loading === "google"}
             disabled={!!loading}
-            variant="primary"
             style={styles.oauthButton}
           />
-
           <Button
             title="Continuer avec Facebook"
             onPress={() => handleOAuth("facebook")}
@@ -74,55 +118,10 @@ export default function LoginScreen() {
             style={styles.link}
             onPress={() => router.push("/(auth)/register")}
           >
-            S'inscrire
+            S&apos;inscrire
           </Text>
         </View>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: Colors.derived.white,
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.derived.blueLight,
-    textAlign: "center",
-    marginBottom: 48,
-  },
-  options: {
-    gap: 16,
-  },
-  oauthButton: {
-    minHeight: 56,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 24,
-  },
-  footerText: {
-    color: Colors.derived.blueLight,
-    fontSize: 14,
-  },
-  link: {
-    color: Colors.primary.gold,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-});
