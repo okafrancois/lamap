@@ -1,65 +1,75 @@
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
-import { isValidPlay, type Card } from "@/convex/game";
 import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "./useAuth";
 
-export function useGame(matchId: Id<"matches">) {
+export type Card = {
+  id: string;
+  suit: "hearts" | "diamonds" | "clubs" | "spades";
+  rank: "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+  playable: boolean;
+};
+
+export function useGame(gameId: string | null) {
   const { userId } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
+    userId ? { clerkUserId: userId } : "skip"
   );
   const myUserId = user?._id;
 
-  // Always call useQuery hooks in the same order
-  const match = useQuery(
-    api.matches.get,
-    matchId ? { matchId } : "skip"
+  const game = useQuery(
+    api.games.getGame,
+    gameId ? { gameId } : "skip"
   );
+
   const myHand = useQuery(
-    api.matches.getMyHand,
-    matchId && myUserId
-      ? { matchId, playerId: myUserId }
+    api.games.getMyHand,
+    gameId && myUserId
+      ? { gameId, playerId: myUserId }
       : "skip"
   ) as Card[] | undefined;
 
   const currentPlays = useQuery(
-    api.matches.getPlaysByTurn,
-    matchId && match?.currentTurn
-      ? { matchId, turn: match.currentTurn }
+    api.games.getPlaysByTurn,
+    gameId && game?.currentRound
+      ? { gameId, round: game.currentRound }
       : "skip"
   );
 
   const turnResults = useQuery(
-    api.matches.getTurnResults,
-    matchId ? { matchId } : "skip"
+    api.games.getTurnResults,
+    gameId ? { gameId } : "skip"
   );
 
-  const playCardMutation = useMutation(api.matches.playCard);
+  const playCardMutation = useMutation(api.games.playCard);
 
-  const isMyTurn = match?.currentPlayerId === myUserId;
+  const isMyTurn = game?.currentTurnPlayerId === myUserId;
+  
   const canPlayCard = (card: Card) => {
-    if (!myHand) return false;
-    return isValidPlay(myHand, card, match?.leadSuit || null);
+    if (!myHand || !game) return false;
+    return card.playable === true;
   };
 
   const playCard = async (card: Card) => {
     if (!myUserId) {
       throw new Error("User not authenticated");
     }
+    if (!gameId) {
+      throw new Error("Game ID not found");
+    }
     if (!canPlayCard(card)) {
       throw new Error("Cannot play this card");
     }
     return await playCardMutation({
-      matchId,
+      gameId,
+      cardId: card.id,
       playerId: myUserId,
-      card,
     });
   };
 
   return {
-    match,
+    match: game,
+    game,
     myHand: myHand || [],
     currentPlays: currentPlays || [],
     turnResults: turnResults || [],

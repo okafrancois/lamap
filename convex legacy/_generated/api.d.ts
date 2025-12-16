@@ -8,15 +8,12 @@
  * @module
  */
 
-import type * as aiPlayer from "../aiPlayer.js";
-import type * as chat from "../chat.js";
+import type * as ai from "../ai.js";
 import type * as economy from "../economy.js";
-import type * as gameEngine from "../gameEngine.js";
-import type * as games from "../games.js";
-import type * as http from "../http.js";
+import type * as game from "../game.js";
+import type * as matches from "../matches.js";
 import type * as matchmaking from "../matchmaking.js";
 import type * as users from "../users.js";
-import type * as validators from "../validators.js";
 
 import type {
   ApiFromModules,
@@ -25,15 +22,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  aiPlayer: typeof aiPlayer;
-  chat: typeof chat;
+  ai: typeof ai;
   economy: typeof economy;
-  gameEngine: typeof gameEngine;
-  games: typeof games;
-  http: typeof http;
+  game: typeof game;
+  matches: typeof matches;
   matchmaking: typeof matchmaking;
   users: typeof users;
-  validators: typeof validators;
 }>;
 
 /**

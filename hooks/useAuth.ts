@@ -8,7 +8,7 @@ export function useAuth() {
 
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    userId && isLoaded && isSignedIn ? { clerkId: userId } : "skip"
+    userId && isLoaded && isSignedIn ? { clerkUserId: userId } : "skip"
   );
 
   return {

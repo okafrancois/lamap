@@ -15,7 +15,7 @@ export function useSyncUser() {
 
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    userId && isLoaded && isSignedIn ? { clerkId: userId } : "skip"
+    userId && isLoaded && isSignedIn ? { clerkUserId: userId } : "skip"
   );
 
   const createOrUpdateUser = useMutation(api.users.createOrUpdateUser);

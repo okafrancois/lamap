@@ -16,7 +16,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function MatchmakingScreen() {
   const router = useRouter();
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
-  const { status, opponent, matchId, joinQueue, leaveQueue, timeInQueue } =
+  const { status, opponent, gameId, joinQueue, leaveQueue, timeInQueue } =
     useMatchmaking();
   const [pulseAnim] = useState(new Animated.Value(1));
 
@@ -24,7 +24,7 @@ export default function MatchmakingScreen() {
 
   useEffect(() => {
     if (bet > 0 && status === "idle") {
-      joinQueue(bet).catch((error) => {
+      joinQueue(bet, "XAF").catch((error) => {
         console.error("Error joining queue:", error);
       });
     }
@@ -52,10 +52,10 @@ export default function MatchmakingScreen() {
   }, [status, pulseAnim]);
 
   useEffect(() => {
-    if (status === "matched" && matchId) {
-      router.replace(`/(lobby)/room/${matchId}`);
+    if (status === "matched" && gameId) {
+      router.replace(`/(lobby)/room/${gameId}`);
     }
-  }, [status, matchId, router]);
+  }, [status, gameId, router]);
 
   const handleCancel = async () => {
     await leaveQueue();
@@ -83,7 +83,7 @@ export default function MatchmakingScreen() {
             >
               <ActivityIndicator size="large" color={Colors.primary.gold} />
             </Animated.View>
-            <Text style={styles.title}>Recherche d'adversaire...</Text>
+            <Text style={styles.title}>Recherche d&apos;adversaire...</Text>
             <Text style={styles.subtitle}>Mise: {bet} Kora</Text>
             <Text style={styles.timeText}>
               Temps écoulé: {formatTime(timeInQueue)}

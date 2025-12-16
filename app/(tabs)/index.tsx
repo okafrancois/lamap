@@ -12,12 +12,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const router = useRouter();
   const { userId, isSignedIn } = useAuth();
-  const activeMatch = useQuery(
-    api.matches.getActiveMatch,
-    userId ? { clerkId: userId } : "skip"
-  );
   const user = useQuery(
     api.users.getCurrentUser,
+    userId ? { clerkUserId: userId } : "skip"
+  );
+  const activeGame = useQuery(
+    api.games.getActiveMatch,
     userId ? { clerkId: userId } : "skip"
   );
 
@@ -37,18 +37,18 @@ export default function HomeScreen() {
           <Text style={styles.subtitle}>Jeu de cartes compétitif</Text>
         </View>
 
-        {activeMatch && (
+        {activeGame && (
           <View style={styles.activeMatchCard}>
             <View style={styles.activeMatchContent}>
               <View>
                 <Text style={styles.activeMatchLabel}>Partie en cours</Text>
                 <Text style={styles.activeMatchInfo}>
-                  {activeMatch.isVsAI ? "Contre l'IA" : "Contre un joueur"} • {activeMatch.betAmount} Kora
+                  {activeGame.mode === "AI" ? "Contre l'IA" : "Contre un joueur"} • {activeGame.bet.amount} {activeGame.bet.currency}
                 </Text>
               </View>
               <Button
                 title="Rejoindre"
-                onPress={() => router.push(`/(game)/match/${activeMatch._id}`)}
+                onPress={() => router.push(`/(game)/match/${activeGame.gameId}`)}
                 style={styles.rejoinButton}
                 textStyle={styles.rejoinButtonText}
               />
@@ -59,9 +59,9 @@ export default function HomeScreen() {
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Votre solde</Text>
           <Text style={styles.balanceAmount}>
-            {user?.koraBalance?.toLocaleString() || 0}
+            {user?.balance?.toLocaleString() || 0}
           </Text>
-          <Badge label="Kora" variant="kora" style={styles.badge} />
+          <Badge label={user?.currency || "XAF"} variant="kora" style={styles.badge} />
         </View>
 
         <View style={styles.actions}>
@@ -72,16 +72,6 @@ export default function HomeScreen() {
           />
         </View>
 
-        <View style={styles.stats}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{user?.totalWins || 0}</Text>
-            <Text style={styles.statLabel}>Victoires</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{user?.totalLosses || 0}</Text>
-            <Text style={styles.statLabel}>Défaites</Text>
-          </View>
-        </View>
       </View>
     </SafeAreaView>
   );

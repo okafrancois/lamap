@@ -1,13 +1,12 @@
-import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "./useAuth";
-import { Id } from "@/convex/_generated/dataModel";
 
 export function useMatchmaking() {
   const { userId } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
+    userId ? { clerkUserId: userId } : "skip"
   );
   const myUserId = user?._id;
 
@@ -21,11 +20,14 @@ export function useMatchmaking() {
   const createMatchVsAI = useMutation(api.matchmaking.createMatchVsAI);
   const setMatchReady = useMutation(api.matchmaking.setMatchReady);
 
-  const handleJoinQueue = async (betAmount: number) => {
+  const handleJoinQueue = async (
+    betAmount: number,
+    currency: "EUR" | "XAF" = "XAF"
+  ) => {
     if (!myUserId) {
       throw new Error("User not authenticated");
     }
-    return await joinQueue({ userId: myUserId, betAmount });
+    return await joinQueue({ userId: myUserId, betAmount, currency });
   };
 
   const handleLeaveQueue = async () => {
@@ -37,7 +39,8 @@ export function useMatchmaking() {
 
   const handleCreateMatchVsAI = async (
     betAmount: number,
-    difficulty: string
+    difficulty: "easy" | "medium" | "hard",
+    currency: "EUR" | "XAF" = "XAF"
   ) => {
     if (!myUserId) {
       throw new Error("User not authenticated");
@@ -46,30 +49,28 @@ export function useMatchmaking() {
       playerId: myUserId,
       betAmount,
       difficulty,
+      currency,
     });
   };
 
-  const handleSetMatchReady = async (matchId: Id<"matches">) => {
+  const handleSetMatchReady = async (gameId: string) => {
     if (!myUserId) {
       throw new Error("User not authenticated");
     }
-    return await setMatchReady({ matchId, playerId: myUserId });
+    return await setMatchReady({ gameId, playerId: myUserId });
   };
 
   return {
     status: queueStatus?.status || "idle",
     opponent: queueStatus?.opponent,
-    matchId: queueStatus?.matchId,
-    match: queueStatus?.match,
+    gameId: queueStatus?.gameId,
+    match: queueStatus?.game,
     betAmount: queueStatus?.betAmount,
     joinedAt: queueStatus?.joinedAt,
     joinQueue: handleJoinQueue,
     leaveQueue: handleLeaveQueue,
     createMatchVsAI: handleCreateMatchVsAI,
     setMatchReady: handleSetMatchReady,
-    timeInQueue: queueStatus?.joinedAt
-      ? Date.now() - queueStatus.joinedAt
-      : 0,
+    timeInQueue: queueStatus?.joinedAt ? Date.now() - queueStatus.joinedAt : 0,
   };
 }
-

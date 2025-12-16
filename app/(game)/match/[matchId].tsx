@@ -1,45 +1,50 @@
-import { CardHand } from '@/components/game/CardHand';
-import { PlayingCard } from '@/components/game/PlayingCard';
-import { TurnHistory } from '@/components/game/TurnHistory';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/theme';
-import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { SUIT_SYMBOLS, type Card, type TurnResult } from '@/convex/game';
-import { useGame } from '@/hooks/useGame';
-import { useMutation } from 'convex/react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { CardHand, type Card } from "@/components/game/CardHand";
+import { PlayingCard } from "@/components/game/PlayingCard";
+import { TurnHistory } from "@/components/game/TurnHistory";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { api } from "@/convex/_generated/api";
+import { useGame } from "@/hooks/useGame";
+import { useMutation } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
-  
-  // All hooks must be called before any conditional returns
-  const gameMatchId = matchId ? (matchId as Id<"matches">) : (null as unknown as Id<"matches">);
-  const { match, myHand, currentPlays, turnResults, isMyTurn, playCard, canPlayCard, myUserId } = useGame(gameMatchId);
-  const startMatch = useMutation(api.matches.startMatch);
-  
+
+  const {
+    game,
+    myHand,
+    currentPlays,
+    turnResults,
+    isMyTurn,
+    playCard,
+    canPlayCard,
+    myUserId,
+  } = useGame(matchId || null);
+  const startGame = useMutation(api.games.startGame);
+
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
-    if (match?.status === 'finished') {
+    if (game?.status === "ENDED") {
       router.replace(`/(game)/result/${matchId}`);
     }
-  }, [match?.status, matchId, router]);
+  }, [game?.status, matchId, router]);
 
   useEffect(() => {
-    if (match?.status === 'ready' && !match.currentTurn && gameMatchId) {
-      startMatch({ matchId: gameMatchId }).catch((error) => {
-        Alert.alert('Erreur', 'Impossible de démarrer le match');
+    if (game?.status === "WAITING" && matchId) {
+      startGame({ gameId: matchId }).catch((error) => {
+        Alert.alert("Erreur", "Impossible de démarrer la partie");
         console.error(error);
       });
     }
-  }, [match?.status, gameMatchId, startMatch]);
+  }, [game?.status, matchId, startGame]);
 
   const handleCardSelect = (card: Card) => {
     if (canPlayCard(card)) {
@@ -49,13 +54,30 @@ export default function MatchScreen() {
 
   const handlePlayCard = async () => {
     if (!selectedCard) return;
-    
+
     setIsPlaying(true);
     try {
       await playCard(selectedCard);
       setSelectedCard(null);
     } catch (error: any) {
-      Alert.alert('Erreur', error.message || 'Impossible de jouer cette carte');
+      Alert.alert("Erreur", error.message || "Impossible de jouer cette carte");
+    } finally {
+      setIsPlaying(false);
+    }
+  };
+
+  const handleDoubleTapCard = async (card: Card) => {
+    if (isPlaying) return;
+
+    setIsPlaying(true);
+    // Optimistically select the card if not already selected to show feedback
+    setSelectedCard(card);
+
+    try {
+      await playCard(card);
+      setSelectedCard(null);
+    } catch (error: any) {
+      Alert.alert("Erreur", error.message || "Impossible de jouer cette carte");
     } finally {
       setIsPlaying(false);
     }
@@ -64,64 +86,71 @@ export default function MatchScreen() {
   // Conditional rendering after all hooks are called
   if (!matchId) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <Text style={styles.loadingText}>Match ID manquant</Text>
       </SafeAreaView>
     );
   }
 
-  if (!match) {
+  if (!game) {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <ActivityIndicator size="large" color={Colors.primary.gold} />
-        <Text style={styles.loadingText}>Chargement du match...</Text>
+        <Text style={styles.loadingText}>Chargement de la partie...</Text>
       </SafeAreaView>
     );
   }
 
-  if (match.status === 'waiting' || match.status === 'ready') {
+  if (game.status === "WAITING") {
     return (
-      <SafeAreaView style={styles.container} edges={['top']}>
-        <Text style={styles.title}>Préparation du match...</Text>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <Text style={styles.title}>Préparation de la partie...</Text>
         <ActivityIndicator size="large" color={Colors.primary.gold} />
       </SafeAreaView>
     );
   }
 
-  if (match.status === 'finished') {
+  if (game.status === "ENDED") {
     return null;
   }
 
-  const player1Card = currentPlays.find((p) => p.playerId === match.player1Id);
-  const player2Card = currentPlays.find((p) => p.playerId !== match.player1Id);
+  const opponent = game.players.find((p) => p.userId !== myUserId);
+  const currentRoundCards = currentPlays || [];
+  const myCard = currentRoundCards.find((pc) => pc.playerId === myUserId)?.card;
+  const opponentCard = currentRoundCards.find(
+    (pc) => pc.playerId !== myUserId
+  )?.card;
+
+  const hasHandPlayer = game.players.find((p) => {
+    const playerId = p.userId || p.botId;
+    return playerId === game.hasHandPlayerId;
+  });
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View style={styles.turnIndicator}>
-          <Text style={styles.turnText}>Tour {match.currentTurn} / 5</Text>
-          {match.leadSuit && (
-            <Badge 
-              label={`Couleur demandée: ${SUIT_SYMBOLS[match.leadSuit as keyof typeof SUIT_SYMBOLS]}`} 
-              variant="default" 
-            />
-          )}
+          <Text style={styles.turnText}>
+            Tour {game.currentRound} / {game.maxRounds}
+          </Text>
         </View>
         <View style={styles.betInfo}>
-          <Text style={styles.betText}>Mise: {match.betAmount} Kora</Text>
+          <Text style={styles.betText}>
+            Mise: {game.bet.amount} {game.bet.currency}
+          </Text>
         </View>
       </View>
 
       <View style={styles.playArea}>
         <View style={styles.opponentArea}>
           <Text style={styles.playerLabel}>
-            {match.isVsAI ? 'IA' : 'Adversaire'}
+            {opponent?.username || "Adversaire"}
           </Text>
-          {player2Card && (
+          {opponentCard && (
             <View style={styles.playedCard}>
               <PlayingCard
-                suit={player2Card.card.suit as Card['suit']}
-                value={player2Card.card.value}
+                suit={opponentCard.suit}
+                rank={opponentCard.rank}
                 state="played"
                 size="small"
               />
@@ -130,15 +159,27 @@ export default function MatchScreen() {
         </View>
 
         <View style={styles.centerArea}>
-          <TurnHistory results={turnResults as unknown as TurnResult[]} myPlayerId={myUserId} />
+          {hasHandPlayer && (
+            <View style={styles.leadSuitContainer}>
+              <Badge
+                label={`${hasHandPlayer.username} a la main`}
+                variant="default"
+              />
+            </View>
+          )}
+          <TurnHistory
+            results={turnResults}
+            myPlayerId={myUserId}
+            game={game}
+          />
         </View>
 
         <View style={styles.myArea}>
-          {player1Card && (
+          {myCard && (
             <View style={styles.playedCard}>
               <PlayingCard
-                suit={player1Card.card.suit as Card['suit']}
-                value={player1Card.card.value}
+                suit={myCard.suit}
+                rank={myCard.rank}
                 state="played"
                 size="small"
               />
@@ -149,25 +190,28 @@ export default function MatchScreen() {
       </View>
 
       <View style={styles.handArea}>
-        {isMyTurn && !player1Card && (
+        {isMyTurn && !myCard && (
           <View style={styles.turnIndicator}>
-            <Text style={styles.yourTurnText}>C'est votre tour !</Text>
+            <Text style={styles.yourTurnText}>C&apos;est votre tour !</Text>
           </View>
         )}
         {!isMyTurn && (
           <View style={styles.turnIndicator}>
-            <Text style={styles.waitingText}>En attente de l'adversaire...</Text>
+            <Text style={styles.waitingText}>
+              En attente de l&apos;adversaire...
+            </Text>
           </View>
         )}
         <CardHand
           cards={myHand}
-          leadSuit={match.leadSuit || null}
-          isMyTurn={isMyTurn && !player1Card}
+          isMyTurn={isMyTurn && !myCard}
           onCardSelect={handleCardSelect}
+          onCardDoubleTap={handleDoubleTapCard}
           selectedCard={selectedCard}
-          disabled={isPlaying || !!player1Card}
+          disabled={isPlaying || !!myCard}
         />
-        {selectedCard && isMyTurn && !player1Card && (
+
+        {selectedCard && isMyTurn && !myCard && (
           <View style={styles.playButtonContainer}>
             <Button
               title="Jouer cette carte"
@@ -198,43 +242,46 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.primary.gold,
   },
   turnIndicator: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 8,
   },
   turnText: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
     marginBottom: 8,
   },
   betInfo: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   betText: {
     fontSize: 16,
     color: Colors.primary.gold,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   playArea: {
     flex: 1,
     padding: 16,
   },
   opponentArea: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   centerArea: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  leadSuitContainer: {
+    marginBottom: 8,
   },
   myArea: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 24,
   },
   playerLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
     marginBottom: 8,
   },
@@ -249,7 +296,7 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
     marginBottom: 8,
   },
@@ -266,7 +313,7 @@ const styles = StyleSheet.create({
   },
   yourTurnText: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary.gold,
     marginBottom: 8,
   },
@@ -277,13 +324,12 @@ const styles = StyleSheet.create({
   },
   playButtonContainer: {
     marginTop: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
     marginBottom: 16,
   },
 });
-

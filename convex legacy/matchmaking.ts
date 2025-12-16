@@ -1,12 +1,10 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import { aiDifficultyValidator, currencyValidator } from "./validators";
 
 export const joinQueue = mutation({
   args: {
     userId: v.id("users"),
     betAmount: v.number(),
-    currency: currencyValidator,
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -19,15 +17,6 @@ export const joinQueue = mutation({
 
     if (existing) {
       return existing._id;
-    }
-
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if ((user.balance || 0) < args.betAmount) {
-      throw new Error("Insufficient balance");
     }
 
     const queueEntry = await ctx.db.insert("matchmakingQueue", {
@@ -53,30 +42,37 @@ export const joinQueue = mutation({
         throw new Error("Players not found");
       }
 
-      if (
-        (player1.balance || 0) < args.betAmount ||
-        (player2.balance || 0) < args.betAmount
-      ) {
+      if (player1.koraBalance < args.betAmount || player2.koraBalance < args.betAmount) {
         throw new Error("Insufficient balance");
       }
 
-      const seed = crypto.randomUUID();
-      const gameId = `game-${seed}`;
+      const matchId = await ctx.db.insert("matches", {
+        player1Id: args.userId,
+        player2Id: potentialMatch.userId,
+        isVsAI: false,
+        betAmount: args.betAmount,
+        status: "waiting",
+        koraMultiplier: 1,
+        currentTurn: 0,
+        createdAt: Date.now(),
+      });
 
       await ctx.db.patch(args.userId, {
-        balance: (player1.balance || 0) - args.betAmount,
+        koraBalance: player1.koraBalance - args.betAmount,
+        totalKoraLost: player1.totalKoraLost + args.betAmount,
       });
 
       await ctx.db.patch(potentialMatch.userId, {
-        balance: (player2.balance || 0) - args.betAmount,
+        koraBalance: player2.koraBalance - args.betAmount,
+        totalKoraLost: player2.totalKoraLost + args.betAmount,
       });
 
       await ctx.db.insert("transactions", {
         userId: args.userId,
         type: "bet",
         amount: -args.betAmount,
-        gameId,
-        description: `Mise de ${args.betAmount} ${args.currency} pour la partie`,
+        matchId,
+        description: `Mise de ${args.betAmount} Kora pour le match`,
         createdAt: Date.now(),
       });
 
@@ -84,24 +80,24 @@ export const joinQueue = mutation({
         userId: potentialMatch.userId,
         type: "bet",
         amount: -args.betAmount,
-        gameId,
-        description: `Mise de ${args.betAmount} ${args.currency} pour la partie`,
+        matchId,
+        description: `Mise de ${args.betAmount} Kora pour le match`,
         createdAt: Date.now(),
       });
 
       await ctx.db.patch(queueEntry, {
         status: "matched",
         matchedWith: potentialMatch.userId,
-        gameId,
+        matchId,
       });
 
       await ctx.db.patch(potentialMatch._id, {
         status: "matched",
         matchedWith: args.userId,
-        gameId,
+        matchId,
       });
 
-      return { matched: true, gameId, queueId: queueEntry };
+      return { matched: true, matchId, queueId: queueEntry };
     }
 
     return { matched: false, queueId: queueEntry };
@@ -147,20 +143,17 @@ export const getMyStatus = query({
         .filter((q) => q.eq(q.field("status"), "matched"))
         .first();
 
-      if (matched && matched.gameId) {
-        const game = await ctx.db
-          .query("games")
-          .withIndex("by_game_id", (q) => q.eq("gameId", matched.gameId!))
-          .first();
-        const opponent =
-          matched.matchedWith ? await ctx.db.get(matched.matchedWith) : null;
+      if (matched && matched.matchId) {
+        const match = await ctx.db.get(matched.matchId);
+        const opponent = matched.matchedWith
+          ? await ctx.db.get(matched.matchedWith)
+          : null;
 
         return {
           status: "matched",
-          gameId: matched.gameId,
+          matchId: matched.matchId,
           opponent,
-          game,
-          betAmount: matched.betAmount,
+          match,
         };
       }
 
@@ -179,8 +172,7 @@ export const createMatchVsAI = mutation({
   args: {
     playerId: v.id("users"),
     betAmount: v.number(),
-    currency: currencyValidator,
-    difficulty: aiDifficultyValidator,
+    difficulty: v.string(),
   },
   handler: async (ctx, args) => {
     const player = await ctx.db.get(args.playerId);
@@ -188,134 +180,92 @@ export const createMatchVsAI = mutation({
       throw new Error("Player not found");
     }
 
-    if ((player.balance || 0) < args.betAmount) {
+    if (player.koraBalance < args.betAmount) {
       throw new Error("Insufficient balance");
     }
 
-    const seed = crypto.randomUUID();
-    const gameId = `game-${seed}`;
-    const now = Date.now();
+    let aiUser = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", "SYSTEM_AI"))
+      .first();
 
-    const players: any[] = [
-      {
-        userId: args.playerId,
-        username: player.username,
-        type: "user",
-        isConnected: true,
-        avatar: player.avatarUrl,
-        balance: 0,
-      },
-      {
-        userId: null,
-        botId: `ai-${
-          args.difficulty === "easy" ? "bindi"
-          : args.difficulty === "medium" ? "ndoss"
-          : "bandi"
-        }`,
-        username:
-          args.difficulty === "easy" ? "Bindi du Tierqua"
-          : args.difficulty === "medium" ? "Le Ndoss"
-          : "Le Grand Bandi",
-        type: "ai",
-        isConnected: true,
-        balance: 0,
-        aiDifficulty: args.difficulty,
-      },
-    ];
+    if (!aiUser) {
+      const aiUserId = await ctx.db.insert("users", {
+        clerkId: "SYSTEM_AI",
+        username: "IA LaMap",
+        koraBalance: 1000000,
+        totalWins: 0,
+        totalLosses: 0,
+        totalKoraWon: 0,
+        totalKoraLost: 0,
+        createdAt: Date.now(),
+      });
+      aiUser = await ctx.db.get(aiUserId);
+    }
 
-    const gameData = {
-      gameId,
-      seed,
-      version: 1,
-      status: "WAITING" as const,
-      currentRound: 1,
-      maxRounds: 5,
-      hasHandPlayerId: null as any,
-      currentTurnPlayerId: null as any,
-      players,
-      playedCards: [],
-      bet: {
-        amount: args.betAmount,
-        currency: args.currency,
-      },
-      winnerId: null as any,
-      endReason: null as string | null,
-      history: [
-        {
-          action: "game_created" as const,
-          timestamp: now,
-          playerId: args.playerId,
-          data: {
-            message: `Partie créée par ${player.username}`,
-          },
-        },
-      ],
-      mode: "AI" as const,
-      maxPlayers: 2,
+    if (!aiUser) {
+        throw new Error("Failed to get AI user");
+    }
+
+    const matchId = await ctx.db.insert("matches", {
+      player1Id: args.playerId,
+      player2Id: aiUser._id,
+      isVsAI: true,
       aiDifficulty: args.difficulty,
-      roomName: undefined,
-      isPrivate: false,
-      hostId: args.playerId,
-      joinCode: undefined,
-      startedAt: now,
-      endedAt: null as number | null,
-      lastUpdatedAt: now,
-      victoryType: null as string | null,
-      rematchGameId: undefined,
-    };
-
-    await ctx.db.insert("games", gameData as any);
+      betAmount: args.betAmount,
+      status: "ready",
+      koraMultiplier: 1,
+      currentTurn: 0,
+      createdAt: Date.now(),
+    });
 
     await ctx.db.patch(args.playerId, {
-      balance: (player.balance || 0) - args.betAmount,
+      koraBalance: player.koraBalance - args.betAmount,
+      totalKoraLost: player.totalKoraLost + args.betAmount,
     });
 
     await ctx.db.insert("transactions", {
       userId: args.playerId,
       type: "bet",
       amount: -args.betAmount,
-      gameId,
-      description: `Mise de ${args.betAmount} ${args.currency} pour la partie vs IA`,
+      matchId,
+      description: `Mise de ${args.betAmount} Kora pour le match vs IA`,
       createdAt: Date.now(),
     });
 
-    return gameId;
+    return matchId;
   },
 });
 
 export const setMatchReady = mutation({
   args: {
-    gameId: v.string(),
+    matchId: v.id("matches"),
     playerId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const game = await ctx.db
-      .query("games")
-      .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
-      .first();
-
-    if (!game) {
-      throw new Error("Game not found");
+    const match = await ctx.db.get(args.matchId);
+    if (!match) {
+      throw new Error("Match not found");
     }
 
-    if (game.status !== "WAITING") {
-      throw new Error("Game is not in waiting state");
+    if (match.status !== "waiting") {
+      throw new Error("Match is not in waiting state");
     }
 
-    const isPlayer1 = game.players[0]?.userId === args.playerId;
-    const isPlayer2 = game.players[1]?.userId === args.playerId;
+    const isPlayer1 = match.player1Id === args.playerId;
+    const isPlayer2 = match.player2Id === args.playerId;
 
     if (!isPlayer1 && !isPlayer2) {
-      throw new Error("Player not in game");
+      throw new Error("Player not in match");
     }
 
-    if (game.status === "WAITING") {
-      await ctx.db.patch(game._id, {
-        status: "WAITING",
-        lastUpdatedAt: Date.now(),
-      } as any);
+    if (match.status === "waiting") {
+      await ctx.db.patch(args.matchId, {
+        status: "ready",
+      });
     }
 
     return { success: true };
   },
 });
+

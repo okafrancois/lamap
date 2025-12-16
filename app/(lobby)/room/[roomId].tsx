@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { useAuth } from "@/hooks/useAuth";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useMutation, useQuery } from "convex/react";
@@ -18,43 +17,35 @@ export default function RoomScreen() {
   const { userId } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
+    userId ? { clerkUserId: userId } : "skip"
   );
   const myUserId = user?._id;
   const { setMatchReady } = useMatchmaking();
-  const startMatch = useMutation(api.matches.startMatch);
+  const startGame = useMutation(api.games.startGame);
 
-  const match = useQuery(api.matches.get, {
-    matchId: roomId as Id<"matches">,
-  });
-
-  const player1 = useQuery(
-    api.users.getUserById,
-    match?.player1Id ? { userId: match.player1Id } : "skip"
-  );
-  const player2 = useQuery(
-    api.users.getUserById,
-    match?.player2Id ? { userId: match.player2Id } : "skip"
+  const game = useQuery(
+    api.games.getGame,
+    roomId ? { gameId: roomId } : "skip"
   );
 
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (match?.status === "ready" || match?.status === "playing") {
+    if (game?.status === "PLAYING") {
       router.replace(`/(game)/match/${roomId}`);
     }
-  }, [match?.status, roomId, router]);
+  }, [game?.status, roomId, router]);
 
   const handleReady = async () => {
-    if (!match) return;
+    if (!game) return;
     setLoading(true);
     try {
-      await setMatchReady(match._id);
+      await setMatchReady(game.gameId);
       setIsReady(true);
 
-      if (match.status === "ready") {
-        await startMatch({ matchId: match._id });
+      if (game.status === "WAITING" && game.players.length >= 2) {
+        await startGame({ gameId: game.gameId });
       }
     } catch (error) {
       console.error("Error setting ready:", error);
@@ -63,7 +54,7 @@ export default function RoomScreen() {
     }
   };
 
-  if (!match) {
+  if (!game) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <ActivityIndicator size="large" color={Colors.primary.gold} />
@@ -72,15 +63,16 @@ export default function RoomScreen() {
     );
   }
 
-  const isPlayer1 = match.player1Id === myUserId;
-  const opponent = isPlayer1 ? player2 : player1;
-  const me = isPlayer1 ? player1 : player2;
+  const me = game.players.find((p) => p.userId === myUserId);
+  const opponent = game.players.find((p) => p.userId !== myUserId);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
-        <Text style={styles.title}>Salle d'attente</Text>
-        <Text style={styles.subtitle}>Mise: {match.betAmount} Kora</Text>
+        <Text style={styles.title}>Salle d&apos;attente</Text>
+        <Text style={styles.subtitle}>
+          Mise: {game.bet.amount} {game.bet.currency}
+        </Text>
 
         <View style={styles.players}>
           <View style={styles.playerCard}>
@@ -119,7 +111,7 @@ export default function RoomScreen() {
         {isReady && (
           <View style={styles.readySection}>
             <Text style={styles.waitingText}>
-              En attente de l'adversaire...
+              En attente de l&apos;adversaire...
             </Text>
           </View>
         )}

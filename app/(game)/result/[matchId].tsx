@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,15 +15,16 @@ export default function ResultScreen() {
   const { userId } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
+    userId ? { clerkUserId: userId } : "skip"
   );
   const myUserId = user?._id;
 
-  const match = useQuery(api.matches.get, {
-    matchId: matchId as Id<"matches">,
-  });
+  const game = useQuery(
+    api.games.getGame,
+    matchId ? { gameId: matchId } : "skip"
+  );
 
-  if (!match) {
+  if (!game) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <Text style={styles.text}>Chargement...</Text>
@@ -32,20 +32,22 @@ export default function ResultScreen() {
     );
   }
 
-  const isWinner = match.winnerId === myUserId;
+  const isWinner = game.winnerId === myUserId;
   const winTypeLabels: Record<string, string> = {
     normal: "Victoire normale",
-    kora: "Kora simple",
+    simple_kora: "Kora simple",
     double_kora: "Double Kora",
     triple_kora: "Triple Kora",
-    main_faible: "Main faible",
-    triple_7: "Triple 7",
+    auto_sum: "Main faible",
+    auto_sevens: "Triple 7",
   };
 
-  const winTypeLabel = winTypeLabels[match.winType || "normal"] || "Victoire";
-  const totalBet = match.betAmount * 2;
+  const winTypeLabel =
+    winTypeLabels[game.victoryType || "normal"] || "Victoire";
+  const myPlayer = game.players.find((p) => p.userId === myUserId);
+  const winnings = myPlayer?.balance || 0;
+  const totalBet = game.bet.amount * 2;
   const platformFee = totalBet * 0.1;
-  const winnings = (totalBet - platformFee) * match.koraMultiplier;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -66,9 +68,14 @@ export default function ResultScreen() {
               variant={isWinner ? "kora" : "default"}
               style={styles.winTypeBadge}
             />
-            {match.koraMultiplier > 1 && (
+            {game.victoryType && game.victoryType.includes("kora") && (
               <Badge
-                label={`x${match.koraMultiplier}`}
+                label={
+                  game.victoryType === "triple_kora" ? "x8"
+                  : game.victoryType === "double_kora" ?
+                    "x4"
+                  : "x2"
+                }
                 variant="kora"
                 style={styles.multiplierBadge}
               />
@@ -78,22 +85,28 @@ export default function ResultScreen() {
           <View style={styles.statsContainer}>
             <View style={styles.statRow}>
               <Text style={styles.statLabel}>Mise totale</Text>
-              <Text style={styles.statValue}>{totalBet} Kora</Text>
+              <Text style={styles.statValue}>
+                {totalBet} {game.bet.currency}
+              </Text>
             </View>
             {isWinner && (
               <>
                 <View style={styles.statRow}>
                   <Text style={styles.statLabel}>Commission (10%)</Text>
-                  <Text style={styles.statValue}>-{platformFee} Kora</Text>
+                  <Text style={styles.statValue}>
+                    -{platformFee} {game.bet.currency}
+                  </Text>
                 </View>
-                <View style={styles.statRow}>
-                  <Text style={styles.statLabel}>Multiplicateur</Text>
-                  <Text style={styles.statValue}>x{match.koraMultiplier}</Text>
-                </View>
+                {game.victoryType && game.victoryType.includes("kora") && (
+                  <View style={styles.statRow}>
+                    <Text style={styles.statLabel}>Type de victoire</Text>
+                    <Text style={styles.statValue}>{winTypeLabel}</Text>
+                  </View>
+                )}
                 <View style={[styles.statRow, styles.totalRow]}>
                   <Text style={styles.totalLabel}>Gains</Text>
                   <Text style={styles.totalValue}>
-                    {Math.round(winnings)} Kora
+                    {Math.round(winnings)} {game.bet.currency}
                   </Text>
                 </View>
               </>

@@ -26,11 +26,12 @@ export default function SelectDifficultyScreen() {
 
     setLoading(true);
     try {
-      const matchId = await createMatchVsAI(
+      const gameId = await createMatchVsAI(
         parseInt(betAmount, 10),
-        selectedDifficulty
+        selectedDifficulty as "easy" | "medium" | "hard",
+        "XAF"
       );
-      router.replace(`/(game)/match/${matchId}`);
+      router.replace(`/(game)/match/${gameId}`);
     } catch (error) {
       console.error("Error creating match vs AI:", error);
     } finally {
@@ -42,7 +43,7 @@ export default function SelectDifficultyScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <Text style={styles.title}>Choisir la difficulté</Text>
-        <Text style={styles.subtitle}>Mise: {betAmount} Kora</Text>
+        <Text style={styles.subtitle}>Mise: {betAmount} XAF</Text>
 
         <View style={styles.options}>
           {DIFFICULTIES.map((difficulty) => (

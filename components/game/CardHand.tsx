@@ -1,14 +1,25 @@
-import { isValidPlay, type Card } from '@/convex/game';
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withDelay, withSpring } from 'react-native-reanimated';
-import { PlayingCard } from './PlayingCard';
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+} from "react-native-reanimated";
+import { PlayingCard } from "./PlayingCard";
+
+export type Card = {
+  id: string;
+  suit: "hearts" | "diamonds" | "clubs" | "spades";
+  rank: "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+  playable: boolean;
+};
 
 interface CardHandProps {
   cards: Card[];
-  leadSuit: string | null;
   isMyTurn: boolean;
   onCardSelect: (card: Card) => void;
+  onCardDoubleTap?: (card: Card) => void;
   selectedCard?: Card | null;
   disabled?: boolean;
 }
@@ -16,19 +27,28 @@ interface CardHandProps {
 interface AnimatedCardProps {
   card: Card;
   index: number;
-  state: 'playable' | 'disabled' | 'selected';
+  state: "playable" | "disabled" | "selected";
   onPress: () => void;
   isSelected: boolean;
 }
 
-function AnimatedCard({ card, index, state, onPress, isSelected }: AnimatedCardProps) {
-  const translateY = useSharedValue(50);
+function AnimatedCard({
+  card,
+  index,
+  state,
+  onPress,
+  isSelected,
+}: AnimatedCardProps) {
+  const translateY = useSharedValue(100);
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
-    translateY.value = withDelay(index * 50, withSpring(0, { damping: 15 }));
-    opacity.value = withDelay(index * 50, withSpring(1, { damping: 15 }));
-  }, []);
+    translateY.value = withDelay(
+      index * 50,
+      withSpring(0, { damping: 12, stiffness: 100 })
+    );
+    opacity.value = withDelay(index * 50, withSpring(1, { damping: 20 }));
+  }, [index, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -45,7 +65,7 @@ function AnimatedCard({ card, index, state, onPress, isSelected }: AnimatedCardP
     >
       <PlayingCard
         suit={card.suit}
-        value={card.value}
+        rank={card.rank}
         state={state}
         onPress={onPress}
         size="medium"
@@ -56,29 +76,50 @@ function AnimatedCard({ card, index, state, onPress, isSelected }: AnimatedCardP
 
 export function CardHand({
   cards,
-  leadSuit,
   isMyTurn,
   onCardSelect,
+  onCardDoubleTap,
   selectedCard,
   disabled = false,
 }: CardHandProps) {
-  const getCardState = (card: Card): 'playable' | 'disabled' | 'selected' => {
+  // Store last tap time for double tap detection
+  const lastTapRef = React.useRef<{ time: number; cardId: string } | null>(
+    null
+  );
+
+  const getCardState = (card: Card): "playable" | "disabled" | "selected" => {
     if (disabled || !isMyTurn) {
-      return 'disabled';
+      return "disabled";
     }
 
-    if (selectedCard && selectedCard.suit === card.suit && selectedCard.value === card.value) {
-      return 'selected';
+    if (selectedCard && selectedCard.id === card.id) {
+      return "selected";
     }
 
-    const canPlay = isValidPlay(cards, card, leadSuit);
-    return canPlay ? 'playable' : 'disabled';
+    return card.playable ? "playable" : "disabled";
   };
 
   const handleCardPress = (card: Card) => {
     if (disabled || !isMyTurn) return;
-    const canPlay = isValidPlay(cards, card, leadSuit);
-    if (canPlay) {
+    if (!card.playable) return;
+
+    const now = Date.now();
+    const cardId = card.id;
+
+    // Check for double tap
+    if (
+      lastTapRef.current &&
+      lastTapRef.current.cardId === cardId &&
+      now - lastTapRef.current.time < 300 // 300ms threshold
+    ) {
+      // Double tap detected!
+      if (onCardDoubleTap) {
+        onCardDoubleTap(card);
+      }
+      lastTapRef.current = null; // Reset
+    } else {
+      // Single tap
+      lastTapRef.current = { time: now, cardId };
       onCardSelect(card);
     }
   };
@@ -87,12 +128,12 @@ export function CardHand({
     <View style={styles.container}>
       {cards.map((card, index) => (
         <AnimatedCard
-          key={`${card.suit}-${card.value}-${index}`}
+          key={card.id}
           card={card}
           index={index}
           state={getCardState(card)}
           onPress={() => handleCardPress(card)}
-          isSelected={!!(selectedCard && selectedCard.suit === card.suit && selectedCard.value === card.value)}
+          isSelected={!!(selectedCard && selectedCard.id === card.id)}
         />
       ))}
     </View>
@@ -101,9 +142,9 @@ export function CardHand({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "flex-end",
     gap: 8,
     paddingVertical: 16,
     paddingHorizontal: 8,
@@ -115,4 +156,3 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
-

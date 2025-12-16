@@ -17,14 +17,14 @@ export default function SelectBetScreen() {
   const { userId } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
+    userId ? { clerkUserId: userId } : "skip"
   );
   const [selectedBet, setSelectedBet] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleContinue = async () => {
     if (!selectedBet) return;
-    if (!user || user.koraBalance < selectedBet) {
+    if (!user || (user.balance || 0) < selectedBet) {
       return;
     }
 
@@ -45,12 +45,13 @@ export default function SelectBetScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Choisir la mise</Text>
         <Text style={styles.subtitle}>
-          Votre solde: {user?.koraBalance?.toLocaleString() || 0} Kora
+          Votre solde: {user?.balance?.toLocaleString() || 0}{" "}
+          {user?.currency || "XAF"}
         </Text>
 
         <View style={styles.betOptions}>
           {BET_AMOUNTS.map((amount) => {
-            const canAfford = user ? user.koraBalance >= amount : false;
+            const canAfford = user ? (user.balance || 0) >= amount : false;
             return (
               <Button
                 key={amount}
@@ -71,7 +72,7 @@ export default function SelectBetScreen() {
         {selectedBet && (
           <View style={styles.selectedInfo}>
             <Badge
-              label={`Mise sélectionnée: ${selectedBet} Kora`}
+              label={`Mise sélectionnée: ${selectedBet} ${user?.currency || "XAF"}`}
               variant="kora"
             />
           </View>

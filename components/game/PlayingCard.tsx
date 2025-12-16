@@ -1,5 +1,4 @@
 import { Colors } from "@/constants/theme";
-import { SUIT_COLORS, type Card } from "@/convex/game";
 import { Image } from "expo-image";
 import React, { useEffect } from "react";
 import {
@@ -17,9 +16,12 @@ import Animated, {
     withTiming,
 } from "react-native-reanimated";
 
+type Suit = "hearts" | "diamonds" | "clubs" | "spades";
+type Rank = "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+
 interface PlayingCardProps {
-  suit: Card["suit"];
-  value: number;
+  suit: Suit;
+  rank: Rank;
   state: "playable" | "disabled" | "selected" | "played";
   onPress?: () => void;
   size?: "small" | "medium" | "large";
@@ -31,16 +33,23 @@ const CARD_SIZES = {
   large: { width: 100, height: 140 },
 };
 
-const SUIT_IMAGES = {
-  spade: require("@/assets/images/suit_spade.svg"),
-  club: require("@/assets/images/suit_club.svg"),
-  heart: require("@/assets/images/suit_heart.svg"),
-  diamond: require("@/assets/images/suit_diamond.svg"),
+const SUIT_COLORS: Record<Suit, string> = {
+  spades: "#1A1A1A",
+  clubs: "#1A1A1A",
+  hearts: "#B4443E",
+  diamonds: "#B4443E",
+};
+
+const SUIT_IMAGES: Record<Suit, any> = {
+  spades: require("@/assets/images/suit_spade.svg"),
+  clubs: require("@/assets/images/suit_club.svg"),
+  hearts: require("@/assets/images/suit_heart.svg"),
+  diamonds: require("@/assets/images/suit_diamond.svg"),
 };
 
 export function PlayingCard({
   suit,
-  value,
+  rank,
   state,
   onPress,
   size = "medium",
@@ -48,6 +57,7 @@ export function PlayingCard({
   const cardSize = CARD_SIZES[size];
   const suitColor = SUIT_COLORS[suit];
   const suitImage = SUIT_IMAGES[suit];
+  const displayValue = rank;
   const isPlayable = state === "playable" || state === "selected";
   const isSelected = state === "selected";
   const isPlayed = state === "played";
@@ -123,7 +133,7 @@ export function PlayingCard({
   const content = (
     <Animated.View style={[cardStyle, animatedStyle]}>
       <View style={styles.topCorner}>
-        <Text style={[styles.value, { color: suitColor }]}>{value}</Text>
+        <Text style={[styles.value, { color: suitColor }]}>{displayValue}</Text>
         <Image
           source={suitImage}
           style={[
@@ -170,7 +180,7 @@ export function PlayingCard({
             { color: suitColor, transform: [{ rotate: "180deg" }] },
           ]}
         >
-          {value}
+          {displayValue}
         </Text>
       </View>
     </Animated.View>

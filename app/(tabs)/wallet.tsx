@@ -1,22 +1,14 @@
 import { Badge } from "@/components/ui/Badge";
 import { Colors } from "@/constants/theme";
-import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "convex/react";
+import { useEconomy } from "@/hooks/useEconomy";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WalletScreen() {
-  const { userId, isSignedIn } = useAuth();
-  const user = useQuery(
-    api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
-  );
-  const transactions = useQuery(
-    api.economy.getTransactionHistory,
-    user?._id ? { userId: user._id } : "skip"
-  );
+  const { isSignedIn } = useAuth();
+  const { balance, currency, transactions } = useEconomy();
 
   if (!isSignedIn) {
     return (
@@ -31,26 +23,11 @@ export default function WalletScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Solde Kora</Text>
+            <Text style={styles.balanceLabel}>Solde</Text>
             <Text style={styles.balanceAmount}>
-              {user?.koraBalance?.toLocaleString() || 0}
+              {balance.toLocaleString()}
             </Text>
-            <Badge label="Kora" variant="kora" style={styles.badge} />
-          </View>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Total gagné</Text>
-              <Text style={styles.statValue}>
-                {user?.totalKoraWon?.toLocaleString() || 0}
-              </Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Total perdu</Text>
-              <Text style={styles.statValue}>
-                {user?.totalKoraLost?.toLocaleString() || 0}
-              </Text>
-            </View>
+            <Badge label={currency} variant="kora" style={styles.badge} />
           </View>
 
           <View style={styles.section}>
@@ -93,7 +70,7 @@ export default function WalletScreen() {
                       ]}
                     >
                       {tx.amount > 0 ? "+" : ""}
-                      {tx.amount.toLocaleString()} Kora
+                      {tx.amount.toLocaleString()} {currency}
                     </Text>
                   </View>
                 ))}

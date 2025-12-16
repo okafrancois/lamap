@@ -5,7 +5,7 @@ export const deductBet = mutation({
   args: {
     userId: v.id("users"),
     amount: v.number(),
-    gameId: v.optional(v.string()),
+    matchId: v.optional(v.id("matches")),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -13,23 +13,23 @@ export const deductBet = mutation({
       throw new Error("User not found");
     }
 
-    const currentBalance = user.balance || 0;
-    if (currentBalance < args.amount) {
+    if (user.koraBalance < args.amount) {
       throw new Error("Insufficient balance");
     }
 
-    const newBalance = currentBalance - args.amount;
+    const newBalance = user.koraBalance - args.amount;
 
     await ctx.db.patch(args.userId, {
-      balance: newBalance,
+      koraBalance: newBalance,
+      totalKoraLost: user.totalKoraLost + args.amount,
     });
 
     await ctx.db.insert("transactions", {
       userId: args.userId,
       type: "bet",
       amount: -args.amount,
-      gameId: args.gameId,
-      description: `Mise de ${args.amount} ${user.currency || "XAF"}${args.gameId ? ` pour la partie` : ""}`,
+      matchId: args.matchId,
+      description: `Mise de ${args.amount} Kora${args.matchId ? ` pour le match` : ""}`,
       createdAt: Date.now(),
     });
 
@@ -41,7 +41,7 @@ export const creditWinnings = mutation({
   args: {
     userId: v.id("users"),
     amount: v.number(),
-    gameId: v.string(),
+    matchId: v.id("matches"),
     winType: v.string(),
   },
   handler: async (ctx, args) => {
@@ -50,19 +50,20 @@ export const creditWinnings = mutation({
       throw new Error("User not found");
     }
 
-    const currentBalance = user.balance || 0;
-    const newBalance = currentBalance + args.amount;
+    const newBalance = user.koraBalance + args.amount;
 
     await ctx.db.patch(args.userId, {
-      balance: newBalance,
+      koraBalance: newBalance,
+      totalWins: user.totalWins + 1,
+      totalKoraWon: user.totalKoraWon + args.amount,
     });
 
     await ctx.db.insert("transactions", {
       userId: args.userId,
       type: "win",
       amount: args.amount,
-      gameId: args.gameId,
-      description: `Gain de ${args.amount} ${user.currency || "XAF"} (${args.winType})`,
+      matchId: args.matchId,
+      description: `Gain de ${args.amount} Kora (${args.winType})`,
       createdAt: Date.now(),
     });
 
@@ -74,7 +75,7 @@ export const refundBet = mutation({
   args: {
     userId: v.id("users"),
     amount: v.number(),
-    gameId: v.optional(v.string()),
+    matchId: v.optional(v.id("matches")),
   },
   handler: async (ctx, args) => {
     const user = await ctx.db.get(args.userId);
@@ -82,19 +83,18 @@ export const refundBet = mutation({
       throw new Error("User not found");
     }
 
-    const currentBalance = user.balance || 0;
-    const newBalance = currentBalance + args.amount;
+    const newBalance = user.koraBalance + args.amount;
 
     await ctx.db.patch(args.userId, {
-      balance: newBalance,
+      koraBalance: newBalance,
     });
 
     await ctx.db.insert("transactions", {
       userId: args.userId,
       type: "bet",
       amount: args.amount,
-      gameId: args.gameId,
-      description: `Remboursement de ${args.amount} ${user.currency || "XAF"}`,
+      matchId: args.matchId,
+      description: `Remboursement de ${args.amount} Kora`,
       createdAt: Date.now(),
     });
 
@@ -124,7 +124,10 @@ export const getTransactions = query({
       .order("desc")
       .take(limit);
 
-    return transactions;
+    return transactions.map((tx) => ({
+      ...tx,
+      match: tx.matchId ? ctx.db.get(tx.matchId) : null,
+    }));
   },
 });
 
@@ -140,4 +143,3 @@ export const getTransactionHistory = query({
       .collect();
   },
 });
-

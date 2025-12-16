@@ -1,36 +1,49 @@
 import { Colors } from '@/constants/theme';
-import { type TurnResult } from '@/convex/game';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { PlayingCard } from './PlayingCard';
 
+type TurnResult = {
+  turn: number;
+  winnerId: string;
+  winningCard: {
+    suit: "hearts" | "diamonds" | "clubs" | "spades";
+    rank: "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+  };
+};
+
 interface TurnHistoryProps {
   results: TurnResult[];
   myPlayerId: string | null | undefined;
+  game?: any;
 }
 
-export function TurnHistory({ results, myPlayerId }: TurnHistoryProps) {
+export function TurnHistory({ results, myPlayerId, game }: TurnHistoryProps) {
   if (results.length === 0 || !myPlayerId) return null;
 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
         {results.map((result) => {
-          // Skip if we don't have full history details (legacy data compatibility)
-          if (!result.losingCard || !result.loserId) return null;
+          if (!result.winningCard) return null;
 
           const isWin = result.winnerId === myPlayerId;
-          const myCard = isWin ? result.winningCard : result.losingCard;
-          const opCard = isWin ? result.losingCard : result.winningCard;
+          
+          const roundCards = game?.playedCards?.filter((pc: any) => pc.round === result.turn) || [];
+          const winnerCard = roundCards.find((pc: any) => pc.playerId === result.winnerId)?.card;
+          const loserCard = roundCards.find((pc: any) => pc.playerId !== result.winnerId)?.card;
 
-          if (!myCard || !opCard) return null;
+          if (!winnerCard || !loserCard) return null;
+
+          const myCard = isWin ? winnerCard : loserCard;
+          const opCard = isWin ? loserCard : winnerCard;
 
           return (
             <View key={result.turn} style={styles.column}>
               <View style={styles.cardContainer}>
                 <PlayingCard
                   suit={opCard.suit}
-                  value={opCard.value}
+                  rank={opCard.rank}
                   state="played"
                   size="small"
                 />
@@ -43,7 +56,7 @@ export function TurnHistory({ results, myPlayerId }: TurnHistoryProps) {
               <View style={styles.cardContainer}>
                 <PlayingCard
                   suit={myCard.suit}
-                  value={myCard.value}
+                  rank={myCard.rank}
                   state="played"
                   size="small"
                 />

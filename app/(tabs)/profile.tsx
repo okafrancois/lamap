@@ -17,7 +17,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : "skip"
+    userId ? { clerkUserId: userId } : "skip"
   );
 
   const handleSignOut = async () => {
@@ -53,39 +53,13 @@ export default function ProfileScreen() {
             {user?.email && <Text style={styles.email}>{user.email}</Text>}
           </View>
 
-          <View style={styles.statsSection}>
-            <Text style={styles.sectionTitle}>Statistiques</Text>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{user?.totalWins || 0}</Text>
-                <Text style={styles.statLabel}>Victoires</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{user?.totalLosses || 0}</Text>
-                <Text style={styles.statLabel}>Défaites</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
-                  {user?.totalWins && user?.totalLosses ?
-                    Math.round(
-                      (user.totalWins / (user.totalWins + user.totalLosses)) *
-                        100
-                    )
-                  : 0}
-                  %
-                </Text>
-                <Text style={styles.statLabel}>Taux de victoire</Text>
-              </View>
-            </View>
-          </View>
-
           <View style={styles.koraSection}>
             <View style={styles.koraCard}>
-              <Text style={styles.koraLabel}>Solde Kora</Text>
+              <Text style={styles.koraLabel}>Solde</Text>
               <Text style={styles.koraAmount}>
-                {user?.koraBalance?.toLocaleString() || 0}
+                {user?.balance?.toLocaleString() || 0}
               </Text>
-              <Badge label="Kora" variant="kora" style={styles.badge} />
+              <Badge label={user?.currency || "XAF"} variant="kora" style={styles.badge} />
             </View>
           </View>
 
