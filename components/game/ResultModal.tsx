@@ -1,48 +1,65 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
-import { api } from "@/convex/_generated/api";
-import { useAuth } from "@/hooks/useAuth";
 import { useSound } from "@/hooks/useSound";
-import { useQuery } from "convex/react";
-import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Modal, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withSpring,
   withTiming,
 } from "react-native-reanimated";
-import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function ResultScreen() {
-  const { matchId } = useLocalSearchParams<{ matchId: string }>();
-  const router = useRouter();
-  const { userId } = useAuth();
-  const user = useQuery(
-    api.users.getCurrentUser,
-    userId ? { clerkUserId: userId } : "skip"
-  );
-  const myUserId = user?._id;
+interface ResultModalProps {
+  visible: boolean;
+  game: {
+    winnerId: string | null;
+    victoryType: string | null;
+    bet: { amount: number; currency: string };
+    players: { userId: string | null; balance: number }[];
+  };
+  myUserId: string | null;
+  onClose: () => void;
+  onGoHome: () => void;
+}
 
-  const game = useQuery(
-    api.games.getGame,
-    matchId ? { gameId: matchId } : "skip"
-  );
+export function ResultModal({
+  visible,
+  game,
+  myUserId,
+  onClose,
+  onGoHome,
+}: ResultModalProps) {
   const { playSound } = useSound();
-
   const [displayedWinnings, setDisplayedWinnings] = useState(0);
-  const cardOpacity = useSharedValue(0);
-  const cardScale = useSharedValue(0.8);
   const soundPlayedRef = useRef(false);
   const counterStartedRef = useRef(false);
 
-  // Son de victoire/défaite uniquement (une seule fois)
-  useEffect(() => {
-    if (game && !soundPlayedRef.current) {
-      const isWinner = game.winnerId === myUserId;
+  const cardOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.8);
+  const modalOpacity = useSharedValue(0);
 
-      // Son selon le type de victoire/défaite
+  const isWinner = game.winnerId === myUserId;
+  const myPlayer = game.players.find((p) => p.userId === myUserId);
+  const winnings = myPlayer?.balance || 0;
+  const totalBet = game.bet.amount * 2;
+  const platformFee = totalBet * 0.1;
+
+  useEffect(() => {
+    if (visible) {
+      cardOpacity.value = withTiming(1, { duration: 300 });
+      cardScale.value = withSpring(1, { damping: 15, stiffness: 150 });
+      modalOpacity.value = withTiming(1, { duration: 200 });
+    } else {
+      cardOpacity.value = withTiming(0, { duration: 200 });
+      cardScale.value = withTiming(0.8, { duration: 200 });
+      modalOpacity.value = withTiming(0, { duration: 200 });
+    }
+  }, [visible, cardOpacity, cardScale, modalOpacity]);
+
+  useEffect(() => {
+    if (visible && game && !soundPlayedRef.current) {
       if (isWinner) {
         if (game.victoryType === "triple_kora") {
           playSound("koraTriple");
@@ -61,30 +78,18 @@ export default function ResultScreen() {
       } else {
         playSound("defeat");
       }
-
       soundPlayedRef.current = true;
     }
-  }, [game, myUserId, playSound]);
+  }, [visible, game, isWinner, playSound]);
 
   useEffect(() => {
-    cardOpacity.value = withTiming(1, { duration: 300 });
-    cardScale.value = withTiming(1, { duration: 300 });
-  }, [cardOpacity, cardScale]);
-
-  const isWinner = game?.winnerId === myUserId;
-  const myPlayer = game?.players.find((p) => p.userId === myUserId);
-  const winnings = myPlayer?.balance || 0;
-
-  useEffect(() => {
-    if (isWinner && winnings > 0 && !counterStartedRef.current) {
+    if (visible && isWinner && winnings > 0 && !counterStartedRef.current) {
       counterStartedRef.current = true;
-
       const duration = 1500;
       const steps = 30;
       const stepValue = winnings / steps;
       const stepDuration = duration / steps;
 
-      // Jouer le son de gain d'argent au début de l'animation
       playSound("winMoney");
 
       let current = 0;
@@ -100,20 +105,15 @@ export default function ResultScreen() {
 
       return () => clearInterval(interval);
     }
-  }, [isWinner, winnings, playSound]);
+  }, [visible, isWinner, winnings, playSound]);
 
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: cardOpacity.value,
-    transform: [{ scale: cardScale.value }],
-  }));
-
-  if (!game) {
-    return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
-        <Text style={styles.text}>Chargement...</Text>
-      </SafeAreaView>
-    );
-  }
+  useEffect(() => {
+    if (!visible) {
+      soundPlayedRef.current = false;
+      counterStartedRef.current = false;
+      setDisplayedWinnings(0);
+    }
+  }, [visible]);
 
   const winTypeLabels: Record<string, string> = {
     normal: "Victoire normale",
@@ -126,12 +126,25 @@ export default function ResultScreen() {
 
   const winTypeLabel =
     winTypeLabels[game.victoryType || "normal"] || "Victoire";
-  const totalBet = game.bet.amount * 2;
-  const platformFee = totalBet * 0.1;
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: modalOpacity.value * 0.5,
+  }));
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.content}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onClose}
+    >
+      <Animated.View style={[styles.backdrop, backdropStyle]} />
+      <View style={styles.container}>
         <Animated.View
           style={[
             styles.resultCard,
@@ -163,71 +176,75 @@ export default function ResultScreen() {
             )}
           </View>
 
-          <View style={styles.statsContainer}>
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Mise totale</Text>
-              <Text style={styles.statValue}>
-                {totalBet} {game.bet.currency}
-              </Text>
-            </View>
-            {isWinner && (
-              <>
-                <View style={styles.statRow}>
-                  <Text style={styles.statLabel}>Commission (10%)</Text>
-                  <Text style={styles.statValue}>
-                    -{platformFee} {game.bet.currency}
-                  </Text>
-                </View>
-                {game.victoryType && game.victoryType.includes("kora") && (
+          {game.bet.amount > 0 && (
+            <View style={styles.statsContainer}>
+              <View style={styles.statRow}>
+                <Text style={styles.statLabel}>Mise totale</Text>
+                <Text style={styles.statValue}>
+                  {totalBet} {game.bet.currency}
+                </Text>
+              </View>
+              {isWinner && (
+                <>
                   <View style={styles.statRow}>
-                    <Text style={styles.statLabel}>Type de victoire</Text>
-                    <Text style={styles.statValue}>{winTypeLabel}</Text>
+                    <Text style={styles.statLabel}>Commission (10%)</Text>
+                    <Text style={styles.statValue}>
+                      -{platformFee} {game.bet.currency}
+                    </Text>
                   </View>
-                )}
-                <View style={[styles.statRow, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Gains</Text>
-                  <Text style={styles.totalValue}>
-                    {Math.round(displayedWinnings)} {game.bet.currency}
-                  </Text>
-                </View>
-              </>
-            )}
+                  {game.victoryType && game.victoryType.includes("kora") && (
+                    <View style={styles.statRow}>
+                      <Text style={styles.statLabel}>Type de victoire</Text>
+                      <Text style={styles.statValue}>{winTypeLabel}</Text>
+                    </View>
+                  )}
+                  <View style={[styles.statRow, styles.totalRow]}>
+                    <Text style={styles.totalLabel}>Gains</Text>
+                    <Text style={styles.totalValue}>
+                      {Math.round(displayedWinnings)} {game.bet.currency}
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
+          )}
+
+          <View style={styles.actions}>
+            <Button
+              title="Rejouer"
+              onPress={onGoHome}
+              variant="primary"
+              style={styles.button}
+            />
+            <Button
+              title="Retour à l'accueil"
+              onPress={onClose}
+              variant="secondary"
+              style={styles.button}
+            />
           </View>
         </Animated.View>
-
-        <View style={styles.actions}>
-          <Button
-            title="Rejouer"
-            onPress={() => router.replace("/(tabs)")}
-            variant="primary"
-            style={styles.button}
-          />
-          <Button
-            title="Retour à l'accueil"
-            onPress={() => router.replace("/(tabs)")}
-            variant="secondary"
-            style={styles.button}
-          />
-        </View>
       </View>
-    </SafeAreaView>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+  },
   container: {
     flex: 1,
-    backgroundColor: Colors.derived.blueDark,
-  },
-  content: {
-    flex: 1,
     justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   resultCard: {
     borderRadius: 16,
     padding: 24,
-    marginBottom: 32,
+    width: "100%",
+    maxWidth: 400,
     borderWidth: 3,
   },
   winnerCard: {
@@ -259,6 +276,7 @@ const styles = StyleSheet.create({
   },
   statsContainer: {
     gap: 12,
+    marginBottom: 24,
   },
   statRow: {
     flexDirection: "row",
@@ -298,8 +316,5 @@ const styles = StyleSheet.create({
   },
   button: {
     minHeight: 56,
-  },
-  text: {
-    color: Colors.derived.white,
   },
 });

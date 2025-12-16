@@ -52,13 +52,10 @@ export const getGameMessages = query({
   handler: async (ctx, args) => {
     const messages = await ctx.db
       .query("gameMessages")
-      .withIndex("by_game_id_and_timestamp", (q) =>
-        q.eq("gameId", args.gameId)
-      )
+      .withIndex("by_game_id_and_timestamp", (q) => q.eq("gameId", args.gameId))
       .order("asc")
       .collect();
 
     return messages;
   },
 });
-

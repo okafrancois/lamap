@@ -1,8 +1,11 @@
 import { CardHand, type Card } from "@/components/game/CardHand";
+import { GameChatDrawer } from "@/components/game/GameChatDrawer";
 import { PlayingCard } from "@/components/game/PlayingCard";
+import { ResultModal } from "@/components/game/ResultModal";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useGame } from "@/hooks/useGame";
@@ -10,7 +13,14 @@ import { useSound } from "@/hooks/useSound";
 import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchScreen() {
@@ -39,12 +49,8 @@ export default function MatchScreen() {
   const [previousGameStatus, setPreviousGameStatus] = useState<
     string | undefined
   >(undefined);
-
-  useEffect(() => {
-    if (game?.status === "ENDED") {
-      router.replace(`/(game)/result/${matchId}`);
-    }
-  }, [game?.status, matchId, router]);
+  const [chatVisible, setChatVisible] = useState(false);
+  const [resultModalVisible, setResultModalVisible] = useState(false);
 
   useEffect(() => {
     if (turnResults && turnResults.length > previousTurnResults.length) {
@@ -97,6 +103,12 @@ export default function MatchScreen() {
     }
     setPreviousIsMyTurn(isMyTurn);
   }, [isMyTurn, previousIsMyTurn, game?.status, playSound]);
+
+  useEffect(() => {
+    if (game?.status === "ENDED") {
+      setResultModalVisible(true);
+    }
+  }, [game?.status]);
 
   const handleCardSelect = useCallback(
     (card: Card) => {
@@ -179,10 +191,6 @@ export default function MatchScreen() {
     );
   }
 
-  if (game.status === "ENDED") {
-    return null;
-  }
-
   const opponent = game.players.find((p) => p.userId !== myUserId);
   const currentRoundCards = currentPlays || [];
   const myCard = currentRoundCards.find((pc) => pc.playerId === myUserId)?.card;
@@ -203,13 +211,27 @@ export default function MatchScreen() {
             Tour {game.currentRound} / {game.maxRounds}
           </Text>
         </View>
-        {game.bet.amount > 0 && (
-          <View style={styles.betInfo}>
-            <Text style={styles.betText}>
-              Mise: {game.bet.amount} {game.bet.currency}
-            </Text>
-          </View>
-        )}
+        <View style={styles.headerRight}>
+          {game.bet.amount > 0 && (
+            <View style={styles.betInfo}>
+              <Text style={styles.betText}>
+                Mise: {game.bet.amount} {game.bet.currency}
+              </Text>
+            </View>
+          )}
+          {game.mode === "ONLINE" && (
+            <TouchableOpacity
+              onPress={() => setChatVisible(true)}
+              style={styles.chatButton}
+            >
+              <IconSymbol
+                name="message.fill"
+                size={24}
+                color={Colors.primary.gold}
+              />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <View style={styles.playArea}>
@@ -294,6 +316,28 @@ export default function MatchScreen() {
           </View>
         )}
       </View>
+
+      <GameChatDrawer
+        gameId={matchId}
+        visible={chatVisible}
+        onClose={() => setChatVisible(false)}
+      />
+
+      {game.status === "ENDED" && (
+        <ResultModal
+          visible={resultModalVisible}
+          game={game}
+          myUserId={myUserId ?? null}
+          onClose={() => {
+            setResultModalVisible(false);
+            router.replace("/(tabs)");
+          }}
+          onGoHome={() => {
+            setResultModalVisible(false);
+            router.replace("/(tabs)");
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -313,10 +357,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.blue,
     borderBottomWidth: 2,
     borderBottomColor: Colors.primary.gold,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   turnIndicator: {
     alignItems: "center",
-    marginBottom: 8,
   },
   turnText: {
     fontSize: 20,
@@ -326,6 +377,9 @@ const styles = StyleSheet.create({
   },
   betInfo: {
     alignItems: "center",
+  },
+  chatButton: {
+    padding: 8,
   },
   betText: {
     fontSize: 16,

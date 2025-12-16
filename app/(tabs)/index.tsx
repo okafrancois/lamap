@@ -43,12 +43,17 @@ export default function HomeScreen() {
               <View>
                 <Text style={styles.activeMatchLabel}>Partie en cours</Text>
                 <Text style={styles.activeMatchInfo}>
-                  {activeGame.mode === "AI" ? "Contre l'IA" : "Contre un joueur"} • {activeGame.bet.amount} {activeGame.bet.currency}
+                  {activeGame.mode === "AI" ?
+                    "Contre l'IA"
+                  : "Contre un joueur"}{" "}
+                  • {activeGame.bet.amount} {activeGame.bet.currency}
                 </Text>
               </View>
               <Button
                 title="Rejoindre"
-                onPress={() => router.push(`/(game)/match/${activeGame.gameId}`)}
+                onPress={() =>
+                  router.push(`/(game)/match/${activeGame.gameId}`)
+                }
                 style={styles.rejoinButton}
                 textStyle={styles.rejoinButtonText}
               />
@@ -61,7 +66,11 @@ export default function HomeScreen() {
           <Text style={styles.balanceAmount}>
             {user?.balance?.toLocaleString() || 0}
           </Text>
-          <Badge label={user?.currency || "XAF"} variant="kora" style={styles.badge} />
+          <Badge
+            label={user?.currency || "XAF"}
+            variant="kora"
+            style={styles.badge}
+          />
         </View>
 
         <View style={styles.actions}>
@@ -70,8 +79,21 @@ export default function HomeScreen() {
             onPress={() => router.push("/(lobby)/select-mode")}
             style={styles.playButton}
           />
+          <View style={styles.friendlyActions}>
+            <Button
+              title="Créer une partie amicale"
+              onPress={() => router.push("/(lobby)/create-friendly")}
+              variant="secondary"
+              style={styles.friendlyButton}
+            />
+            <Button
+              title="Rejoindre une partie amicale"
+              onPress={() => router.push("/(lobby)/join-friendly")}
+              variant="secondary"
+              style={styles.friendlyButton}
+            />
+          </View>
         </View>
-
       </View>
     </SafeAreaView>
   );
@@ -163,6 +185,13 @@ const styles = StyleSheet.create({
   },
   playButton: {
     minHeight: 56,
+    marginBottom: 16,
+  },
+  friendlyActions: {
+    gap: 12,
+  },
+  friendlyButton: {
+    minHeight: 48,
   },
   stats: {
     flexDirection: "row",

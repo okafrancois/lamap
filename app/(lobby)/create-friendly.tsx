@@ -2,15 +2,20 @@ import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
+import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Clipboard, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CreateFriendlyScreen() {
   const router = useRouter();
   const { userId } = useAuth();
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkUserId: userId } : "skip"
+  );
   const createFriendlyMatch = useMutation(
     api.friendlyMatches.createFriendlyMatch
   );
@@ -19,23 +24,15 @@ export default function CreateFriendlyScreen() {
   const [gameId, setGameId] = useState<string | null>(null);
 
   const handleCreate = async () => {
-    if (!userId) {
+    if (!userId || !user?._id) {
       Alert.alert("Erreur", "Vous devez être connecté pour créer une partie");
       return;
     }
 
     setLoading(true);
     try {
-      const user = await fetch(
-        `https://api.convex.dev/api/query?function=users.getCurrentUser&args=${encodeURIComponent(JSON.stringify({ clerkUserId: userId }))}`
-      ).then((r) => r.json());
-
-      if (!user || !user._id) {
-        throw new Error("User not found");
-      }
-
       const result = await createFriendlyMatch({
-        hostId: user._id as any,
+        hostId: user._id,
         currency: "XAF",
       });
 
@@ -52,9 +49,9 @@ export default function CreateFriendlyScreen() {
     }
   };
 
-  const handleCopyCode = () => {
+  const handleCopyCode = async () => {
     if (joinCode) {
-      Clipboard.setString(joinCode);
+      await Clipboard.setStringAsync(joinCode);
       Alert.alert("Code copié", "Le code a été copié dans le presse-papiers");
     }
   };

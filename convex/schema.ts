@@ -88,6 +88,23 @@ const matchmakingQueueTable = defineTable({
   joinedAt: v.number(),
 }).index("by_status_bet", ["status", "betAmount"]);
 
+const conversationsTable = defineTable({
+  participants: v.array(v.id("users")),
+  lastMessageAt: v.number(),
+  createdAt: v.number(),
+})
+  .index("by_last_message", ["lastMessageAt"]);
+
+const messagesTable = defineTable({
+  conversationId: v.id("conversations"),
+  senderId: v.id("users"),
+  content: v.string(),
+  timestamp: v.number(),
+  read: v.boolean(),
+})
+  .index("by_conversation", ["conversationId", "timestamp"])
+  .index("by_sender", ["senderId"]);
+
 export default defineSchema({
   numbers: numbersTable,
   users: usersTable,
@@ -95,4 +112,6 @@ export default defineSchema({
   gameMessages: gameMessagesTable,
   transactions: transactionsTable,
   matchmakingQueue: matchmakingQueueTable,
+  conversations: conversationsTable,
+  messages: messagesTable,
 });
