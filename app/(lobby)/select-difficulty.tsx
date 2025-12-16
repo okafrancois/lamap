@@ -4,6 +4,7 @@ import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const DIFFICULTIES = [
   { value: "easy", label: "Facile" },
@@ -38,7 +39,7 @@ export default function SelectDifficultyScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <Text style={styles.title}>Choisir la difficulté</Text>
         <Text style={styles.subtitle}>Mise: {betAmount} Kora</Text>
@@ -79,7 +80,7 @@ export default function SelectDifficultyScreen() {
           />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

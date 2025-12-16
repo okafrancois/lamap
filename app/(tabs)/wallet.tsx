@@ -1,106 +1,108 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { Badge } from '@/components/ui/Badge';
-import { Colors } from '@/constants/theme';
-import { Id } from '@/convex/_generated/dataModel';
+import { Badge } from "@/components/ui/Badge";
+import { Colors } from "@/constants/theme";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "convex/react";
+import React from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function WalletScreen() {
   const { userId, isSignedIn } = useAuth();
-  const myUserId = userId ? (userId as any as Id<"users">) : null;
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : 'skip'
+    userId ? { clerkId: userId } : "skip"
   );
   const transactions = useQuery(
     api.economy.getTransactionHistory,
-    myUserId ? { userId: myUserId } : 'skip'
+    user?._id ? { userId: user._id } : "skip"
   );
 
   if (!isSignedIn) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <Text style={styles.text}>Veuillez vous connecter</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Solde Kora</Text>
-          <Text style={styles.balanceAmount}>
-            {user?.koraBalance?.toLocaleString() || 0}
-          </Text>
-          <Badge label="Kora" variant="kora" style={styles.badge} />
-        </View>
-
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Total gagné</Text>
-            <Text style={styles.statValue}>
-              {user?.totalKoraWon?.toLocaleString() || 0}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView style={styles.scrollView}>
+        <View style={styles.content}>
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceLabel}>Solde Kora</Text>
+            <Text style={styles.balanceAmount}>
+              {user?.koraBalance?.toLocaleString() || 0}
             </Text>
+            <Badge label="Kora" variant="kora" style={styles.badge} />
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statLabel}>Total perdu</Text>
-            <Text style={styles.statValue}>
-              {user?.totalKoraLost?.toLocaleString() || 0}
-            </Text>
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Historique des transactions</Text>
-          {!transactions || transactions.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>Aucune transaction pour le moment</Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Total gagné</Text>
+              <Text style={styles.statValue}>
+                {user?.totalKoraWon?.toLocaleString() || 0}
+              </Text>
             </View>
-          ) : (
-            <View style={styles.transactionsList}>
-              {transactions.map((tx) => (
-                <View
-                  key={tx._id}
-                  style={[
-                    styles.transactionItem,
-                    tx.amount > 0 && styles.transactionWin,
-                    tx.amount < 0 && styles.transactionLoss,
-                  ]}
-                >
-                  <View style={styles.transactionContent}>
-                    <Text style={styles.transactionDescription}>
-                      {tx.description}
-                    </Text>
-                    <Text style={styles.transactionDate}>
-                      {new Date(tx.createdAt).toLocaleDateString('fr-FR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </Text>
-                  </View>
-                  <Text
+            <View style={styles.statCard}>
+              <Text style={styles.statLabel}>Total perdu</Text>
+              <Text style={styles.statValue}>
+                {user?.totalKoraLost?.toLocaleString() || 0}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Historique des transactions</Text>
+            {!transactions || transactions.length === 0 ?
+              <View style={styles.emptyState}>
+                <Text style={styles.emptyText}>
+                  Aucune transaction pour le moment
+                </Text>
+              </View>
+            : <View style={styles.transactionsList}>
+                {transactions.map((tx) => (
+                  <View
+                    key={tx._id}
                     style={[
-                      styles.transactionAmount,
-                      tx.amount > 0 && styles.amountWin,
-                      tx.amount < 0 && styles.amountLoss,
+                      styles.transactionItem,
+                      tx.amount > 0 && styles.transactionWin,
+                      tx.amount < 0 && styles.transactionLoss,
                     ]}
                   >
-                    {tx.amount > 0 ? '+' : ''}
-                    {tx.amount.toLocaleString()} Kora
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
+                    <View style={styles.transactionContent}>
+                      <Text style={styles.transactionDescription}>
+                        {tx.description}
+                      </Text>
+                      <Text style={styles.transactionDate}>
+                        {new Date(tx.createdAt).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.transactionAmount,
+                        tx.amount > 0 && styles.amountWin,
+                        tx.amount < 0 && styles.amountLoss,
+                      ]}
+                    >
+                      {tx.amount > 0 ? "+" : ""}
+                      {tx.amount.toLocaleString()} Kora
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            }
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -109,6 +111,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.derived.blueDark,
   },
+  scrollView: {
+    flex: 1,
+  },
   content: {
     padding: 24,
   },
@@ -116,7 +121,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.blue,
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
     borderWidth: 2,
     borderColor: Colors.primary.gold,
@@ -128,7 +133,7 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     fontSize: 48,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary.gold,
     marginBottom: 12,
   },
@@ -136,7 +141,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   statsContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
     marginBottom: 24,
   },
@@ -145,7 +150,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.blue,
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statLabel: {
     fontSize: 14,
@@ -154,7 +159,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
   },
   section: {
@@ -162,13 +167,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
     marginBottom: 16,
   },
   emptyState: {
     padding: 32,
-    alignItems: 'center',
+    alignItems: "center",
   },
   emptyText: {
     color: Colors.derived.blueLight,
@@ -181,9 +186,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.blue,
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   transactionWin: {
     borderLeftWidth: 4,
@@ -198,7 +203,7 @@ const styles = StyleSheet.create({
   },
   transactionDescription: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
     marginBottom: 4,
   },
@@ -208,7 +213,7 @@ const styles = StyleSheet.create({
   },
   transactionAmount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   amountWin: {
     color: Colors.primary.gold,
@@ -220,4 +225,3 @@ const styles = StyleSheet.create({
     color: Colors.derived.white,
   },
 });
-

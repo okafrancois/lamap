@@ -1,11 +1,12 @@
-import { Tabs, useRouter, useSegments } from 'expo-router';
-import React, { useEffect } from 'react';
+import { Tabs, useRouter, useSegments } from "expo-router";
+import React, { useEffect } from "react";
 
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAuth } from '@/hooks/useAuth';
+import { HapticTab } from "@/components/haptic-tab";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
+import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useAuth } from "@/hooks/useAuth";
+import { useSyncUser } from "@/hooks/useSyncUser";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -13,18 +14,19 @@ export default function TabLayout() {
   const segments = useSegments();
   const router = useRouter();
 
+  useSyncUser();
+
   useEffect(() => {
     if (!isLoaded) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const inTabsGroup = segments[0] === '(tabs)';
+    const inAuthGroup = segments[0] === "(auth)";
 
     if (!isSignedIn && !inAuthGroup) {
-      router.replace('/(auth)/login');
+      router.replace("/(auth)/login");
     } else if (isSignedIn && inAuthGroup) {
-      router.replace('/(tabs)');
+      router.replace("/(tabs)");
     }
-  }, [isSignedIn, segments, isLoaded]);
+  }, [isSignedIn, segments, isLoaded, router]);
 
   if (!isLoaded) {
     return null;
@@ -33,34 +35,41 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'dark'].tint,
-        tabBarInactiveTintColor: Colors[colorScheme ?? 'dark'].tabIconDefault,
+        tabBarActiveTintColor: Colors[colorScheme ?? "dark"].tint,
+        tabBarInactiveTintColor: Colors[colorScheme ?? "dark"].tabIconDefault,
         headerShown: false,
         tabBarStyle: {
           backgroundColor: Colors.derived.blueDark,
           borderTopColor: Colors.primary.blue,
         },
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Jouer',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gamecontroller.fill" color={color} />,
+          title: "Jouer",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="gamecontroller.fill" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="wallet"
         options={{
-          title: 'Portefeuille',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="wallet.pass.fill" color={color} />,
+          title: "Portefeuille",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="wallet.pass.fill" color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          title: "Profil",
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.fill" color={color} />
+          ),
         }}
       />
     </Tabs>

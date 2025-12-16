@@ -8,6 +8,7 @@ import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const BET_AMOUNTS = [10, 50, 100, 500];
 
@@ -42,7 +43,7 @@ export default function SelectBetScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Choisir la mise</Text>
         <Text style={styles.subtitle}>
@@ -94,7 +95,7 @@ export default function SelectBetScreen() {
           />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 

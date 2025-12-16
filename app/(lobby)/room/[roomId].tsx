@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useQuery, useMutation } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
-import { useAuth } from '@/hooks/useAuth';
-import { useMatchmaking } from '@/hooks/useMatchmaking';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { Colors } from '@/constants/theme';
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useAuth } from "@/hooks/useAuth";
+import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { useMutation, useQuery } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RoomScreen() {
   const router = useRouter();
@@ -25,18 +26,18 @@ export default function RoomScreen() {
 
   const player1 = useQuery(
     api.users.getUserById,
-    match?.player1Id ? { userId: match.player1Id } : 'skip'
+    match?.player1Id ? { userId: match.player1Id } : "skip"
   );
   const player2 = useQuery(
     api.users.getUserById,
-    match?.player2Id ? { userId: match.player2Id } : 'skip'
+    match?.player2Id ? { userId: match.player2Id } : "skip"
   );
 
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (match?.status === 'ready' || match?.status === 'playing') {
+    if (match?.status === "ready" || match?.status === "playing") {
       router.replace(`/(game)/match/${roomId}`);
     }
   }, [match?.status, roomId, router]);
@@ -48,11 +49,11 @@ export default function RoomScreen() {
       await setMatchReady(match._id);
       setIsReady(true);
 
-      if (match.status === 'ready') {
+      if (match.status === "ready") {
         await startMatch({ matchId: match._id });
       }
     } catch (error) {
-      console.error('Error setting ready:', error);
+      console.error("Error setting ready:", error);
     } finally {
       setLoading(false);
     }
@@ -60,10 +61,10 @@ export default function RoomScreen() {
 
   if (!match) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <ActivityIndicator size="large" color={Colors.primary.gold} />
         <Text style={styles.loadingText}>Chargement de la salle...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -72,32 +73,31 @@ export default function RoomScreen() {
   const me = isPlayer1 ? player1 : player2;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <Text style={styles.title}>Salle d'attente</Text>
         <Text style={styles.subtitle}>Mise: {match.betAmount} Kora</Text>
 
         <View style={styles.players}>
           <View style={styles.playerCard}>
-            <Avatar name={me?.username || 'Vous'} size={60} />
-            <Text style={styles.playerName}>{me?.username || 'Vous'}</Text>
+            <Avatar name={me?.username || "Vous"} size={60} />
+            <Text style={styles.playerName}>{me?.username || "Vous"}</Text>
             {isReady && <Badge label="Prêt" variant="success" />}
           </View>
 
           <Text style={styles.vs}>VS</Text>
 
           <View style={styles.playerCard}>
-            {opponent ? (
+            {opponent ?
               <>
                 <Avatar name={opponent.username} size={60} />
                 <Text style={styles.playerName}>{opponent.username}</Text>
               </>
-            ) : (
-              <>
+            : <>
                 <ActivityIndicator size="small" color={Colors.primary.gold} />
                 <Text style={styles.waitingText}>En attente...</Text>
               </>
-            )}
+            }
           </View>
         </View>
 
@@ -127,7 +127,7 @@ export default function RoomScreen() {
           style={styles.leaveButton}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   loadingText: {
@@ -148,24 +148,24 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
     color: Colors.primary.gold,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 48,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   players: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 48,
   },
   playerCard: {
-    alignItems: 'center',
+    alignItems: "center",
     backgroundColor: Colors.primary.blue,
     borderRadius: 16,
     padding: 24,
@@ -174,13 +174,13 @@ const styles = StyleSheet.create({
   },
   playerName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
     marginTop: 12,
   },
   vs: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary.gold,
     marginVertical: 16,
   },
@@ -188,10 +188,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.derived.blueLight,
     marginTop: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   readySection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   readyButton: {
@@ -202,4 +202,3 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
 });
-

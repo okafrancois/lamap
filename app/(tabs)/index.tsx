@@ -1,31 +1,32 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/hooks/useAuth';
-import { useQuery } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Badge';
-import { Colors } from '@/constants/theme';
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "convex/react";
+import { useRouter } from "expo-router";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { userId, isSignedIn } = useAuth();
   const user = useQuery(
     api.users.getCurrentUser,
-    userId ? { clerkId: userId } : 'skip'
+    userId ? { clerkId: userId } : "skip"
   );
 
   if (!isSignedIn) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={["top"]}>
         <Text style={styles.text}>Veuillez vous connecter</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title}>LaMap241</Text>
@@ -43,7 +44,7 @@ export default function HomeScreen() {
         <View style={styles.actions}>
           <Button
             title="Jouer"
-            onPress={() => router.push('/(lobby)/select-mode')}
+            onPress={() => router.push("/(lobby)/select-mode")}
             style={styles.playButton}
           />
         </View>
@@ -59,7 +60,7 @@ export default function HomeScreen() {
           </View>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -71,15 +72,15 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
   },
   title: {
     fontSize: 36,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
     marginBottom: 8,
   },
@@ -91,7 +92,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.blue,
     borderRadius: 16,
     padding: 24,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 32,
     borderWidth: 2,
     borderColor: Colors.primary.gold,
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
   },
   balanceAmount: {
     fontSize: 48,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary.gold,
     marginBottom: 12,
   },
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   stats: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 16,
   },
   statCard: {
@@ -125,11 +126,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary.blue,
     borderRadius: 12,
     padding: 20,
-    alignItems: 'center',
+    alignItems: "center",
   },
   statValue: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary.gold,
     marginBottom: 4,
   },

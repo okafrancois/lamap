@@ -5,6 +5,7 @@ import { useOAuth } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { Alert, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function LoginScreen() {
   useWarmUpBrowser();
@@ -42,7 +43,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <Text style={styles.title}>Connexion</Text>
         <Text style={styles.subtitle}>Connectez-vous pour jouer</Text>
@@ -66,8 +67,18 @@ export default function LoginScreen() {
             style={styles.oauthButton}
           />
         </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>Pas encore de compte ? </Text>
+          <Text
+            style={styles.link}
+            onPress={() => router.push("/(auth)/register")}
+          >
+            S'inscrire
+          </Text>
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -99,5 +110,19 @@ const styles = StyleSheet.create({
   },
   oauthButton: {
     minHeight: 56,
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 24,
+  },
+  footerText: {
+    color: Colors.derived.blueLight,
+    fontSize: 14,
+  },
+  link: {
+    color: Colors.primary.gold,
+    fontSize: 14,
+    fontWeight: "600",
   },
 });

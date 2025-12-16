@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
@@ -21,9 +22,9 @@ export default function ResultScreen() {
 
   if (!match) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <Text style={styles.text}>Chargement...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -43,7 +44,7 @@ export default function ResultScreen() {
   const winnings = (totalBet - platformFee) * match.koraMultiplier;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.content}>
         <View style={[styles.resultCard, isWinner ? styles.winnerCard : styles.loserCard]}>
           <Text style={styles.resultTitle}>
@@ -104,7 +105,7 @@ export default function ResultScreen() {
           />
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

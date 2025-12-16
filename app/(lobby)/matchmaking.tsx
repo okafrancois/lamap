@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Animated } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useMatchmaking } from '@/hooks/useMatchmaking';
-import { Button } from '@/components/ui/Button';
-import { Avatar } from '@/components/ui/Avatar';
-import { Colors } from '@/constants/theme';
+import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchmakingScreen() {
   const router = useRouter();
@@ -16,15 +23,15 @@ export default function MatchmakingScreen() {
   const bet = betAmount ? parseInt(betAmount, 10) : 0;
 
   useEffect(() => {
-    if (bet > 0 && status === 'idle') {
+    if (bet > 0 && status === "idle") {
       joinQueue(bet).catch((error) => {
-        console.error('Error joining queue:', error);
+        console.error("Error joining queue:", error);
       });
     }
   }, [bet, status, joinQueue]);
 
   useEffect(() => {
-    if (status === 'searching') {
+    if (status === "searching") {
       const pulse = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
@@ -45,7 +52,7 @@ export default function MatchmakingScreen() {
   }, [status, pulseAnim]);
 
   useEffect(() => {
-    if (status === 'matched' && matchId) {
+    if (status === "matched" && matchId) {
       router.replace(`/(lobby)/room/${matchId}`);
     }
   }, [status, matchId, router]);
@@ -58,13 +65,13 @@ export default function MatchmakingScreen() {
   const formatTime = (ms: number) => {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
-    return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+    return `${minutes}:${String(seconds % 60).padStart(2, "0")}`;
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
-        {status === 'searching' && (
+        {status === "searching" && (
           <>
             <Animated.View
               style={[
@@ -77,9 +84,7 @@ export default function MatchmakingScreen() {
               <ActivityIndicator size="large" color={Colors.primary.gold} />
             </Animated.View>
             <Text style={styles.title}>Recherche d'adversaire...</Text>
-            <Text style={styles.subtitle}>
-              Mise: {bet} Kora
-            </Text>
+            <Text style={styles.subtitle}>Mise: {bet} Kora</Text>
             <Text style={styles.timeText}>
               Temps écoulé: {formatTime(timeInQueue)}
             </Text>
@@ -92,28 +97,23 @@ export default function MatchmakingScreen() {
           </>
         )}
 
-        {status === 'matched' && opponent && (
+        {status === "matched" && opponent && (
           <>
             <Text style={styles.foundTitle}>Adversaire trouvé !</Text>
-            <Avatar
-              name={opponent.username}
-              size={80}
-            />
+            <Avatar name={opponent.username} size={80} />
             <Text style={styles.opponentName}>{opponent.username}</Text>
-            <Text style={styles.subtitle}>
-              Mise: {bet} Kora
-            </Text>
+            <Text style={styles.subtitle}>Mise: {bet} Kora</Text>
           </>
         )}
 
-        {status === 'idle' && (
+        {status === "idle" && (
           <>
             <ActivityIndicator size="large" color={Colors.primary.gold} />
             <Text style={styles.title}>Préparation...</Text>
           </>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -124,8 +124,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 24,
   },
   searchIcon: {
@@ -133,33 +133,33 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 16,
   },
   foundTitle: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary.gold,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 24,
   },
   subtitle: {
     fontSize: 18,
     color: Colors.derived.blueLight,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   timeText: {
     fontSize: 16,
     color: Colors.derived.blueLight,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
   },
   opponentName: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.derived.white,
     marginTop: 16,
     marginBottom: 8,
@@ -169,4 +169,3 @@ const styles = StyleSheet.create({
     minWidth: 200,
   },
 });
-

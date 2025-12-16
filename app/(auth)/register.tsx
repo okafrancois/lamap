@@ -1,39 +1,49 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { useOAuth } from '@clerk/clerk-expo';
-import { useRouter } from 'expo-router';
-import { useWarmUpBrowser } from '@/hooks/useWarmUpBrowser';
-import { Button } from '@/components/ui/Button';
-import { Colors } from '@/constants/theme';
+import { Button } from "@/components/ui/Button";
+import { Colors } from "@/constants/theme";
+import { useWarmUpBrowser } from "@/hooks/useWarmUpBrowser";
+import { useOAuth } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RegisterScreen() {
   useWarmUpBrowser();
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
 
-  const { startOAuthFlow: startGoogleOAuth } = useOAuth({ strategy: 'oauth_google' });
-  const { startOAuthFlow: startFacebookOAuth } = useOAuth({ strategy: 'oauth_facebook' });
+  const { startOAuthFlow: startGoogleOAuth } = useOAuth({
+    strategy: "oauth_google",
+  });
+  const { startOAuthFlow: startFacebookOAuth } = useOAuth({
+    strategy: "oauth_facebook",
+  });
 
-  const handleOAuth = async (strategy: 'google' | 'facebook') => {
+  const handleOAuth = async (strategy: "google" | "facebook") => {
     try {
       setLoading(strategy);
-      const startOAuthFlow = strategy === 'google' ? startGoogleOAuth : startFacebookOAuth;
-      
+      const startOAuthFlow =
+        strategy === "google" ? startGoogleOAuth : startFacebookOAuth;
+
       const { createdSessionId, setActive } = await startOAuthFlow();
 
       if (createdSessionId) {
         await setActive!({ session: createdSessionId });
-        router.replace('/(tabs)');
+        router.replace("/(tabs)");
       }
     } catch (err: any) {
-      Alert.alert('Erreur', err.errors?.[0]?.message || 'Une erreur est survenue lors de l\'inscription');
+      Alert.alert(
+        "Erreur",
+        err.errors?.[0]?.message ||
+          "Une erreur est survenue lors de l'inscription"
+      );
     } finally {
       setLoading(null);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <Text style={styles.title}>Inscription</Text>
         <Text style={styles.subtitle}>Créez votre compte pour commencer</Text>
@@ -41,8 +51,8 @@ export default function RegisterScreen() {
         <View style={styles.options}>
           <Button
             title="Continuer avec Google"
-            onPress={() => handleOAuth('google')}
-            loading={loading === 'google'}
+            onPress={() => handleOAuth("google")}
+            loading={loading === "google"}
             disabled={!!loading}
             variant="primary"
             style={styles.oauthButton}
@@ -50,8 +60,8 @@ export default function RegisterScreen() {
 
           <Button
             title="Continuer avec Facebook"
-            onPress={() => handleOAuth('facebook')}
-            loading={loading === 'facebook'}
+            onPress={() => handleOAuth("facebook")}
+            loading={loading === "facebook"}
             disabled={!!loading}
             variant="secondary"
             style={styles.oauthButton}
@@ -62,13 +72,13 @@ export default function RegisterScreen() {
           <Text style={styles.footerText}>Déjà un compte ? </Text>
           <Text
             style={styles.link}
-            onPress={() => router.push('/(auth)/login')}
+            onPress={() => router.push("/(auth)/login")}
           >
             Se connecter
           </Text>
         </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -79,20 +89,20 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 24,
   },
   title: {
     fontSize: 32,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.derived.white,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: Colors.derived.blueLight,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 48,
   },
   options: {
@@ -103,8 +113,8 @@ const styles = StyleSheet.create({
     minHeight: 56,
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     marginTop: 24,
   },
   footerText: {
@@ -114,6 +124,6 @@ const styles = StyleSheet.create({
   link: {
     color: Colors.primary.gold,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

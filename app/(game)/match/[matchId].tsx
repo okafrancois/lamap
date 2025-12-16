@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useGame } from '@/hooks/useGame';
 import { useMutation } from 'convex/react';
@@ -61,19 +62,19 @@ export default function MatchScreen() {
 
   if (!match) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <ActivityIndicator size="large" color={Colors.primary.gold} />
         <Text style={styles.loadingText}>Chargement du match...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (match.status === 'waiting' || match.status === 'ready') {
     return (
-      <View style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top']}>
         <Text style={styles.title}>Préparation du match...</Text>
         <ActivityIndicator size="large" color={Colors.primary.gold} />
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -85,7 +86,7 @@ export default function MatchScreen() {
   const player2Card = currentPlays.find((p) => p.playerId !== match.player1Id);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View style={styles.turnIndicator}>
           <Text style={styles.turnText}>Tour {match.currentTurn} / 5</Text>
@@ -176,7 +177,7 @@ export default function MatchScreen() {
           </View>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
