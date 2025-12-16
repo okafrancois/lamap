@@ -5,15 +5,12 @@ import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
-import { useSyncUser } from "@/hooks/useSyncUser";
 
 export default function TabLayout() {
   const colors = useColors();
   const { isLoaded, isSignedIn } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-
-  useSyncUser();
 
   useEffect(() => {
     if (!isLoaded) return;

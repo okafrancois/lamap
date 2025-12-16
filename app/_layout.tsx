@@ -1,4 +1,5 @@
 import { ClerkProvider } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import {
   DarkTheme,
   DefaultTheme,
@@ -34,7 +35,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <ClerkProvider publishableKey={clerkPublishableKey}>
+      <ClerkProvider publishableKey={clerkPublishableKey} tokenCache={tokenCache}>
         <ConvexProvider client={convex}>
           <ThemeProvider
             value={colorScheme === "dark" ? DarkTheme : DefaultTheme}

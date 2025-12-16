@@ -26,11 +26,16 @@ export default function RegisterScreen() {
         router.replace("/(tabs)");
       }
     } catch (err: any) {
-      Alert.alert(
-        "Erreur",
-        err.errors?.[0]?.message ||
-          "Une erreur est survenue lors de l'inscription"
-      );
+      const errorMessage = err.errors?.[0]?.message || "";
+      
+      if (errorMessage.includes("Session already exists")) {
+        router.replace("/(tabs)");
+      } else {
+        Alert.alert(
+          "Erreur",
+          errorMessage || "Une erreur est survenue lors de l'inscription"
+        );
+      }
     } finally {
       setLoading(null);
     }

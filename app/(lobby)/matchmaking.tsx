@@ -49,7 +49,7 @@ export default function MatchmakingScreen() {
           console.error("Error joining queue:", error);
         });
     }
-  }, [bet, status, joinQueue, playSound]);
+  }, [bet, status, joinQueue, playSound, user, currency]);
 
   // Son quand un adversaire est trouvé
   useEffect(() => {
