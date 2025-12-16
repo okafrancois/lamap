@@ -218,10 +218,10 @@ export default function WelcomeScreen() {
     },
     tagline: {
       fontSize: 18,
-      color: colors.accent,
+      color: colors.foreground,
       textAlign: "center",
       lineHeight: 26,
-      opacity: 0.8,
+      opacity: 0.85,
     },
     taglineHighlight: {
       color: colors.primary,
@@ -239,8 +239,8 @@ export default function WelcomeScreen() {
     },
     footerText: {
       fontSize: 12,
-      color: colors.accent,
-      opacity: 0.5,
+      color: colors.mutedForeground,
+      opacity: 0.8,
       textAlign: "center",
     },
   });
