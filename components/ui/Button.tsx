@@ -10,6 +10,8 @@ interface ButtonProps {
   loading?: boolean;
   style?: ViewStyle | ViewStyle[];
   textStyle?: TextStyle | TextStyle[];
+  accessibilityLabel?: string;
+  accessibilityHint?: string;
 }
 
 export function Button({ 
@@ -19,7 +21,9 @@ export function Button({
   disabled = false,
   loading = false,
   style,
-  textStyle: customTextStyle
+  textStyle: customTextStyle,
+  accessibilityLabel,
+  accessibilityHint,
 }: ButtonProps) {
   const buttonStyle = [
     styles.button,
@@ -45,6 +49,9 @@ export function Button({
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityHint={accessibilityHint}
+      accessibilityRole="button"
     >
       {loading ? (
         <ActivityIndicator 

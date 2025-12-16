@@ -3,10 +3,16 @@ import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
+import { useSound } from "@/hooks/useSound";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ResultScreen() {
@@ -23,6 +29,62 @@ export default function ResultScreen() {
     api.games.getGame,
     matchId ? { gameId: matchId } : "skip"
   );
+  const { playSound } = useSound();
+
+  const [displayedWinnings, setDisplayedWinnings] = useState(0);
+  const cardOpacity = useSharedValue(0);
+  const cardScale = useSharedValue(0.8);
+
+  useEffect(() => {
+    if (game) {
+      const isWinner = game.winnerId === myUserId;
+      if (isWinner) {
+        if (game.victoryType && game.victoryType.includes("kora")) {
+          playSound("kora");
+        } else {
+          playSound("victory");
+        }
+      } else {
+        playSound("defeat");
+      }
+    }
+  }, [game, myUserId, playSound]);
+
+  useEffect(() => {
+    cardOpacity.value = withTiming(1, { duration: 300 });
+    cardScale.value = withTiming(1, { duration: 300 });
+  }, [cardOpacity, cardScale]);
+
+  const isWinner = game?.winnerId === myUserId;
+  const myPlayer = game?.players.find((p) => p.userId === myUserId);
+  const winnings = myPlayer?.balance || 0;
+
+  useEffect(() => {
+    if (isWinner && winnings > 0) {
+      const duration = 1500;
+      const steps = 30;
+      const stepValue = winnings / steps;
+      const stepDuration = duration / steps;
+
+      let current = 0;
+      const interval = setInterval(() => {
+        current += stepValue;
+        if (current >= winnings) {
+          setDisplayedWinnings(winnings);
+          clearInterval(interval);
+        } else {
+          setDisplayedWinnings(Math.floor(current));
+        }
+      }, stepDuration);
+
+      return () => clearInterval(interval);
+    }
+  }, [isWinner, winnings]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ scale: cardScale.value }],
+  }));
 
   if (!game) {
     return (
@@ -32,7 +94,6 @@ export default function ResultScreen() {
     );
   }
 
-  const isWinner = game.winnerId === myUserId;
   const winTypeLabels: Record<string, string> = {
     normal: "Victoire normale",
     simple_kora: "Kora simple",
@@ -44,18 +105,17 @@ export default function ResultScreen() {
 
   const winTypeLabel =
     winTypeLabels[game.victoryType || "normal"] || "Victoire";
-  const myPlayer = game.players.find((p) => p.userId === myUserId);
-  const winnings = myPlayer?.balance || 0;
   const totalBet = game.bet.amount * 2;
   const platformFee = totalBet * 0.1;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
-        <View
+        <Animated.View
           style={[
             styles.resultCard,
             isWinner ? styles.winnerCard : styles.loserCard,
+            cardAnimatedStyle,
           ]}
         >
           <Text style={styles.resultTitle}>
@@ -106,13 +166,13 @@ export default function ResultScreen() {
                 <View style={[styles.statRow, styles.totalRow]}>
                   <Text style={styles.totalLabel}>Gains</Text>
                   <Text style={styles.totalValue}>
-                    {Math.round(winnings)} {game.bet.currency}
+                    {Math.round(displayedWinnings)} {game.bet.currency}
                   </Text>
                 </View>
               </>
             )}
           </View>
-        </View>
+        </Animated.View>
 
         <View style={styles.actions}>
           <Button

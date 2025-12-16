@@ -4,7 +4,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
-  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 import { PlayingCard } from "./PlayingCard";
 
@@ -32,7 +32,7 @@ interface AnimatedCardProps {
   isSelected: boolean;
 }
 
-function AnimatedCard({
+const AnimatedCard = React.memo(function AnimatedCard({
   card,
   index,
   state,
@@ -43,11 +43,8 @@ function AnimatedCard({
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
-    translateY.value = withDelay(
-      index * 50,
-      withSpring(0, { damping: 12, stiffness: 100 })
-    );
-    opacity.value = withDelay(index * 50, withSpring(1, { damping: 20 }));
+    translateY.value = withDelay(index * 30, withTiming(0, { duration: 200 }));
+    opacity.value = withDelay(index * 30, withTiming(1, { duration: 200 }));
   }, [index, opacity, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -72,7 +69,7 @@ function AnimatedCard({
       />
     </Animated.View>
   );
-}
+});
 
 export function CardHand({
   cards,

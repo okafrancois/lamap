@@ -2,18 +2,17 @@ import { Colors } from "@/constants/theme";
 import { Image } from "expo-image";
 import React, { useEffect } from "react";
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
-    ViewStyle,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  ViewStyle,
 } from "react-native";
 import Animated, {
-    useAnimatedStyle,
-    useSharedValue,
-    withSequence,
-    withSpring,
-    withTiming,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
 } from "react-native-reanimated";
 
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -47,7 +46,7 @@ const SUIT_IMAGES: Record<Suit, any> = {
   diamonds: require("@/assets/images/suit_diamond.svg"),
 };
 
-export function PlayingCard({
+export const PlayingCard = React.memo(function PlayingCard({
   suit,
   rank,
   state,
@@ -68,23 +67,23 @@ export function PlayingCard({
   const rotateY = useSharedValue(0);
 
   useEffect(() => {
-    opacity.value = withTiming(1, { duration: 300 });
-    translateY.value = withSpring(0, { damping: 15 });
+    opacity.value = withTiming(1, { duration: 200 });
+    translateY.value = withTiming(0, { duration: 200 });
   }, [opacity, translateY]);
 
   useEffect(() => {
     if (isSelected) {
-      scale.value = withSpring(1.05, { damping: 10 });
+      scale.value = withTiming(1.05, { duration: 150 });
     } else {
-      scale.value = withSpring(1, { damping: 10 });
+      scale.value = withTiming(1, { duration: 150 });
     }
   }, [isSelected, scale]);
 
   useEffect(() => {
     if (isPlayed) {
       rotateY.value = withSequence(
-        withTiming(90, { duration: 200 }),
-        withTiming(0, { duration: 200 })
+        withTiming(90, { duration: 100 }),
+        withTiming(0, { duration: 100 })
       );
     }
   }, [isPlayed, rotateY]);
@@ -119,7 +118,8 @@ export function PlayingCard({
       borderColor:
         isSelected ? Colors.primary.gold
         : state === "playable" ? Colors.primary.gold
-        : state === "disabled" ? "#A0A0A0" // Gray border for disabled
+        : state === "disabled" ?
+          "#A0A0A0" // Gray border for disabled
         : Colors.primary.blue,
       borderWidth: isSelected ? 3 : 2,
       shadowColor: isSelected ? Colors.primary.gold : Colors.derived.black,
@@ -195,11 +195,16 @@ export function PlayingCard({
       onPress={onPress}
       activeOpacity={0.8}
       disabled={!isPlayable}
+      accessibilityLabel={`Carte ${rank} de ${suit}`}
+      accessibilityHint={
+        isPlayable ? "Double-tapez pour jouer cette carte" : "Carte non jouable"
+      }
+      accessibilityRole="button"
     >
       {content}
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   card: {

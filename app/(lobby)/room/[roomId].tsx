@@ -8,7 +8,13 @@ import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RoomScreen() {
@@ -31,11 +37,41 @@ export default function RoomScreen() {
   const [isReady, setIsReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const player1Opacity = useSharedValue(0);
+  const player1Scale = useSharedValue(0.8);
+  const player2Opacity = useSharedValue(0);
+  const player2Scale = useSharedValue(0.8);
+
   useEffect(() => {
     if (game?.status === "PLAYING") {
       router.replace(`/(game)/match/${roomId}`);
     }
   }, [game?.status, roomId, router]);
+
+  useEffect(() => {
+    player1Opacity.value = withDelay(100, withTiming(1, { duration: 300 }));
+    player1Scale.value = withDelay(100, withTiming(1, { duration: 300 }));
+  }, [player1Opacity, player1Scale]);
+
+  const me = game?.players.find((p) => p.userId === myUserId);
+  const opponent = game?.players.find((p) => p.userId !== myUserId);
+
+  useEffect(() => {
+    if (opponent) {
+      player2Opacity.value = withDelay(300, withTiming(1, { duration: 300 }));
+      player2Scale.value = withDelay(300, withTiming(1, { duration: 300 }));
+    }
+  }, [opponent, player2Opacity, player2Scale]);
+
+  const player1AnimatedStyle = useAnimatedStyle(() => ({
+    opacity: player1Opacity.value,
+    transform: [{ scale: player1Scale.value }],
+  }));
+
+  const player2AnimatedStyle = useAnimatedStyle(() => ({
+    opacity: player2Opacity.value,
+    transform: [{ scale: player2Scale.value }],
+  }));
 
   const handleReady = async () => {
     if (!game) return;
@@ -48,6 +84,10 @@ export default function RoomScreen() {
         await startGame({ gameId: game.gameId });
       }
     } catch (error) {
+      Alert.alert(
+        "Erreur",
+        "Impossible de confirmer votre statut. Veuillez réessayer."
+      );
       console.error("Error setting ready:", error);
     } finally {
       setLoading(false);
@@ -63,9 +103,6 @@ export default function RoomScreen() {
     );
   }
 
-  const me = game.players.find((p) => p.userId === myUserId);
-  const opponent = game.players.find((p) => p.userId !== myUserId);
-
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
@@ -75,15 +112,15 @@ export default function RoomScreen() {
         </Text>
 
         <View style={styles.players}>
-          <View style={styles.playerCard}>
+          <Animated.View style={[styles.playerCard, player1AnimatedStyle]}>
             <Avatar name={me?.username || "Vous"} size={60} />
             <Text style={styles.playerName}>{me?.username || "Vous"}</Text>
             {isReady && <Badge label="Prêt" variant="success" />}
-          </View>
+          </Animated.View>
 
           <Text style={styles.vs}>VS</Text>
 
-          <View style={styles.playerCard}>
+          <Animated.View style={[styles.playerCard, player2AnimatedStyle]}>
             {opponent ?
               <>
                 <Avatar name={opponent.username} size={60} />
@@ -94,7 +131,7 @@ export default function RoomScreen() {
                 <Text style={styles.waitingText}>En attente...</Text>
               </>
             }
-          </View>
+          </Animated.View>
         </View>
 
         {!isReady && (

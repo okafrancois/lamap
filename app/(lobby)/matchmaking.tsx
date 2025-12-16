@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
-import {
-  ActivityIndicator,
-  Animated,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import React, { useEffect } from "react";
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchmakingScreen() {
@@ -18,13 +18,17 @@ export default function MatchmakingScreen() {
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
   const { status, opponent, gameId, joinQueue, leaveQueue, timeInQueue } =
     useMatchmaking();
-  const [pulseAnim] = useState(new Animated.Value(1));
+  const pulseScale = useSharedValue(1);
 
   const bet = betAmount ? parseInt(betAmount, 10) : 0;
 
   useEffect(() => {
     if (bet > 0 && status === "idle") {
       joinQueue(bet, "XAF").catch((error) => {
+        Alert.alert(
+          "Erreur de connexion",
+          "Impossible de rejoindre la file d'attente. Vérifiez votre connexion et réessayez."
+        );
         console.error("Error joining queue:", error);
       });
     }
@@ -32,24 +36,19 @@ export default function MatchmakingScreen() {
 
   useEffect(() => {
     if (status === "searching") {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ])
+      pulseScale.value = withRepeat(
+        withTiming(1.15, { duration: 800 }),
+        -1,
+        true
       );
-      pulse.start();
-      return () => pulse.stop();
+    } else {
+      pulseScale.value = withTiming(1, { duration: 200 });
     }
-  }, [status, pulseAnim]);
+  }, [status, pulseScale]);
+
+  const pulseAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+  }));
 
   useEffect(() => {
     if (status === "matched" && gameId) {
@@ -73,14 +72,7 @@ export default function MatchmakingScreen() {
       <View style={styles.content}>
         {status === "searching" && (
           <>
-            <Animated.View
-              style={[
-                styles.searchIcon,
-                {
-                  transform: [{ scale: pulseAnim }],
-                },
-              ]}
-            >
+            <Animated.View style={[styles.searchIcon, pulseAnimatedStyle]}>
               <ActivityIndicator size="large" color={Colors.primary.gold} />
             </Animated.View>
             <Text style={styles.title}>Recherche d&apos;adversaire...</Text>

@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { useGame } from "@/hooks/useGame";
+import { useSound } from "@/hooks/useSound";
 import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -27,9 +28,11 @@ export default function MatchScreen() {
     myUserId,
   } = useGame(matchId || null);
   const startGame = useMutation(api.games.startGame);
+  const { playSound } = useSound();
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [previousTurnResults, setPreviousTurnResults] = useState<any[]>([]);
 
   useEffect(() => {
     if (game?.status === "ENDED") {
@@ -38,50 +41,90 @@ export default function MatchScreen() {
   }, [game?.status, matchId, router]);
 
   useEffect(() => {
+    if (turnResults && turnResults.length > previousTurnResults.length) {
+      const newResult = turnResults[turnResults.length - 1];
+      if (newResult && newResult.winnerId === myUserId) {
+        playSound("victory");
+      }
+    }
+    setPreviousTurnResults(turnResults || []);
+  }, [turnResults, myUserId, playSound, previousTurnResults.length]);
+
+  useEffect(() => {
+    if (
+      game?.victoryType &&
+      game.victoryType.includes("kora") &&
+      game.winnerId === myUserId
+    ) {
+      playSound("kora");
+    }
+  }, [game?.victoryType, game?.winnerId, myUserId, playSound]);
+
+  useEffect(() => {
     if (game?.status === "WAITING" && matchId) {
       startGame({ gameId: matchId }).catch((error) => {
-        Alert.alert("Erreur", "Impossible de démarrer la partie");
-        console.error(error);
+        Alert.alert(
+          "Erreur de démarrage",
+          "Impossible de démarrer la partie. Veuillez réessayer."
+        );
+        console.error("Error starting game:", error);
       });
     }
   }, [game?.status, matchId, startGame]);
 
-  const handleCardSelect = (card: Card) => {
-    if (canPlayCard(card)) {
-      setSelectedCard(card);
-    }
-  };
+  const handleCardSelect = useCallback(
+    (card: Card) => {
+      if (canPlayCard(card)) {
+        setSelectedCard(card);
+        playSound("cardPlay");
+      }
+    },
+    [canPlayCard, playSound]
+  );
 
-  const handlePlayCard = async () => {
+  const handlePlayCard = useCallback(async () => {
     if (!selectedCard) return;
 
     setIsPlaying(true);
+    playSound("cardPlay");
     try {
       await playCard(selectedCard);
       setSelectedCard(null);
     } catch (error: any) {
-      Alert.alert("Erreur", error.message || "Impossible de jouer cette carte");
+      Alert.alert(
+        "Carte non jouable",
+        error.message ||
+          "Cette carte ne peut pas être jouée pour le moment. Vérifiez que c'est votre tour et que vous suivez la couleur demandée."
+      );
     } finally {
       setIsPlaying(false);
     }
-  };
+  }, [selectedCard, playCard, playSound]);
 
-  const handleDoubleTapCard = async (card: Card) => {
-    if (isPlaying) return;
+  const handleDoubleTapCard = useCallback(
+    async (card: Card) => {
+      if (isPlaying) return;
 
-    setIsPlaying(true);
-    // Optimistically select the card if not already selected to show feedback
-    setSelectedCard(card);
+      setIsPlaying(true);
+      playSound("cardPlay");
+      // Optimistically select the card if not already selected to show feedback
+      setSelectedCard(card);
 
-    try {
-      await playCard(card);
-      setSelectedCard(null);
-    } catch (error: any) {
-      Alert.alert("Erreur", error.message || "Impossible de jouer cette carte");
-    } finally {
-      setIsPlaying(false);
-    }
-  };
+      try {
+        await playCard(card);
+        setSelectedCard(null);
+      } catch (error: any) {
+        Alert.alert(
+          "Carte non jouable",
+          error.message ||
+            "Cette carte ne peut pas être jouée pour le moment. Vérifiez que c'est votre tour et que vous suivez la couleur demandée."
+        );
+      } finally {
+        setIsPlaying(false);
+      }
+    },
+    [isPlaying, playCard, playSound]
+  );
 
   // Conditional rendering after all hooks are called
   if (!matchId) {
@@ -217,6 +260,8 @@ export default function MatchScreen() {
               title="Jouer cette carte"
               onPress={handlePlayCard}
               loading={isPlaying}
+              accessibilityLabel="Jouer la carte sélectionnée"
+              accessibilityHint="Joue la carte que vous avez sélectionnée"
             />
           </View>
         )}
