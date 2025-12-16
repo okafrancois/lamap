@@ -1,6 +1,6 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle, TextStyle } from 'react-native';
 import { Colors } from '@/constants/theme';
+import React from 'react';
+import { ActivityIndicator, StyleSheet, Text, TextStyle, TouchableOpacity, ViewStyle } from 'react-native';
 
 interface ButtonProps {
   title: string;
@@ -9,6 +9,7 @@ interface ButtonProps {
   disabled?: boolean;
   loading?: boolean;
   style?: ViewStyle | ViewStyle[];
+  textStyle?: TextStyle | TextStyle[];
 }
 
 export function Button({ 
@@ -17,7 +18,8 @@ export function Button({
   variant = 'primary', 
   disabled = false,
   loading = false,
-  style 
+  style,
+  textStyle: customTextStyle
 }: ButtonProps) {
   const buttonStyle = [
     styles.button,
@@ -34,6 +36,7 @@ export function Button({
     variant === 'secondary' && styles.secondaryText,
     variant === 'ghost' && styles.ghostText,
     disabled && styles.disabledText,
+    ...(Array.isArray(customTextStyle) ? customTextStyle : customTextStyle ? [customTextStyle] : []),
   ];
 
   return (

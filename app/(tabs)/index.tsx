@@ -12,6 +12,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const router = useRouter();
   const { userId, isSignedIn } = useAuth();
+  const activeMatch = useQuery(
+    api.matches.getActiveMatch,
+    userId ? { clerkId: userId } : "skip"
+  );
   const user = useQuery(
     api.users.getCurrentUser,
     userId ? { clerkId: userId } : "skip"
@@ -32,6 +36,25 @@ export default function HomeScreen() {
           <Text style={styles.title}>LaMap241</Text>
           <Text style={styles.subtitle}>Jeu de cartes compétitif</Text>
         </View>
+
+        {activeMatch && (
+          <View style={styles.activeMatchCard}>
+            <View style={styles.activeMatchContent}>
+              <View>
+                <Text style={styles.activeMatchLabel}>Partie en cours</Text>
+                <Text style={styles.activeMatchInfo}>
+                  {activeMatch.isVsAI ? "Contre l'IA" : "Contre un joueur"} • {activeMatch.betAmount} Kora
+                </Text>
+              </View>
+              <Button
+                title="Rejoindre"
+                onPress={() => router.push(`/(game)/match/${activeMatch._id}`)}
+                style={styles.rejoinButton}
+                textStyle={styles.rejoinButtonText}
+              />
+            </View>
+          </View>
+        )}
 
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Votre solde</Text>
@@ -87,6 +110,40 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: Colors.derived.blueLight,
+  },
+  activeMatchCard: {
+    backgroundColor: "rgba(255, 215, 0, 0.1)", // Gold tint
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: Colors.primary.gold,
+  },
+  activeMatchContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  activeMatchLabel: {
+    fontSize: 14,
+    color: Colors.primary.gold,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  activeMatchInfo: {
+    fontSize: 16,
+    color: Colors.derived.white,
+    fontWeight: "600",
+  },
+  rejoinButton: {
+    minHeight: 40,
+    paddingHorizontal: 16,
+    backgroundColor: Colors.primary.gold,
+  },
+  rejoinButtonText: {
+    color: Colors.derived.blueDark,
+    fontSize: 14,
   },
   balanceCard: {
     backgroundColor: Colors.primary.blue,

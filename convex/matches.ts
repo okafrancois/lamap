@@ -5,19 +5,61 @@ import { mutation, query } from "./_generated/server";
 import { aiSelectCard, type Difficulty } from "./ai";
 import { calculateWinnings } from "./economy";
 import {
-  calculateKoraMultiplier,
-  checkAutoWin,
-  dealCards,
-  generateDeck,
-  getTurnWinner,
-  isValidPlay,
-  type Card,
+    calculateKoraMultiplier,
+    checkAutoWin,
+    dealCards,
+    generateDeck,
+    getTurnWinner,
+    isValidPlay,
+    type Card,
 } from "./game";
 
 export const get = query({
   args: { matchId: v.id("matches") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.matchId);
+  },
+});
+
+export const getActiveMatch = query({
+  args: { clerkId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk", (q) => q.eq("clerkId", args.clerkId))
+      .first();
+
+    if (!user) {
+      return null;
+    }
+
+    const runningMatch = await ctx.db
+      .query("matches")
+      .withIndex("by_status", (q) => q.eq("status", "playing"))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("player1Id"), user._id),
+          q.eq(q.field("player2Id"), user._id)
+        )
+      )
+      .first();
+
+    if (runningMatch) return runningMatch;
+
+    const readyMatch = await ctx.db
+      .query("matches")
+      .withIndex("by_status", (q) => q.eq("status", "ready"))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field("player1Id"), user._id),
+          q.eq(q.field("player2Id"), user._id)
+        )
+      )
+      .first();
+
+    if (readyMatch) return readyMatch;
+
+    return null;
   },
 });
 
