@@ -14,7 +14,11 @@ export default function ResultScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
   const { userId } = useAuth();
-  const myUserId = userId ? (userId as any as Id<"users">) : null;
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkId: userId } : "skip"
+  );
+  const myUserId = user?._id;
 
   const match = useQuery(api.matches.get, {
     matchId: matchId as Id<"matches">,

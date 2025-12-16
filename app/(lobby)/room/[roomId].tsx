@@ -16,7 +16,11 @@ export default function RoomScreen() {
   const router = useRouter();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const { userId } = useAuth();
-  const myUserId = userId ? (userId as any as Id<"users">) : null;
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkId: userId } : "skip"
+  );
+  const myUserId = user?._id;
   const { setMatchReady } = useMatchmaking();
   const startMatch = useMutation(api.matches.startMatch);
 

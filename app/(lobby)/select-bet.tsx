@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
-import { Id } from "@/convex/_generated/dataModel";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -16,10 +15,9 @@ export default function SelectBetScreen() {
   const router = useRouter();
   const { vsAI } = useLocalSearchParams<{ vsAI?: string }>();
   const { userId } = useAuth();
-  const myUserId = userId ? (userId as any as Id<"users">) : null;
   const user = useQuery(
     api.users.getCurrentUser,
-    myUserId ? { clerkId: userId! } : "skip"
+    userId ? { clerkId: userId } : "skip"
   );
   const [selectedBet, setSelectedBet] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);

@@ -5,7 +5,11 @@ import { Id } from "@/convex/_generated/dataModel";
 
 export function useMatchmaking() {
   const { userId } = useAuth();
-  const myUserId = userId ? (userId as any as Id<"users">) : null;
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkId: userId } : "skip"
+  );
+  const myUserId = user?._id;
 
   const queueStatus = useQuery(
     api.matchmaking.getMyStatus,

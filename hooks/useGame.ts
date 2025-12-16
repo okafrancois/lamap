@@ -6,7 +6,11 @@ import { isValidPlay, type Card } from "@/convex/game";
 
 export function useGame(matchId: Id<"matches">) {
   const { userId } = useAuth();
-  const myUserId = userId ? (userId as any as Id<"users">) : null;
+  const user = useQuery(
+    api.users.getCurrentUser,
+    userId ? { clerkId: userId } : "skip"
+  );
+  const myUserId = user?._id;
 
   const match = useQuery(api.matches.get, { matchId });
   const myHand = useQuery(
