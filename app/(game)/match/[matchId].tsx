@@ -365,7 +365,7 @@ export default function MatchScreen() {
                 suit={opponentCard.suit}
                 rank={opponentCard.rank}
                 state="played"
-                size="small"
+                size="medium"
               />
             </View>
           )}

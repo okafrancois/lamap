@@ -100,7 +100,7 @@ function AnimatedTurnResult({
           suit={opCard.suit}
           rank={opCard.rank}
           state="played"
-          size="small"
+          size="medium"
         />
       </View>
 
@@ -113,7 +113,7 @@ function AnimatedTurnResult({
           suit={myCard.suit}
           rank={myCard.rank}
           state="played"
-          size="small"
+          size="medium"
         />
       </View>
     </Animated.View>
