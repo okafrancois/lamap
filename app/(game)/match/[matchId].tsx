@@ -3,12 +3,10 @@ import { GameChatDrawer } from "@/components/game/GameChatDrawer";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
-import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -40,7 +38,6 @@ export default function MatchScreen() {
   } = useGame(matchId || null);
   const startGame = useMutation(api.games.startGame);
   const { playSound } = useSound();
-  const { gameMode } = useSettings();
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -121,25 +118,6 @@ export default function MatchScreen() {
     },
     [canPlayCard, playSound]
   );
-
-  const handlePlayCard = useCallback(async () => {
-    if (!selectedCard) return;
-
-    setIsPlaying(true);
-    playSound("cardPlay");
-    try {
-      await playCard(selectedCard);
-      setSelectedCard(null);
-    } catch (error: any) {
-      Alert.alert(
-        "Carte non jouable",
-        error.message ||
-          "Cette carte ne peut pas être jouée pour le moment. Vérifiez que c'est votre tour et que vous suivez la couleur demandée."
-      );
-    } finally {
-      setIsPlaying(false);
-    }
-  }, [selectedCard, playCard, playSound]);
 
   const handleDoubleTapCard = useCallback(
     async (card: Card) => {
@@ -371,19 +349,7 @@ export default function MatchScreen() {
           onCardDoubleTap={handleDoubleTapCard}
           selectedCard={selectedCard}
           disabled={isPlaying}
-          gameMode={gameMode}
         />
-        {selectedCard && isMyTurn && gameMode === "safe" && (
-          <View style={styles.playButtonContainer}>
-            <Button
-              title="Jouer cette carte"
-              onPress={handlePlayCard}
-              loading={isPlaying}
-              accessibilityLabel="Jouer la carte sélectionnée"
-              accessibilityHint="Joue la carte que vous avez sélectionnée"
-            />
-          </View>
-        )}
       </View>
 
       <GameChatDrawer

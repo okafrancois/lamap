@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 
 const SETTINGS_KEY = "@lamap:settings";
 
-export type GameMode = "safe" | "rapid";
+export type ThemeMode = "light" | "dark" | "system";
 
 interface Settings {
-  gameMode: GameMode;
+  themeMode: ThemeMode;
 }
 
 const defaultSettings: Settings = {
-  gameMode: "safe",
+  themeMode: "system",
 };
 
 export function useSettings() {
@@ -45,14 +45,13 @@ export function useSettings() {
     }
   };
 
-  const setGameMode = (mode: GameMode) => {
-    updateSettings({ gameMode: mode });
+  const setThemeMode = (mode: ThemeMode) => {
+    updateSettings({ themeMode: mode });
   };
 
   return {
-    gameMode: settings.gameMode,
-    setGameMode,
+    themeMode: settings.themeMode,
+    setThemeMode,
     isLoading,
   };
 }
-

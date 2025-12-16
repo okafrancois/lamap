@@ -1,6 +1,6 @@
-import { createAudioPlayer, setAudioModeAsync } from "expo-audio";
+import { useAudioPlayer, setAudioModeAsync } from "expo-audio";
 import * as Haptics from "expo-haptics";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 type SoundType =
   // Sons existants
@@ -36,95 +36,99 @@ const buttonClickSound = require("../assets/sounds/ui/click.mp3");
 const confirmationSound = require("../assets/sounds/ui/confirmation.mp3");
 const winMoneySound = require("../assets/sounds/ui/win-money.mp3");
 
-// Mapping des types de sons aux fichiers
-const SOUND_MAP: Record<SoundType, any> = {
-  cardPlay: cardPlaySound,
-  cardSelect: cardSelectSound,
-  victory: victorySound,
-  defeat: defeatSound,
-  kora: koraSound,
-  koraDouble: koraDoubleSound,
-  koraTriple: koraTripleSound,
-  autoVictory: autoVictorySound,
-  gameStart: gameStartSound,
-  gameEnd: gameEndSound,
-  turnChange: turnChangeSound,
-  buttonClick: buttonClickSound,
-  confirmation: confirmationSound,
-  winMoney: winMoneySound,
-};
-
 export function useSound() {
   const [isLoaded, setIsLoaded] = useState(false);
-  const playersRef = useRef<
-    Record<string, ReturnType<typeof createAudioPlayer>>
-  >({});
 
-  const loadSounds = useCallback(async () => {
-    try {
-      // Configurer le mode audio pour permettre la lecture en arrière-plan
-      await setAudioModeAsync({
-        playsInSilentMode: true,
-      });
+  const cardPlayPlayer = useAudioPlayer(cardPlaySound);
+  const cardSelectPlayer = useAudioPlayer(cardSelectSound);
+  const victoryPlayer = useAudioPlayer(victorySound);
+  const defeatPlayer = useAudioPlayer(defeatSound);
+  const koraPlayer = useAudioPlayer(koraSound);
+  const koraDoublePlayer = useAudioPlayer(koraDoubleSound);
+  const koraTriplePlayer = useAudioPlayer(koraTripleSound);
+  const autoVictoryPlayer = useAudioPlayer(autoVictorySound);
+  const gameStartPlayer = useAudioPlayer(gameStartSound);
+  const gameEndPlayer = useAudioPlayer(gameEndSound);
+  const turnChangePlayer = useAudioPlayer(turnChangeSound);
+  const buttonClickPlayer = useAudioPlayer(buttonClickSound);
+  const confirmationPlayer = useAudioPlayer(confirmationSound);
+  const winMoneyPlayer = useAudioPlayer(winMoneySound);
 
-      const loadedPlayers: Record<
-        string,
-        ReturnType<typeof createAudioPlayer>
-      > = {};
-
-      // Créer un player pour chaque son
-      for (const [type, source] of Object.entries(SOUND_MAP)) {
-        try {
-          const player = createAudioPlayer(source);
-          // Configurer le volume
-          player.volume = 0.7;
-          loadedPlayers[type] = player;
-        } catch (error) {
-          console.warn(`Failed to load sound ${type}:`, error);
-        }
-      }
-
-      playersRef.current = loadedPlayers;
-      setIsLoaded(true);
-    } catch (error) {
-      console.warn("Failed to initialize audio:", error);
-      setIsLoaded(false);
-    }
-  }, []);
-
-  const unloadSounds = useCallback(async () => {
-    try {
-      for (const player of Object.values(playersRef.current)) {
-        try {
-          player.release();
-        } catch {
-          // Ignorer les erreurs de release
-        }
-      }
-      playersRef.current = {};
-    } catch (error) {
-      console.warn("Failed to unload sounds:", error);
-    }
-  }, []);
+  const players = {
+    cardPlay: cardPlayPlayer,
+    cardSelect: cardSelectPlayer,
+    victory: victoryPlayer,
+    defeat: defeatPlayer,
+    kora: koraPlayer,
+    koraDouble: koraDoublePlayer,
+    koraTriple: koraTriplePlayer,
+    autoVictory: autoVictoryPlayer,
+    gameStart: gameStartPlayer,
+    gameEnd: gameEndPlayer,
+    turnChange: turnChangePlayer,
+    buttonClick: buttonClickPlayer,
+    confirmation: confirmationPlayer,
+    winMoney: winMoneyPlayer,
+  };
 
   useEffect(() => {
-    loadSounds();
-    return () => {
-      unloadSounds();
+    const initializeAudio = async () => {
+      try {
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          shouldPlayInBackground: true,
+          interruptionMode: "mixWithOthers",
+          interruptionModeAndroid: "duckOthers",
+        });
+
+        cardPlayPlayer.volume = 0.7;
+        cardSelectPlayer.volume = 0.7;
+        victoryPlayer.volume = 0.7;
+        defeatPlayer.volume = 0.7;
+        koraPlayer.volume = 0.7;
+        koraDoublePlayer.volume = 0.7;
+        koraTriplePlayer.volume = 0.7;
+        autoVictoryPlayer.volume = 0.7;
+        gameStartPlayer.volume = 0.7;
+        gameEndPlayer.volume = 0.7;
+        turnChangePlayer.volume = 0.7;
+        buttonClickPlayer.volume = 0.7;
+        confirmationPlayer.volume = 0.7;
+        winMoneyPlayer.volume = 0.7;
+
+        setIsLoaded(true);
+      } catch (error) {
+        console.warn("Failed to initialize audio:", error);
+        setIsLoaded(false);
+      }
     };
-  }, [loadSounds, unloadSounds]);
+
+    initializeAudio();
+  }, [
+    cardPlayPlayer,
+    cardSelectPlayer,
+    victoryPlayer,
+    defeatPlayer,
+    koraPlayer,
+    koraDoublePlayer,
+    koraTriplePlayer,
+    autoVictoryPlayer,
+    gameStartPlayer,
+    gameEndPlayer,
+    turnChangePlayer,
+    buttonClickPlayer,
+    confirmationPlayer,
+    winMoneyPlayer,
+  ]);
 
   const playSound = async (type: SoundType) => {
     try {
-      // Jouer le son audio si disponible
-      const player = playersRef.current[type];
+      const player = players[type];
       if (player && isLoaded) {
         try {
-          // Réinitialiser la position et jouer
           player.seekTo(0);
           player.play();
         } catch (error: any) {
-          // Ignorer les erreurs silencieusement
           if (!error?.message?.includes("Seeking interrupted")) {
             console.warn(`Failed to play sound ${type}:`, error);
           }

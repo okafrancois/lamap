@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -16,7 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { gameMode, setGameMode, isLoading } = useSettings();
+  const { themeMode, setThemeMode, isLoading } = useSettings();
 
   const styles = StyleSheet.create({
     container: {
@@ -71,6 +72,28 @@ export default function SettingsScreen() {
       color: colors.mutedForeground,
       marginTop: 4,
     },
+    settingRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      padding: 16,
+    },
+    settingInfo: {
+      flex: 1,
+      marginRight: 16,
+    },
+    settingTitle: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.text,
+      marginBottom: 4,
+    },
+    settingDescription: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+    },
     header: {
       flexDirection: "row",
       justifyContent: "space-between",
@@ -108,48 +131,25 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mode de jeu</Text>
-
-            <TouchableOpacity
-              style={[
-                styles.optionContainer,
-                gameMode === "safe" && styles.optionContainerSelected,
-              ]}
-              onPress={() => setGameMode("safe")}
-            >
-              <View style={styles.optionHeader}>
-                <Text style={styles.optionTitle}>Safe</Text>
-                {gameMode === "safe" && (
-                  <Text style={{ color: colors.secondary, fontWeight: "600" }}>
-                    ✓
-                  </Text>
-                )}
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>Mode sombre</Text>
+                <Text style={styles.settingDescription}>
+                  Activer le thème sombre
+                </Text>
               </View>
-              <Text style={styles.optionDescription}>
-                Clic sur une carte puis appuyez sur le bouton &quot;Jouer cette
-                carte&quot;
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.optionContainer,
-                gameMode === "rapid" && styles.optionContainerSelected,
-              ]}
-              onPress={() => setGameMode("rapid")}
-            >
-              <View style={styles.optionHeader}>
-                <Text style={styles.optionTitle}>Rapide</Text>
-                {gameMode === "rapid" && (
-                  <Text style={{ color: colors.secondary, fontWeight: "600" }}>
-                    ✓
-                  </Text>
-                )}
-              </View>
-              <Text style={styles.optionDescription}>
-                Double tap sur une carte pour la jouer directement
-              </Text>
-            </TouchableOpacity>
+              <Switch
+                value={themeMode === "dark"}
+                onValueChange={(value) =>
+                  setThemeMode(value ? "dark" : "light")
+                }
+                trackColor={{
+                  false: colors.muted,
+                  true: colors.secondary,
+                }}
+                thumbColor={colors.card}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>

@@ -192,7 +192,7 @@ function CurrentTurnCard({
             suit={opponentCard.suit}
             rank={opponentCard.rank}
             state="played"
-            size="medium"
+            size="small"
           />
         : <View style={badgeStyles.placeholderCard}>
             <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>
@@ -212,7 +212,7 @@ function CurrentTurnCard({
             suit={myCard.suit}
             rank={myCard.rank}
             state="played"
-            size="medium"
+            size="small"
           />
         : <View style={badgeStyles.placeholderCard}>
             <Text style={{ color: colors.mutedForeground, fontSize: 12 }}>

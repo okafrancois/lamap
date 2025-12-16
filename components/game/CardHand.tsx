@@ -15,8 +15,6 @@ export type Card = {
   playable: boolean;
 };
 
-type GameMode = "safe" | "rapid";
-
 interface CardHandProps {
   cards: Card[];
   isMyTurn: boolean;
@@ -24,7 +22,6 @@ interface CardHandProps {
   onCardDoubleTap?: (card: Card) => void;
   selectedCard?: Card | null;
   disabled?: boolean;
-  gameMode?: GameMode;
 }
 
 interface AnimatedCardProps {
@@ -81,7 +78,6 @@ export function CardHand({
   onCardDoubleTap,
   selectedCard,
   disabled = false,
-  gameMode = "safe",
 }: CardHandProps) {
   // Store last tap time for double tap detection
   const lastTapRef = React.useRef<{ time: number; cardId: string } | null>(
@@ -104,6 +100,14 @@ export function CardHand({
     if (disabled || !isMyTurn) return;
     if (!card.playable) return;
 
+    // If card is already selected, play it directly
+    if (selectedCard && selectedCard.id === card.id) {
+      if (onCardDoubleTap) {
+        onCardDoubleTap(card);
+      }
+      return;
+    }
+
     const now = Date.now();
     const cardId = card.id;
 
@@ -114,22 +118,14 @@ export function CardHand({
       now - lastTapRef.current.time < 300 // 300ms threshold
     ) {
       // Double tap detected!
-      if (gameMode === "rapid" && onCardDoubleTap) {
+      if (onCardDoubleTap) {
         onCardDoubleTap(card);
       }
-      // In safe mode, double tap does nothing (single tap already selected)
       lastTapRef.current = null; // Reset
     } else {
-      // Single tap
-      if (gameMode === "safe") {
-        // In safe mode, single tap selects the card
-        lastTapRef.current = { time: now, cardId };
-        onCardSelect(card);
-      } else {
-        // In rapid mode, single tap also selects (for visual feedback)
-        lastTapRef.current = { time: now, cardId };
-        onCardSelect(card);
-      }
+      // Single tap - select the card
+      lastTapRef.current = { time: now, cardId };
+      onCardSelect(card);
     }
   };
 
