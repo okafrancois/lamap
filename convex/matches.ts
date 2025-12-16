@@ -318,12 +318,15 @@ export const playCard = mutation({
 
       // Use match.leadSuit directly. It should be set by the first player.
       const winner = getTurnWinner(play1, play2, match.leadSuit!);
+      const loser = winner.playerId === play1.playerId ? play2 : play1;
 
       await ctx.db.insert("turnResults", {
         matchId: args.matchId,
         turn: match.currentTurn,
         winnerId: winner.playerId as Id<"users">,
         winningCard: winner.card,
+        loserId: loser.playerId as Id<"users">,
+        losingCard: loser.card,
       });
 
       const isLastTurn = match.currentTurn === 5;
@@ -508,13 +511,17 @@ export const playAICard = mutation({
         card: plays[1].card as Card,
       };
 
-      const winner = getTurnWinner(play1, play2, leadSuit);
+      // Use match.leadSuit directly. It should be set by the first player.
+      const winner = getTurnWinner(play1, play2, match.leadSuit!);
+      const loser = winner.playerId === play1.playerId ? play2 : play1;
 
       await ctx.db.insert("turnResults", {
         matchId: args.matchId,
         turn: match.currentTurn,
         winnerId: winner.playerId as Id<"users">,
         winningCard: winner.card,
+        loserId: loser.playerId as Id<"users">,
+        losingCard: loser.card,
       });
 
       const isLastTurn = match.currentTurn === 5;

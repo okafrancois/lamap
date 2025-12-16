@@ -3,18 +3,18 @@ import { SUIT_COLORS, type Card } from "@/convex/game";
 import { Image } from "expo-image";
 import React, { useEffect } from "react";
 import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ViewStyle,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+    ViewStyle,
 } from "react-native";
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withSpring,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withSpring,
+    withTiming,
 } from "react-native-reanimated";
 
 interface PlayingCardProps {
@@ -104,18 +104,19 @@ export function PlayingCard({
       height: cardSize.height,
       backgroundColor:
         state === "disabled" ?
-          `${Colors.primary.blue}99`
+          "#D1D1D1" // Subtle gray for disabled
         : Colors.derived.white,
       borderColor:
         isSelected ? Colors.primary.gold
         : state === "playable" ? Colors.primary.gold
+        : state === "disabled" ? "#A0A0A0" // Gray border for disabled
         : Colors.primary.blue,
       borderWidth: isSelected ? 3 : 2,
       shadowColor: isSelected ? Colors.primary.gold : Colors.derived.black,
       shadowOffset: { width: 0, height: isSelected ? 4 : 2 },
       shadowOpacity: isSelected ? 0.5 : 0.2,
       shadowRadius: isSelected ? 8 : 4,
-      opacity: state === "disabled" ? 0.6 : 1,
+      opacity: 1, // Keep full opacity to avoid transparency
     },
   ];
 

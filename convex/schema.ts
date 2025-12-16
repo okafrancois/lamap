@@ -61,6 +61,11 @@ export default defineSchema({
       suit: v.string(),
       value: v.number(),
     }),
+    loserId: v.optional(v.id("users")),
+    losingCard: v.optional(v.object({
+      suit: v.string(),
+      value: v.number(),
+    })),
   }).index("by_match", ["matchId"]),
 
   transactions: defineTable({

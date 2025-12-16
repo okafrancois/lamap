@@ -12,6 +12,8 @@ export type TurnResult = {
   turn: number;
   winnerId: string;
   winningCard: Card;
+  loserId?: string;
+  losingCard?: Card;
 };
 
 const DECK_VALUES = [3, 4, 5, 6, 7, 8, 9, 10];

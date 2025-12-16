@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useGame } from '@/hooks/useGame';
-import { useMutation } from 'convex/react';
-import { api } from '@/convex/_generated/api';
-import { Id } from '@/convex/_generated/dataModel';
 import { CardHand } from '@/components/game/CardHand';
 import { PlayingCard } from '@/components/game/PlayingCard';
+import { TurnHistory } from '@/components/game/TurnHistory';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Colors } from '@/constants/theme';
-import { type Card } from '@/convex/game';
-import { SUIT_SYMBOLS } from '@/convex/game';
+import { api } from '@/convex/_generated/api';
+import { Id } from '@/convex/_generated/dataModel';
+import { SUIT_SYMBOLS, type Card, type TurnResult } from '@/convex/game';
+import { useGame } from '@/hooks/useGame';
+import { useMutation } from 'convex/react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function MatchScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
@@ -20,7 +20,7 @@ export default function MatchScreen() {
   
   // All hooks must be called before any conditional returns
   const gameMatchId = matchId ? (matchId as Id<"matches">) : (null as unknown as Id<"matches">);
-  const { match, myHand, currentPlays, turnResults, isMyTurn, playCard, canPlayCard } = useGame(gameMatchId);
+  const { match, myHand, currentPlays, turnResults, isMyTurn, playCard, canPlayCard, myUserId } = useGame(gameMatchId);
   const startMatch = useMutation(api.matches.startMatch);
   
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -130,17 +130,7 @@ export default function MatchScreen() {
         </View>
 
         <View style={styles.centerArea}>
-          {turnResults.length > 0 && (
-            <View style={styles.turnHistory}>
-              <Text style={styles.historyTitle}>Résultats des tours</Text>
-              {turnResults.map((result) => (
-                <Text key={result.turn} style={styles.historyItem}>
-                  Tour {result.turn}: Gagnant avec {result.winningCard.value}
-                  {SUIT_SYMBOLS[result.winningCard.suit as keyof typeof SUIT_SYMBOLS]}
-                </Text>
-              ))}
-            </View>
-          )}
+          <TurnHistory results={turnResults as unknown as TurnResult[]} myPlayerId={myUserId} />
         </View>
 
         <View style={styles.myArea}>

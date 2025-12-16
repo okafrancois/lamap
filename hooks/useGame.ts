@@ -1,8 +1,8 @@
-import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { useAuth } from "./useAuth";
 import { Id } from "@/convex/_generated/dataModel";
 import { isValidPlay, type Card } from "@/convex/game";
+import { useMutation, useQuery } from "convex/react";
+import { useAuth } from "./useAuth";
 
 export function useGame(matchId: Id<"matches">) {
   const { userId } = useAuth();
@@ -66,6 +66,7 @@ export function useGame(matchId: Id<"matches">) {
     playCard,
     isMyTurn: isMyTurn || false,
     canPlayCard,
+    myUserId,
   };
 }
 
