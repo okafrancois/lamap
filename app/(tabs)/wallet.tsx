@@ -24,9 +24,7 @@ export default function WalletScreen() {
         <View style={styles.content}>
           <View style={styles.balanceCard}>
             <Text style={styles.balanceLabel}>Solde</Text>
-            <Text style={styles.balanceAmount}>
-              {balance.toLocaleString()}
-            </Text>
+            <Text style={styles.balanceAmount}>{balance.toLocaleString()}</Text>
             <Badge label={currency} variant="kora" style={styles.badge} />
           </View>
 

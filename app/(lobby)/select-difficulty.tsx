@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Colors } from "@/constants/theme";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,7 +14,6 @@ const DIFFICULTIES = [
 
 export default function SelectDifficultyScreen() {
   const router = useRouter();
-  const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
   const { createMatchVsAI } = useMatchmaking();
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(
     null
@@ -22,12 +21,12 @@ export default function SelectDifficultyScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleStart = async () => {
-    if (!selectedDifficulty || !betAmount) return;
+    if (!selectedDifficulty) return;
 
     setLoading(true);
     try {
       const gameId = await createMatchVsAI(
-        parseInt(betAmount, 10),
+        0,
         selectedDifficulty as "easy" | "medium" | "hard",
         "XAF"
       );
@@ -43,7 +42,7 @@ export default function SelectDifficultyScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.content}>
         <Text style={styles.title}>Choisir la difficulté</Text>
-        <Text style={styles.subtitle}>Mise: {betAmount} XAF</Text>
+        <Text style={styles.subtitle}>Partie gratuite</Text>
 
         <View style={styles.options}>
           {DIFFICULTIES.map((difficulty) => (

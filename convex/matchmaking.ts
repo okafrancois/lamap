@@ -252,7 +252,7 @@ export const createMatchVsAI = mutation({
       throw new Error("Player not found");
     }
 
-    if ((player.balance || 0) < args.betAmount) {
+    if (args.betAmount > 0 && (player.balance || 0) < args.betAmount) {
       throw new Error("Insufficient balance");
     }
 
@@ -330,18 +330,20 @@ export const createMatchVsAI = mutation({
 
     await ctx.db.insert("games", gameData as any);
 
-    await ctx.db.patch(args.playerId, {
-      balance: (player.balance || 0) - args.betAmount,
-    });
+    if (args.betAmount > 0) {
+      await ctx.db.patch(args.playerId, {
+        balance: (player.balance || 0) - args.betAmount,
+      });
 
-    await ctx.db.insert("transactions", {
-      userId: args.playerId,
-      type: "bet",
-      amount: -args.betAmount,
-      gameId,
-      description: `Mise de ${args.betAmount} ${args.currency} pour la partie vs IA`,
-      createdAt: Date.now(),
-    });
+      await ctx.db.insert("transactions", {
+        userId: args.playerId,
+        type: "bet",
+        amount: -args.betAmount,
+        gameId,
+        description: `Mise de ${args.betAmount} ${args.currency} pour la partie vs IA`,
+        createdAt: Date.now(),
+      });
+    }
 
     return gameId;
   },

@@ -11,6 +11,7 @@
 import type * as aiPlayer from "../aiPlayer.js";
 import type * as chat from "../chat.js";
 import type * as economy from "../economy.js";
+import type * as friendlyMatches from "../friendlyMatches.js";
 import type * as gameEngine from "../gameEngine.js";
 import type * as games from "../games.js";
 import type * as http from "../http.js";
@@ -28,6 +29,7 @@ declare const fullApi: ApiFromModules<{
   aiPlayer: typeof aiPlayer;
   chat: typeof chat;
   economy: typeof economy;
+  friendlyMatches: typeof friendlyMatches;
   gameEngine: typeof gameEngine;
   games: typeof games;
   http: typeof http;

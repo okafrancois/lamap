@@ -203,11 +203,13 @@ export default function MatchScreen() {
             Tour {game.currentRound} / {game.maxRounds}
           </Text>
         </View>
-        <View style={styles.betInfo}>
-          <Text style={styles.betText}>
-            Mise: {game.bet.amount} {game.bet.currency}
-          </Text>
-        </View>
+        {game.bet.amount > 0 && (
+          <View style={styles.betInfo}>
+            <Text style={styles.betText}>
+              Mise: {game.bet.amount} {game.bet.currency}
+            </Text>
+          </View>
+        )}
       </View>
 
       <View style={styles.playArea}>

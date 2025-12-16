@@ -23,7 +23,7 @@ export default function SelectModeScreen() {
           />
           <Button
             title="vs IA"
-            onPress={() => router.push("/(lobby)/select-bet?vsAI=true")}
+            onPress={() => router.push("/(lobby)/select-difficulty")}
             variant="secondary"
             style={styles.button}
           />
