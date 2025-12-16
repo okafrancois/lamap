@@ -1,32 +1,12 @@
-import { Tabs, useRouter, useSegments } from "expo-router";
-import React, { useEffect } from "react";
+import { Tabs } from "expo-router";
+import React from "react";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
   const colors = useColors();
-  const { isLoaded, isSignedIn } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!isLoaded) return;
-
-    const inAuthGroup = segments[0] === "(auth)";
-
-    if (!isSignedIn && !inAuthGroup) {
-      router.replace("/(auth)/login");
-    } else if (isSignedIn && inAuthGroup) {
-      router.replace("/(tabs)");
-    }
-  }, [isSignedIn, segments, isLoaded, router]);
-
-  if (!isLoaded) {
-    return null;
-  }
 
   return (
     <Tabs

@@ -27,15 +27,21 @@ interface PlayingCardProps {
   rank: Rank;
   state: "playable" | "disabled" | "selected" | "played";
   onPress?: () => void;
-  size?: "small" | "medium" | "large";
+  size?: "small" | "medium" | "large" | "xl" | "xxl";
 }
 
-// Dimensions selon le guide de style (uniformes pour joueur et adversaire)
-const CARD_SIZES = {
-  small: { width: 60, height: 84 }, // 60px × 84px
-  medium: { width: 80, height: 112 }, // 80px × 112px
-  large: { width: 100, height: 140 }, // 100px × 140px
+const CARD_ASPECT_RATIO = 5 / 7;
+
+const CARD_WIDTHS = {
+  small: 60,
+  medium: 80,
+  large: 100,
+  xl: 120,
+  xxl: 140,
 };
+
+const SMALL_ICON_RATIO = 0.225;
+const LARGE_ICON_RATIO = 0.65;
 
 const SUIT_COLORS: Record<Suit, string> = {
   spades: "#1A1A1A",
@@ -59,7 +65,8 @@ export const PlayingCard = React.memo(function PlayingCard({
   size = "medium",
 }: PlayingCardProps) {
   const colors = useColors();
-  const cardSize = CARD_SIZES[size];
+  const cardWidth = CARD_WIDTHS[size];
+  const cardHeight = cardWidth / CARD_ASPECT_RATIO;
   const suitColor = SUIT_COLORS[suit];
   const suitImage = SUIT_IMAGES[suit];
   const displayValue = rank;
@@ -115,20 +122,14 @@ export const PlayingCard = React.memo(function PlayingCard({
     opacity: opacity.value,
   }));
 
-  const suitIconSize =
-    size === "small" ? 14
-    : size === "medium" ? 18
-    : 22;
-  const suitIconLargeSize =
-    size === "small" ? 36
-    : size === "medium" ? 52
-    : 68;
+  const suitIconSize = Math.round(cardWidth * SMALL_ICON_RATIO);
+  const suitIconLargeSize = Math.round(cardWidth * LARGE_ICON_RATIO);
 
   const cardStyle: ViewStyle[] = [
     styles.card,
     {
-      width: cardSize.width,
-      height: cardSize.height,
+      width: cardWidth,
+      height: cardHeight,
       backgroundColor:
         state === "disabled" ?
           colors.playingCardDisabledBackground

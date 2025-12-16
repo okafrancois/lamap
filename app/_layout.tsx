@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/clerk-expo";
+import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import {
   DarkTheme,
@@ -22,9 +22,41 @@ export const unstable_settings = {
   anchor: "(tabs)",
 };
 
-export default function RootLayout() {
+function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const { isSignedIn, isLoaded } = useClerkAuth();
 
+  if (!isLoaded) {
+    return null;
+  }
+
+  return (
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <Stack>
+        <Stack.Protected guard={!isSignedIn}>
+          <Stack.Screen name="welcome" options={{ headerShown: false }} />
+        </Stack.Protected>
+
+        <Stack.Protected guard={isSignedIn}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(lobby)" options={{ headerShown: false }} />
+          <Stack.Screen name="(game)" options={{ headerShown: false }} />
+          <Stack.Screen name="(messages)" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="settings"
+            options={{
+              presentation: "modal",
+              headerShown: false,
+            }}
+          />
+        </Stack.Protected>
+      </Stack>
+      <StatusBar style="auto" />
+    </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
   if (!clerkPublishableKey) {
     console.warn("Missing EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY");
   }
@@ -40,28 +72,7 @@ export default function RootLayout() {
         tokenCache={tokenCache}
       >
         <ConvexProvider client={convex}>
-          <ThemeProvider
-            value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
-          >
-            <Stack>
-              <Stack.Screen name="welcome" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="(lobby)" options={{ headerShown: false }} />
-              <Stack.Screen name="(game)" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="(messages)"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="settings"
-                options={{
-                  presentation: "modal",
-                  headerShown: false,
-                }}
-              />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
+          <RootLayoutNav />
         </ConvexProvider>
       </ClerkProvider>
     </SafeAreaProvider>
