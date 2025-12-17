@@ -15,8 +15,8 @@ interface Card {
 
 interface CardStackProps {
   cards: Card[];
-  size?: "small" | "medium" | "large" | "xlarge" | "xxl";
-  layout?: "compact" | "fan" | "linear";
+  size?: "small" | "medium" | "large" | "xl" | "xxl";
+  layout?: "compact" | "fan" | "linear" | "verycompact";
 }
 
 function AnimatedCard({
@@ -28,7 +28,7 @@ function AnimatedCard({
   card: Card;
   index: number;
   cardX: number;
-  size?: "small" | "medium" | "large" | "xlarge" | "xxl";
+  size?: "small" | "medium" | "large" | "xl" | "xxl";
 }) {
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
@@ -53,19 +53,36 @@ function AnimatedCard({
         },
       ]}
     >
-      <PlayingCard suit={card.suit} rank={card.rank} state="played" size={size} />
+      <PlayingCard
+        suit={card.suit}
+        rank={card.rank}
+        state="played"
+        size={size}
+      />
     </Animated.View>
   );
 }
 
-export function CardStack({ cards, size = "large", layout = "compact" }: CardStackProps) {
+export function CardStack({
+  cards,
+  size = "large",
+  layout = "compact",
+}: CardStackProps) {
   if (cards.length === 0) return null;
 
   const screenWidth = Dimensions.get("window").width;
-  const cardWidth = size === "large" ? 100 : size === "medium" ? 80 : size === "small" ? 50 : 100;
-  
-  const spacing = layout === "compact" ? cardWidth * 0.5 : layout === "fan" ? cardWidth * 0.75 : cardWidth * 1.2;
-  
+  const cardWidth =
+    size === "large" ? 100
+    : size === "medium" ? 80
+    : size === "small" ? 50
+    : 100;
+
+  const spacing =
+    layout === "compact" ? cardWidth * 0.5
+    : layout === "fan" ? cardWidth * 0.75
+    : layout === "verycompact" ? cardWidth * 0.3
+    : cardWidth * 1.2;
+
   const totalWidth = (cards.length - 1) * spacing + cardWidth;
   const startX = (screenWidth - totalWidth) / 2;
 
@@ -96,4 +113,3 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
 });
-

@@ -50,9 +50,9 @@ export function TurnHistory({
 
   return (
     <View style={styles.container}>
-      <CardStack cards={opponentCards} size="large" layout="compact" />
+      <CardStack cards={opponentCards} size="large" layout="verycompact" />
       <View style={styles.divider} />
-      <CardStack cards={myCards} size="large" layout="compact" />
+      <CardStack cards={myCards} size="large" layout="verycompact" />
     </View>
   );
 }
