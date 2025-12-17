@@ -5,15 +5,18 @@ const SETTINGS_KEY = "@lamap:settings";
 
 export type ThemeMode = "light" | "dark" | "system";
 export type CardLayout = "fan" | "linear" | "compact";
+export type PlayAreaMode = "battle" | "history";
 
 interface Settings {
   themeMode: ThemeMode;
   cardLayout: CardLayout;
+  playAreaMode: PlayAreaMode;
 }
 
 const defaultSettings: Settings = {
   themeMode: "system",
   cardLayout: "fan",
+  playAreaMode: "battle",
 };
 
 export function useSettings() {
@@ -56,11 +59,17 @@ export function useSettings() {
     updateSettings({ cardLayout: layout });
   };
 
+  const setPlayAreaMode = (mode: PlayAreaMode) => {
+    updateSettings({ playAreaMode: mode });
+  };
+
   return {
     themeMode: settings.themeMode,
     cardLayout: settings.cardLayout,
+    playAreaMode: settings.playAreaMode,
     setThemeMode,
     setCardLayout,
+    setPlayAreaMode,
     isLoading,
   };
 }

@@ -1,10 +1,15 @@
+import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
-import { PlayerIndicator } from "@/components/game/PlayerIndicator";
+import { ConfirmPlayButton } from "@/components/game/ConfirmPlayButton";
+import { OpponentZone } from "@/components/game/OpponentZone";
 import { ResultModal } from "@/components/game/ResultModal";
+import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
+import { TurnPips } from "@/components/game/TurnPips";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
+import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
@@ -24,6 +29,7 @@ export default function MatchScreen() {
   const colors = useColors();
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
+  const { playAreaMode } = useSettings();
 
   const {
     game,
@@ -123,7 +129,6 @@ export default function MatchScreen() {
 
       setIsPlaying(true);
       playSound("cardPlay");
-      // Optimistically select the card if not already selected to show feedback
       setSelectedCard(card);
 
       try {
@@ -142,6 +147,26 @@ export default function MatchScreen() {
     [isPlaying, playCard, playSound]
   );
 
+  const handleConfirmPlay = useCallback(async () => {
+    if (!selectedCard || isPlaying) return;
+
+    setIsPlaying(true);
+    playSound("cardPlay");
+
+    try {
+      await playCard(selectedCard);
+      setSelectedCard(null);
+    } catch (error: any) {
+      Alert.alert(
+        "Carte non jouable",
+        error.message ||
+          "Cette carte ne peut pas être jouée pour le moment. Vérifiez que c'est votre tour et que vous suivez la couleur demandée."
+      );
+    } finally {
+      setIsPlaying(false);
+    }
+  }, [selectedCard, isPlaying, playCard, playSound]);
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -154,7 +179,7 @@ export default function MatchScreen() {
     },
     header: {
       paddingHorizontal: 16,
-      paddingVertical: 12,
+      paddingVertical: 10,
       backgroundColor: colors.card,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
@@ -163,17 +188,11 @@ export default function MatchScreen() {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      marginBottom: 12,
     },
     headerLeft: {
       flexDirection: "row",
       alignItems: "center",
       gap: 12,
-    },
-    turnText: {
-      fontSize: 16,
-      fontWeight: "700",
-      color: colors.foreground,
     },
     betBadge: {
       flexDirection: "row",
@@ -185,7 +204,7 @@ export default function MatchScreen() {
       borderRadius: 12,
     },
     betText: {
-      fontSize: 13,
+      fontSize: 12,
       color: colors.secondaryForeground,
       fontWeight: "600",
     },
@@ -197,11 +216,6 @@ export default function MatchScreen() {
     chatButton: {
       padding: 6,
     },
-    playersRow: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-    },
     playArea: {
       flex: 1,
       justifyContent: "center",
@@ -211,6 +225,25 @@ export default function MatchScreen() {
       backgroundColor: colors.card,
       borderTopWidth: 1,
       borderTopColor: colors.border,
+      paddingBottom: 8,
+      position: "relative",
+    },
+    turnBadgeContainer: {
+      alignItems: "center",
+      paddingVertical: 8,
+      position: "absolute",
+      top: -70,
+      left: 0,
+      right: 0,
+      zIndex: 100,
+    },
+    confirmButtonContainer: {
+      position: "absolute",
+      bottom: 180,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      zIndex: 100,
     },
     title: {
       fontSize: 24,
@@ -247,11 +280,6 @@ export default function MatchScreen() {
     );
   }
 
-  const currentTurnPlayer = game.players.find((p) => {
-    const playerId = p.userId || p.botId;
-    return playerId === game.currentTurnPlayerId;
-  });
-
   const hasHandPlayer = game.players.find((p) => {
     const playerId = p.userId || p.botId;
     return playerId === game.hasHandPlayerId;
@@ -262,32 +290,45 @@ export default function MatchScreen() {
     return playerId !== myUserId;
   });
 
-  const me = game.players.find((p) => {
-    const playerId = p.userId || p.botId;
-    return playerId === myUserId;
-  });
-
-  const isOpponentTurn =
-    currentTurnPlayer &&
-    (currentTurnPlayer.userId || currentTurnPlayer.botId) !== myUserId;
   const opponentHasHand =
     hasHandPlayer && (hasHandPlayer.userId || hasHandPlayer.botId) !== myUserId;
   const iHaveHand =
     hasHandPlayer && (hasHandPlayer.userId || hasHandPlayer.botId) === myUserId;
+
+  const opponentCardsRemaining = opponent?.hand?.length || 0;
+
+  const roundsWonByPlayer =
+    turnResults?.filter((r) => r.winnerId === myUserId).length || 0;
+  const roundsWonByOpponent = (turnResults?.length || 0) - roundsWonByPlayer;
+
+  const opponentPlayedCard = currentPlays?.find(
+    (pc) => pc.playerId !== myUserId
+  )?.card;
+  const playerPlayedCard = currentPlays?.find(
+    (pc) => pc.playerId === myUserId
+  )?.card;
+
+  const leadSuit =
+    iHaveHand && opponentPlayedCard ? opponentPlayedCard.suit
+    : opponentHasHand && playerPlayedCard ? playerPlayedCard.suit
+    : undefined;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
-            <Text style={styles.turnText}>
-              Tour {game.currentRound} / {game.maxRounds}
-            </Text>
+            <TurnPips
+              totalRounds={game.maxRounds}
+              currentRound={game.currentRound}
+              roundsWonByPlayer={roundsWonByPlayer}
+              roundsWonByOpponent={roundsWonByOpponent}
+            />
             {game.bet.amount > 0 && (
               <View style={styles.betBadge}>
                 <Ionicons
                   name="trophy"
-                  size={14}
+                  size={12}
                   color={colors.secondaryForeground}
                 />
                 <Text style={styles.betText}>
@@ -311,57 +352,91 @@ export default function MatchScreen() {
             )}
           </View>
         </View>
-
-        <View style={styles.playersRow}>
-          {opponent && (
-            <PlayerIndicator
-              name={opponent.username}
-              hasHand={opponentHasHand}
-              isCurrentTurn={isOpponentTurn}
-              position="top"
-              leadSuit={
-                opponentHasHand && currentPlays && currentPlays.length > 0 ?
-                  currentPlays.find((pc) => pc.playerId !== myUserId)?.card
-                    ?.suit
-                : undefined
-              }
-            />
-          )}
-          {me && (
-            <PlayerIndicator
-              name={me.username}
-              hasHand={iHaveHand}
-              isCurrentTurn={isMyTurn}
-              isMe
-              position="bottom"
-              leadSuit={
-                iHaveHand && currentPlays && currentPlays.length > 0 ?
-                  currentPlays.find((pc) => pc.playerId === myUserId)?.card
-                    ?.suit
-                : undefined
-              }
-            />
-          )}
-        </View>
       </View>
 
-      <View style={styles.playArea}>
-        <TurnHistory
-          results={turnResults}
-          myPlayerId={myUserId}
-          game={game}
-          currentPlays={currentPlays}
-          currentRound={game.currentRound}
+      {opponent && (
+        <OpponentZone
+          name={opponent.username}
+          hasHand={opponentHasHand}
+          cardsRemaining={opponentCardsRemaining}
         />
+      )}
+
+      <View style={styles.playArea}>
+        {playAreaMode === "battle" ?
+          <BattleZone
+            opponentCard={
+              opponentPlayedCard ?
+                {
+                  suit: opponentPlayedCard.suit as
+                    | "hearts"
+                    | "diamonds"
+                    | "clubs"
+                    | "spades",
+                  rank: opponentPlayedCard.rank as
+                    | "3"
+                    | "4"
+                    | "5"
+                    | "6"
+                    | "7"
+                    | "8"
+                    | "9"
+                    | "10",
+                }
+              : null
+            }
+            playerCard={
+              playerPlayedCard ?
+                {
+                  suit: playerPlayedCard.suit as
+                    | "hearts"
+                    | "diamonds"
+                    | "clubs"
+                    | "spades",
+                  rank: playerPlayedCard.rank as
+                    | "3"
+                    | "4"
+                    | "5"
+                    | "6"
+                    | "7"
+                    | "8"
+                    | "9"
+                    | "10",
+                }
+              : null
+            }
+            leadSuit={
+              leadSuit as "hearts" | "diamonds" | "clubs" | "spades" | undefined
+            }
+          />
+        : <TurnHistory
+            results={turnResults}
+            myPlayerId={myUserId}
+            game={game}
+            currentPlays={currentPlays}
+            currentRound={game.currentRound}
+          />
+        }
       </View>
 
       <View style={styles.handArea}>
+        <View style={styles.turnBadgeContainer}>
+          <TurnBadge visible={isMyTurn} />
+        </View>
         <CardHand
           cards={myHand}
           isMyTurn={isMyTurn}
           onCardSelect={handleCardSelect}
           onCardDoubleTap={handleDoubleTapCard}
           selectedCard={selectedCard}
+          disabled={isPlaying}
+        />
+      </View>
+
+      <View style={styles.confirmButtonContainer}>
+        <ConfirmPlayButton
+          visible={!!selectedCard && isMyTurn}
+          onPress={handleConfirmPlay}
           disabled={isPlaying}
         />
       </View>

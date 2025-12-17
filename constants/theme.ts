@@ -14,6 +14,18 @@ export const Colors = {
     white: "#F5F2ED",
     black: "#1A1A1A",
   },
+  gameUI: {
+    rougeTerre: "#B4443E",
+    rougeVif: "#C9524B",
+    rougeSombre: "#8B3331",
+    orSable: "#A68258",
+    orClair: "#D4B896",
+    orBrillant: "#E8D5B7",
+    bleuNuit: "#465D74",
+    bleuProfond: "#2A3B4D",
+    bleuAbyssal: "#1A2633",
+    bleuSurface: "#566E85",
+  },
   light: {
     background: "#FAFAF9",
     foreground: "#1A1A1A",

@@ -18,6 +18,7 @@ interface CardStackProps {
   cards: Card[];
   size?: "small" | "medium" | "large" | "xl" | "xxl";
   layout?: "compact" | "fan" | "linear" | "verycompact";
+  orientation?: "horizontal" | "vertical";
   highlightLastN?: number;
 }
 
@@ -25,12 +26,14 @@ function AnimatedCard({
   card,
   index,
   cardX,
+  cardY,
   size = "large",
   isOldCard = false,
 }: {
   card: Card;
   index: number;
   cardX: number;
+  cardY?: number;
   size?: "small" | "medium" | "large" | "xl" | "xxl";
   isOldCard?: boolean;
 }) {
@@ -73,6 +76,7 @@ function AnimatedCard({
         animatedStyle,
         {
           left: cardX,
+          ...(cardY !== undefined && { top: cardY }),
         },
       ]}
     >
@@ -91,6 +95,7 @@ export function CardStack({
   cards,
   size = "large",
   layout = "compact",
+  orientation = "horizontal",
   highlightLastN = 1,
 }: CardStackProps) {
   if (cards.length === 0) return null;
@@ -102,6 +107,35 @@ export function CardStack({
     : size === "small" ? 50
     : 100;
 
+  const cardHeight = cardWidth * 1.4;
+
+  if (orientation === "vertical") {
+    const verticalSpacing = cardHeight * 0.25;
+    const totalHeight = (cards.length - 1) * verticalSpacing + cardHeight;
+    const startY = 0;
+    const centerX = (screenWidth - cardWidth) / 2;
+
+    return (
+      <View style={[styles.container, { height: totalHeight + 20 }]}>
+        {cards.map((card, index) => {
+          const cardY = startY + index * verticalSpacing;
+          const isOldCard = index < cards.length - highlightLastN;
+          return (
+            <AnimatedCard
+              key={index}
+              card={card}
+              index={index}
+              cardX={centerX}
+              cardY={cardY}
+              size={size}
+              isOldCard={isOldCard}
+            />
+          );
+        })}
+      </View>
+    );
+  }
+
   const spacing =
     layout === "compact" ? cardWidth * 0.5
     : layout === "fan" ? cardWidth * 0.75
@@ -112,7 +146,7 @@ export function CardStack({
   const startX = (screenWidth - totalWidth) / 2;
 
   return (
-    <View style={[styles.container, { height: cardWidth * 1.4 + 20 }]}>
+    <View style={[styles.container, { height: cardHeight + 20 }]}>
       {cards.map((card, index) => {
         const cardX = startX + index * spacing;
         const isOldCard = index < cards.length - highlightLastN;
