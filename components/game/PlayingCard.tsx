@@ -168,7 +168,7 @@ export const PlayingCard = React.memo(function PlayingCard({
           colors.playingCardDisabledBackground
         : colors.playingCardBackground,
       borderColor:
-        isSelected ? colors.primary
+        isSelected ? colors.secondary
         : state === "playable" ? colors.primary
         : state === "disabled" ? colors.border
         : colors.border,
