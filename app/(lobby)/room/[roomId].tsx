@@ -78,11 +78,17 @@ export default function RoomScreen() {
 
       const timeout = setTimeout(async () => {
         try {
-          await startGame({ gameId: game.gameId });
-        } catch (error) {
-          console.error("Error starting game:", error);
-          hasStartedTimerRef.current = false;
-          setCountdown(null);
+          if (game?.status === "WAITING") {
+            await startGame({ gameId: game.gameId });
+          }
+        } catch (error: any) {
+          if (error?.message?.includes("Game already started")) {
+            console.log("Game already started by another player");
+          } else {
+            console.error("Error starting game:", error);
+            hasStartedTimerRef.current = false;
+            setCountdown(null);
+          }
         }
         clearInterval(interval);
       }, 3000);

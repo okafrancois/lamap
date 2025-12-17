@@ -650,6 +650,11 @@ export const playCard = mutation({
             multiplier,
             winnerId,
           });
+          gameState.victoryType = koraType as
+            | "normal"
+            | "simple_kora"
+            | "double_kora"
+            | "triple_kora";
           gameState.version = gameState.version + 1;
           gameState.lastUpdatedAt = Date.now();
         }
@@ -669,6 +674,9 @@ export const playCard = mutation({
         gameState.status = "ENDED" as const;
         gameState.winnerId = winnerId;
         gameState.endedAt = Date.now();
+        if (!gameState.victoryType) {
+          gameState.victoryType = "normal";
+        }
 
         const winnerPlayer = gameState.players.find(
           (p) => getPlayerId(p) === winnerId

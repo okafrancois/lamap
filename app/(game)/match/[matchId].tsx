@@ -5,13 +5,11 @@ import { ResultModal } from "@/components/game/ResultModal";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
-import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -40,7 +38,6 @@ export default function MatchScreen() {
     canPlayCard,
     myUserId,
   } = useGame(matchId || null);
-  const startGame = useMutation(api.games.startGame);
   const { playSound } = useSound();
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
@@ -73,18 +70,6 @@ export default function MatchScreen() {
       playSound("kora");
     }
   }, [game?.victoryType, game?.winnerId, myUserId, playSound]);
-
-  useEffect(() => {
-    if (game?.status === "WAITING" && matchId) {
-      startGame({ gameId: matchId }).catch((error) => {
-        Alert.alert(
-          "Erreur de démarrage",
-          "Impossible de démarrer la partie. Veuillez réessayer."
-        );
-        console.error("Error starting game:", error);
-      });
-    }
-  }, [game?.status, matchId, startGame]);
 
   // Son quand la partie démarre
   useEffect(() => {
@@ -430,11 +415,11 @@ export default function MatchScreen() {
           myUserId={myUserId ?? null}
           onClose={() => {
             setResultModalVisible(false);
-            router.replace("/(tabs)");
+            router.replace("/(lobby)/select-mode");
           }}
           onGoHome={() => {
             setResultModalVisible(false);
-            router.replace("/(tabs)");
+            router.replace("/(lobby)/select-mode");
           }}
         />
       )}

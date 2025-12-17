@@ -260,7 +260,9 @@ export function calculateKoraMultiplier(consecutiveThrees: number): number {
   return 1;
 }
 
-export function getKoraType(consecutiveThrees: number): string {
+export function getKoraType(
+  consecutiveThrees: number
+): "normal" | "simple_kora" | "double_kora" | "triple_kora" {
   if (consecutiveThrees >= 3) return "triple_kora";
   if (consecutiveThrees >= 2) return "double_kora";
   if (consecutiveThrees >= 1) return "simple_kora";
