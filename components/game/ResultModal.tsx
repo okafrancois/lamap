@@ -46,9 +46,10 @@ export function ResultModal({
   const platformFee = totalBet * 0.02;
 
   // Calculate net winnings (what the player wins minus fees)
+  const opponentBet = game.bet.amount;
   let winnings = 0;
+
   if (isWinner) {
-    const opponentBet = game.bet.amount;
     if (game.victoryType === "triple_kora") {
       winnings = opponentBet * 8 - platformFee;
     } else if (game.victoryType === "double_kora") {
@@ -56,10 +57,19 @@ export function ResultModal({
     } else if (game.victoryType === "simple_kora") {
       winnings = opponentBet * 2 - platformFee;
     } else {
-      // Normal victory: win opponent's bet minus commission
+      // Normal victory or any other type: win opponent's bet minus commission
       winnings = opponentBet - platformFee;
     }
   }
+
+  console.log("Victory debug:", {
+    isWinner,
+    victoryType: game.victoryType,
+    opponentBet,
+    platformFee,
+    winnings,
+    displayedWinnings,
+  });
 
   useEffect(() => {
     if (visible) {
@@ -308,7 +318,10 @@ export function ResultModal({
                   <View style={[styles.statRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Gains</Text>
                     <Text style={styles.totalValue}>
-                      {Math.round(displayedWinnings)} {game.bet.currency}
+                      {Math.round(
+                        displayedWinnings > 0 ? displayedWinnings : winnings
+                      )}{" "}
+                      {game.bet.currency}
                     </Text>
                   </View>
                 </>
