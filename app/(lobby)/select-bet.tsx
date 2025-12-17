@@ -6,10 +6,10 @@ import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const BET_AMOUNTS = [10, 50, 100, 500];
+const BET_AMOUNTS = [100, 500, 1000, 5000];
 
 export default function SelectBetScreen() {
   const colors = useColors();
@@ -22,6 +22,8 @@ export default function SelectBetScreen() {
   );
   const [selectedBet, setSelectedBet] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [customModalVisible, setCustomModalVisible] = useState(false);
+  const [customAmount, setCustomAmount] = useState("");
 
   const handleContinue = async () => {
     if (!selectedBet) return;
@@ -39,6 +41,24 @@ export default function SelectBetScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCustomBet = () => {
+    const amount = parseInt(customAmount);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert("Erreur", "Veuillez entrer un montant valide");
+      return;
+    }
+    if (!user || (user.balance || 0) < amount) {
+      Alert.alert(
+        "Solde insuffisant",
+        `Votre solde est de ${user?.balance || 0} ${user?.currency || "XAF"}. Vous ne pouvez pas miser ${amount} ${user?.currency || "XAF"}.`
+      );
+      return;
+    }
+    setSelectedBet(amount);
+    setCustomModalVisible(false);
+    setCustomAmount("");
   };
 
   const styles = StyleSheet.create({
@@ -67,7 +87,7 @@ export default function SelectBetScreen() {
     },
     betOptions: {
       gap: 16,
-      marginBottom: 32,
+      marginBottom: 16,
     },
     betButton: {
       minHeight: 64,
@@ -76,18 +96,68 @@ export default function SelectBetScreen() {
       borderWidth: 3,
       borderColor: colors.secondary,
     },
+    customButton: {
+      minHeight: 64,
+      backgroundColor: colors.accent,
+      borderWidth: 2,
+      borderColor: colors.border,
+      borderStyle: "dashed",
+    },
     selectedInfo: {
       alignItems: "center",
       marginBottom: 32,
     },
     actions: {
       gap: 12,
+      marginTop: 16,
     },
     continueButton: {
       minHeight: 56,
     },
     backButton: {
       marginTop: 8,
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: "rgba(0, 0, 0, 0.5)",
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    modalContent: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 24,
+      width: "80%",
+      maxWidth: 400,
+    },
+    modalTitle: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 8,
+    },
+    modalSubtitle: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      marginBottom: 24,
+    },
+    input: {
+      backgroundColor: colors.background,
+      borderWidth: 1,
+      borderColor: colors.border,
+      borderRadius: 8,
+      padding: 16,
+      fontSize: 18,
+      color: colors.text,
+      marginBottom: 24,
+    },
+    modalActions: {
+      flexDirection: "row",
+      gap: 12,
+    },
+    modalButton: {
+      flex: 1,
+      minHeight: 48,
     },
   });
 
@@ -118,6 +188,12 @@ export default function SelectBetScreen() {
               />
             );
           })}
+          <Button
+            title="Montant personnalisé"
+            onPress={() => setCustomModalVisible(true)}
+            variant="outline"
+            style={styles.customButton}
+          />
         </View>
 
         {selectedBet && (
@@ -145,6 +221,54 @@ export default function SelectBetScreen() {
           />
         </View>
       </ScrollView>
+
+      <Modal
+        visible={customModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCustomModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setCustomModalVisible(false)}
+        >
+          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Montant personnalisé</Text>
+              <Text style={styles.modalSubtitle}>
+                Solde disponible: {user?.balance?.toLocaleString() || 0}{" "}
+                {user?.currency || "XAF"}
+              </Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Entrez le montant"
+                placeholderTextColor={colors.mutedForeground}
+                keyboardType="numeric"
+                value={customAmount}
+                onChangeText={setCustomAmount}
+                autoFocus
+              />
+              <View style={styles.modalActions}>
+                <Button
+                  title="Annuler"
+                  onPress={() => {
+                    setCustomModalVisible(false);
+                    setCustomAmount("");
+                  }}
+                  variant="ghost"
+                  style={styles.modalButton}
+                />
+                <Button
+                  title="Valider"
+                  onPress={handleCustomBet}
+                  style={styles.modalButton}
+                />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 }

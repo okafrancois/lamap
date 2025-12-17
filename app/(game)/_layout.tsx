@@ -15,6 +15,12 @@ export default function GameLayout() {
           headerShown: false,
         }}
       />
+      <Stack.Screen
+        name="replay/[gameId]"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

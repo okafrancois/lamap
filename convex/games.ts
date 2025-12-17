@@ -1305,3 +1305,125 @@ export const autoStartGame = internalMutation({
     }
   },
 });
+
+export const getUserGameHistory = query({
+  args: { 
+    clerkUserId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { clerkUserId, limit = 20 }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", clerkUserId))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    const endedGames = await ctx.db
+      .query("games")
+      .withIndex("by_status", (q) => q.eq("status", "ENDED"))
+      .collect();
+
+    const userGames = endedGames
+      .filter((game) => game.players.some((p) => p.userId === user._id))
+      .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0))
+      .slice(0, limit);
+
+    const gamesWithOpponentInfo = await Promise.all(
+      userGames.map(async (game) => {
+        const opponent = game.players.find((p) => p.userId !== user._id);
+        let opponentInfo = null;
+
+        if (opponent) {
+          if (opponent.type === "ai") {
+            opponentInfo = {
+              username: opponent.username,
+              avatarUrl: null,
+              isAI: true,
+            };
+          } else if (opponent.userId) {
+            const opponentUser = await ctx.db.get(opponent.userId);
+            opponentInfo = {
+              username: opponentUser?.username || "Joueur",
+              avatarUrl: opponentUser?.avatarUrl || null,
+              isAI: false,
+            };
+          }
+        }
+
+        const isWinner = game.winnerId === user._id;
+        const gain = isWinner ? game.bet.amount : -game.bet.amount;
+
+        return {
+          gameId: game.gameId,
+          _id: game._id,
+          opponent: opponentInfo,
+          result: isWinner ? ("win" as const) : ("loss" as const),
+          bet: game.bet,
+          gain,
+          endedAt: game.endedAt,
+          victoryType: game.victoryType,
+          mode: game.mode,
+          currentRound: game.currentRound,
+        };
+      })
+    );
+
+    return gamesWithOpponentInfo;
+  },
+});
+
+export const getRecentGames = query({
+  args: {
+    clerkUserId: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, { clerkUserId, limit = 5 }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", clerkUserId))
+      .first();
+
+    if (!user) {
+      return [];
+    }
+
+    const endedGames = await ctx.db
+      .query("games")
+      .withIndex("by_status", (q) => q.eq("status", "ENDED"))
+      .collect();
+
+    const userGames = endedGames
+      .filter((game) => game.players.some((p) => p.userId === user._id))
+      .sort((a, b) => (b.endedAt || 0) - (a.endedAt || 0))
+      .slice(0, limit);
+
+    return Promise.all(
+      userGames.map(async (game) => {
+        const opponent = game.players.find((p) => p.userId !== user._id);
+        let opponentName = "Adversaire";
+
+        if (opponent) {
+          if (opponent.type === "ai") {
+            opponentName = opponent.username;
+          } else if (opponent.userId) {
+            const opponentUser = await ctx.db.get(opponent.userId);
+            opponentName = opponentUser?.username || "Joueur";
+          }
+        }
+
+        const isWinner = game.winnerId === user._id;
+
+        return {
+          gameId: game.gameId,
+          opponentName,
+          result: isWinner ? ("win" as const) : ("loss" as const),
+          betAmount: game.bet.amount,
+          endedAt: game.endedAt,
+        };
+      })
+    );
+  },
+});

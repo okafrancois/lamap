@@ -24,7 +24,7 @@ export default function ProfileScreen() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace("/(auth)/login");
+      router.replace("/welcome");
     } catch (error) {
       console.error("Error signing out:", error);
     }
@@ -160,11 +160,6 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.actionsSection}>
-            <Button
-              title="Paramètres"
-              onPress={() => router.push("/settings")}
-              variant="outline"
-            />
             <Button
               title="Déconnexion"
               onPress={handleSignOut}

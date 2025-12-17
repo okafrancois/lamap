@@ -1,10 +1,12 @@
 import { Stack } from "expo-router";
+import { TopBar } from "@/components/ui/TopBar";
 
 export default function LobbyLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        header: () => <TopBar />,
       }}
     >
       <Stack.Screen name="select-mode" />
@@ -12,6 +14,8 @@ export default function LobbyLayout() {
       <Stack.Screen name="select-difficulty" />
       <Stack.Screen name="matchmaking" />
       <Stack.Screen name="room/[roomId]" />
+      <Stack.Screen name="create-friendly" />
+      <Stack.Screen name="join-friendly" />
     </Stack>
   );
 }

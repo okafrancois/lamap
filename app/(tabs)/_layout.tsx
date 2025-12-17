@@ -1,23 +1,42 @@
 import { Tabs } from "expo-router";
 import React from "react";
+import { BlurView } from "expo-blur";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { TopBar } from "@/components/ui/TopBar";
 import { useColors } from "@/hooks/useColors";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 
 export default function TabLayout() {
   const colors = useColors();
+  const colorScheme = useColorScheme();
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
-        headerShown: false,
+        headerShown: true,
+        header: () => <TopBar />,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
+          position: "absolute",
+          borderTopWidth: 0,
+          elevation: 0,
         },
+        tabBarBackground: () => (
+          <BlurView
+            intensity={80}
+            tint={colorScheme === "dark" ? "dark" : "light"}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          />
+        ),
         tabBarButton: HapticTab,
       }}
     >
@@ -49,11 +68,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="history"
         options={{
-          title: "Profil",
+          title: "Mes parties",
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.fill" color={color} />
+            <IconSymbol size={28} name="clock.fill" color={color} />
           ),
         }}
       />

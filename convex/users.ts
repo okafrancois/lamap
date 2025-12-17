@@ -22,7 +22,7 @@ export const updateOrCreateUser = internalMutation({
 
     // Trouver l'email principal (gérer le cas où email_addresses est vide)
     const primaryEmail = clerkUser.email_addresses?.find?.(
-      (email: any) => email.id === clerkUser.primary_email_address_id,
+      (email: any) => email.id === clerkUser.primary_email_address_id
     );
     const email =
       primaryEmail?.email_address ||
@@ -110,7 +110,7 @@ const getUserQuery = {
       balance: v.optional(v.number()),
       currency: v.optional(v.string()),
     }),
-    v.null(),
+    v.null()
   ),
   handler: async (ctx: QueryCtx, args: { clerkUserId: string }) => {
     return await ctx.db
@@ -225,6 +225,93 @@ export const getUserBalance = query({
     return {
       balance: user.balance || 0,
       currency: user.currency || "XAF",
+    };
+  },
+});
+
+export const getUserStats = query({
+  args: {
+    clerkUserId: v.string(),
+  },
+  returns: v.object({
+    wins: v.number(),
+    losses: v.number(),
+    totalGames: v.number(),
+    winRate: v.number(),
+    currentStreak: v.number(),
+    bestStreak: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", args.clerkUserId))
+      .first();
+
+    if (!user) {
+      return {
+        wins: 0,
+        losses: 0,
+        totalGames: 0,
+        winRate: 0,
+        currentStreak: 0,
+        bestStreak: 0,
+      };
+    }
+
+    const allEndedGames = await ctx.db
+      .query("games")
+      .withIndex("by_status", (q) => q.eq("status", "ENDED"))
+      .collect();
+
+    const games = allEndedGames.filter((game) =>
+      game.players.some((p) => p.userId === user._id)
+    );
+
+    const sortedGames = games.sort(
+      (a, b) => (a.endedAt || 0) - (b.endedAt || 0)
+    );
+
+    let wins = 0;
+    let losses = 0;
+    let currentStreak = 0;
+    let bestStreak = 0;
+    let tempStreak = 0;
+
+    for (const game of sortedGames) {
+      const isWinner = game.winnerId === user._id;
+
+      if (isWinner) {
+        wins++;
+        tempStreak++;
+        if (tempStreak > bestStreak) {
+          bestStreak = tempStreak;
+        }
+      } else {
+        losses++;
+        tempStreak = 0;
+      }
+    }
+
+    const recentGames = sortedGames.slice(-10);
+    for (let i = recentGames.length - 1; i >= 0; i--) {
+      const game = recentGames[i];
+      if (game.winnerId === user._id) {
+        currentStreak++;
+      } else {
+        break;
+      }
+    }
+
+    const totalGames = wins + losses;
+    const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
+
+    return {
+      wins,
+      losses,
+      totalGames,
+      winRate: Math.round(winRate * 10) / 10,
+      currentStreak,
+      bestStreak,
     };
   },
 });

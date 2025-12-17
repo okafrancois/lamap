@@ -239,14 +239,14 @@ export default function WalletScreen() {
 
   if (!isSignedIn) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={[]}>
         <Text style={styles.text}>Veuillez vous connecter</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.balanceCard}>

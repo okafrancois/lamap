@@ -125,7 +125,7 @@ export default function MessagesScreen() {
 
   if (!myUserId) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={[]}>
         <ActivityIndicator size="large" color={colors.secondary} />
       </SafeAreaView>
     );
@@ -155,7 +155,7 @@ export default function MessagesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Messages</Text>
       </View>
