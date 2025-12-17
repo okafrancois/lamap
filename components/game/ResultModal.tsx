@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Modal, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -33,9 +33,7 @@ export function ResultModal({
 }: ResultModalProps) {
   const colors = useColors();
   const { playSound } = useSound();
-  const [displayedWinnings, setDisplayedWinnings] = useState(0);
   const soundPlayedRef = useRef(false);
-  const counterStartedRef = useRef(false);
 
   const cardOpacity = useSharedValue(0);
   const cardScale = useSharedValue(0.8);
@@ -61,15 +59,6 @@ export function ResultModal({
       winnings = opponentBet - platformFee;
     }
   }
-
-  console.log("Victory debug:", {
-    isWinner,
-    victoryType: game.victoryType,
-    opponentBet,
-    platformFee,
-    winnings,
-    displayedWinnings,
-  });
 
   useEffect(() => {
     if (visible) {
@@ -108,35 +97,8 @@ export function ResultModal({
   }, [visible, game, isWinner, playSound]);
 
   useEffect(() => {
-    if (visible && isWinner && winnings > 0 && !counterStartedRef.current) {
-      counterStartedRef.current = true;
-      const duration = 1500;
-      const steps = 30;
-      const stepValue = winnings / steps;
-      const stepDuration = duration / steps;
-
-      playSound("winMoney");
-
-      let current = 0;
-      const interval = setInterval(() => {
-        current += stepValue;
-        if (current >= winnings) {
-          setDisplayedWinnings(winnings);
-          clearInterval(interval);
-        } else {
-          setDisplayedWinnings(Math.floor(current));
-        }
-      }, stepDuration);
-
-      return () => clearInterval(interval);
-    }
-  }, [visible, isWinner, winnings, playSound]);
-
-  useEffect(() => {
     if (!visible) {
       soundPlayedRef.current = false;
-      counterStartedRef.current = false;
-      setDisplayedWinnings(0);
     }
   }, [visible]);
 
@@ -318,10 +280,7 @@ export function ResultModal({
                   <View style={[styles.statRow, styles.totalRow]}>
                     <Text style={styles.totalLabel}>Gains</Text>
                     <Text style={styles.totalValue}>
-                      {Math.round(
-                        displayedWinnings > 0 ? displayedWinnings : winnings
-                      )}{" "}
-                      {game.bet.currency}
+                      {Math.round(winnings)} {game.bet.currency}
                     </Text>
                   </View>
                 </>
