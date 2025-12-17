@@ -79,6 +79,39 @@ export const PlayingCard = React.memo(function PlayingCard({
   const translateY = useSharedValue(50);
   const rotateY = useSharedValue(0);
 
+  const styles = StyleSheet.create({
+    card: {
+      borderRadius: cardWidth * 0.1,
+      padding: cardWidth * 0.05,
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    topCorner: {
+      alignSelf: "flex-start",
+      alignItems: "center",
+    },
+    bottomCorner: {
+      alignSelf: "flex-end",
+      alignItems: "center",
+    },
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    value: {
+      fontSize: cardWidth * 0.12,
+      fontWeight: "700",
+      lineHeight: 20,
+    },
+    suitIcon: {
+      marginTop: 2,
+    },
+    suitIconLarge: {
+      marginVertical: 4,
+    },
+  });
+
   useEffect(() => {
     opacity.value = withTiming(1, {
       duration: AnimationDurations.fast,
@@ -223,37 +256,4 @@ export const PlayingCard = React.memo(function PlayingCard({
       {content}
     </TouchableOpacity>
   );
-});
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: Spacing.radius.lg,
-    padding: 8,
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  topCorner: {
-    alignSelf: "flex-start",
-    alignItems: "center",
-  },
-  bottomCorner: {
-    alignSelf: "flex-end",
-    alignItems: "center",
-  },
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  value: {
-    fontSize: 18,
-    fontWeight: "700",
-    lineHeight: 20,
-  },
-  suitIcon: {
-    marginTop: 2,
-  },
-  suitIconLarge: {
-    marginVertical: 4,
-  },
 });
