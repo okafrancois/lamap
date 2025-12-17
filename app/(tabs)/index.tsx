@@ -33,7 +33,7 @@ export default function HomeScreen() {
   );
   const recentGames = useQuery(
     api.games.getRecentGames,
-    userId ? { clerkUserId: userId, limit: 5 } : "skip"
+    userId ? { clerkUserId: userId, limit: 3 } : "skip"
   );
 
   const styles = StyleSheet.create({
@@ -378,18 +378,6 @@ export default function HomeScreen() {
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{userStats.winRate}%</Text>
               <Text style={styles.statLabel}>Taux</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{userStats.totalGames}</Text>
-              <Text style={styles.statLabel}>Total</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{userStats.currentStreak}</Text>
-              <Text style={styles.statLabel}>Série actuelle</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{userStats.bestStreak}</Text>
-              <Text style={styles.statLabel}>Meilleure série</Text>
             </View>
           </View>
 
