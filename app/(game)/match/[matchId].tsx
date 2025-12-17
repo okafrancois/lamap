@@ -6,13 +6,15 @@ import { ResultModal } from "@/components/game/ResultModal";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
+import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
+import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -40,6 +42,7 @@ export default function MatchScreen() {
     myUserId,
   } = useGame(matchId || null);
   const { playSound } = useSound();
+  const startGame = useMutation(api.games.startGame);
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -51,6 +54,7 @@ export default function MatchScreen() {
     string | undefined
   >(undefined);
   const [resultModalVisible, setResultModalVisible] = useState(false);
+  const hasStartedGameRef = useRef(false);
 
   useEffect(() => {
     if (turnResults && turnResults.length > previousTurnResults.length) {
@@ -97,6 +101,30 @@ export default function MatchScreen() {
       setResultModalVisible(true);
     }
   }, [game?.status]);
+
+  // Démarrage automatique pour les parties en WAITING (notamment contre IA)
+  useEffect(() => {
+    if (
+      game?.status === "WAITING" &&
+      game.players.length >= 2 &&
+      !hasStartedGameRef.current
+    ) {
+      hasStartedGameRef.current = true;
+
+      const startGameAsync = async () => {
+        try {
+          await startGame({ gameId: game.gameId });
+        } catch (error: any) {
+          if (!error?.message?.includes("Game already started")) {
+            console.error("Error starting game:", error);
+            hasStartedGameRef.current = false;
+          }
+        }
+      };
+
+      startGameAsync();
+    }
+  }, [game?.status, game?.players.length, game?.gameId, startGame]);
 
   const handleCardSelect = useCallback(
     (card: Card) => {
