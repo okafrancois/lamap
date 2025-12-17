@@ -68,7 +68,6 @@ export default function RoomScreen() {
       game.players.length >= 2 &&
       !hasStartedTimerRef.current
     ) {
-      console.log("Starting countdown for game:", game.gameId);
       hasStartedTimerRef.current = true;
       setCountdown(3);
 
@@ -85,14 +84,11 @@ export default function RoomScreen() {
       const timeout = setTimeout(async () => {
         try {
           if (game?.status === "WAITING") {
-            console.log("Starting game:", game.gameId);
             await startGame({ gameId: game.gameId });
           }
         } catch (error: any) {
           if (error?.message?.includes("Game already started")) {
-            console.log("Game already started by another player");
           } else {
-            console.error("Error starting game:", error);
             hasStartedTimerRef.current = false;
             setCountdown(null);
           }
@@ -106,14 +102,14 @@ export default function RoomScreen() {
         clearTimeout(timeout);
         clearInterval(interval);
       };
-    } else if (game) {
-      console.log("Countdown not starting:", {
-        status: game.status,
-        playersLength: game.players?.length,
-        hasStarted: hasStartedTimerRef.current,
-      });
     }
-  }, [game?.status, game?.players?.length, game?.gameId, startGame]);
+  }, [
+    game?.status,
+    game?.gameId,
+    game?.players.length,
+    startGame,
+    game?.players,
+  ]);
 
   // Réinitialiser le timer si le statut change
   useEffect(() => {

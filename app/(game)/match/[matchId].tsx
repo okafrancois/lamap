@@ -120,7 +120,6 @@ export default function MatchScreen() {
       !hasStartedGameRef.current
     ) {
       hasStartedGameRef.current = true;
-      console.log("Auto-starting game:", game.gameId, "mode:", game.mode);
 
       const startGameAsync = async () => {
         try {

@@ -47,7 +47,6 @@ export const updateOrCreateUser = internalMutation({
         username: clerkUser.username,
         ...(avatarUrl ? { avatarUrl } : {}),
       });
-      console.log(`Updated user: ${clerkUser.id}`);
       return existing._id;
     } else {
       // Créer un nouvel utilisateur
@@ -65,7 +64,6 @@ export const updateOrCreateUser = internalMutation({
         balance: 1000, // Starting balance for new users
         currency: "XAF", // Default currency (Franc CFA)
       });
-      console.log(`Created user: ${clerkUser.id}`);
       return newUserId;
     }
   },
@@ -83,7 +81,6 @@ export const deleteUser = internalMutation({
 
     if (user) {
       await ctx.db.delete(user._id);
-      console.log(`Deleted user: ${args.clerkUserId}`);
     } else {
       console.log(`User not found for deletion: ${args.clerkUserId}`);
     }

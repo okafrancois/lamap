@@ -1,7 +1,7 @@
 import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
 import { Webhook } from "svix";
+import { internal } from "./_generated/api";
+import { httpAction } from "./_generated/server";
 
 const http = httpRouter();
 
@@ -41,7 +41,6 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
   }
 
   const eventType = evt.type;
-  console.log(`Processing Clerk webhook: ${eventType}`);
 
   try {
     switch (eventType) {
@@ -59,7 +58,6 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
         }
         break;
       default:
-        console.log(`Unhandled Clerk webhook event: ${eventType}`);
     }
   } catch (error) {
     console.error(`Error processing Clerk webhook ${eventType}:`, error);
