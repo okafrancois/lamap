@@ -332,7 +332,7 @@ export const startGame = mutation({
     }
 
     if (game.status !== "WAITING") {
-      throw new Error("Game already started");
+      return;
     }
 
     // Create and distribute cards

@@ -302,7 +302,7 @@ export function ResultModal({
               style={styles.button}
             />
             <Button
-              title="Nouvelle partie"
+              title="Retour à l'accueil"
               onPress={onClose}
               variant="secondary"
               style={styles.button}

@@ -16,8 +16,8 @@ export function PlaceholderCardHand({
       flexDirection: "row",
       justifyContent: "center",
       alignItems: "center",
-      paddingVertical: 20,
-      height: 120,
+      paddingVertical: 10,
+      height: 150,
     },
     cardWrapper: {
       marginLeft: -20,

@@ -4,7 +4,7 @@ import React from "react";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface CardBackProps {
-  size?: "small" | "medium" | "large";
+  size?: "small" | "medium" | "large" | "xl" | "xxl";
   style?: ViewStyle;
 }
 
@@ -14,6 +14,8 @@ const CARD_WIDTHS = {
   small: 32,
   medium: 60,
   large: 90,
+  xl: 100,
+  xxl: 140,
 };
 
 export function CardBack({ size = "medium", style }: CardBackProps) {

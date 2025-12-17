@@ -6,6 +6,7 @@ import { ResultModal } from "@/components/game/ResultModal";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
+import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
@@ -55,6 +56,15 @@ export default function MatchScreen() {
   >(undefined);
   const [resultModalVisible, setResultModalVisible] = useState(false);
   const hasStartedGameRef = useRef(false);
+  const currentGameIdRef = useRef<string | null>(null);
+
+  // Réinitialiser le flag de démarrage si on change de partie
+  useEffect(() => {
+    if (game?.gameId && game.gameId !== currentGameIdRef.current) {
+      currentGameIdRef.current = game.gameId;
+      hasStartedGameRef.current = false;
+    }
+  }, [game?.gameId]);
 
   useEffect(() => {
     if (turnResults && turnResults.length > previousTurnResults.length) {
@@ -102,15 +112,15 @@ export default function MatchScreen() {
     }
   }, [game?.status]);
 
-  // Démarrage automatique pour les parties contre IA en WAITING
+  // Démarrage automatique pour les parties en WAITING (AI ou ONLINE)
   useEffect(() => {
     if (
       game?.status === "WAITING" &&
-      game.mode === "AI" &&
       game.players.length >= 2 &&
       !hasStartedGameRef.current
     ) {
       hasStartedGameRef.current = true;
+      console.log("Auto-starting game:", game.gameId, "mode:", game.mode);
 
       const startGameAsync = async () => {
         try {
@@ -123,9 +133,11 @@ export default function MatchScreen() {
         }
       };
 
-      startGameAsync();
+      // Petit délai pour les parties ONLINE (pour une transition plus smooth)
+      const delay = game.mode === "ONLINE" ? 1000 : 0;
+      setTimeout(startGameAsync, delay);
     }
-  }, [game?.status, game?.mode, game?.players.length, game?.gameId, startGame]);
+  }, [game?.status, game?.players.length, game?.gameId, game?.mode, startGame]);
 
   const handleCardSelect = useCallback(
     (card: Card) => {
@@ -219,7 +231,8 @@ export default function MatchScreen() {
       backgroundColor: colors.card,
       borderTopWidth: 2,
       borderTopColor: colors.border,
-      paddingTop: 16,
+      paddingTop: 20,
+      height: 200,
       position: "relative",
       display: "flex",
       flexDirection: "row",
@@ -257,8 +270,13 @@ export default function MatchScreen() {
       color: colors.mutedForeground,
     },
     quitButtonContainer: {
-      padding: 16,
-      paddingBottom: 24,
+      position: "absolute",
+      bottom: 170,
+      minWidth: 150,
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      zIndex: 100,
     },
   });
 
@@ -296,6 +314,14 @@ export default function MatchScreen() {
 
         <View style={styles.handArea}>
           <PlaceholderCardHand cardCount={5} />
+          <View style={styles.quitButtonContainer}>
+            <Button
+              title="Quitter"
+              onPress={() => router.back()}
+              variant="outline"
+              size="sm"
+            />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -335,19 +361,28 @@ export default function MatchScreen() {
         />
 
         <View style={styles.playArea}>
-          <View style={styles.loadingOverlay}>
-            <ActivityIndicator size="large" color={colors.secondary} />
-            <Text style={styles.loadingLabel}>Préparation de la partie...</Text>
-          </View>
           <BattleZone
             opponentCards={[]}
             playerCards={[]}
             battleLayout={battleLayout}
           />
+
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+            <Text style={styles.loadingLabel}>Préparation de la partie...</Text>
+          </View>
         </View>
 
         <View style={styles.handArea}>
           <PlaceholderCardHand cardCount={5} />
+          <View style={styles.quitButtonContainer}>
+            <Button
+              title="Quitter"
+              onPress={() => router.back()}
+              variant="outline"
+              size="sm"
+            />
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -522,7 +557,7 @@ export default function MatchScreen() {
           myUserId={myUserId ?? null}
           onClose={() => {
             setResultModalVisible(false);
-            router.replace("/(lobby)/select-mode");
+            router.replace("/(tabs)");
           }}
           onGoHome={() => {
             setResultModalVisible(false);
