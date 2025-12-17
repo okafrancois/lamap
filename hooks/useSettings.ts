@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 const SETTINGS_KEY = "@lamap:settings";
 
 export type ThemeMode = "light" | "dark" | "system";
+export type CardLayout = "fan" | "linear" | "compact";
 
 interface Settings {
   themeMode: ThemeMode;
+  cardLayout: CardLayout;
 }
 
 const defaultSettings: Settings = {
   themeMode: "system",
+  cardLayout: "fan",
 };
 
 export function useSettings() {
@@ -49,9 +52,15 @@ export function useSettings() {
     updateSettings({ themeMode: mode });
   };
 
+  const setCardLayout = (layout: CardLayout) => {
+    updateSettings({ cardLayout: layout });
+  };
+
   return {
     themeMode: settings.themeMode,
+    cardLayout: settings.cardLayout,
     setThemeMode,
+    setCardLayout,
     isLoading,
   };
 }

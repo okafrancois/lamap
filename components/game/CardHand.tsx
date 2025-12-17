@@ -1,3 +1,4 @@
+import { useSettings } from "@/hooks/useSettings";
 import React from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
@@ -32,6 +33,7 @@ interface AnimatedCardProps {
   state: "playable" | "disabled" | "selected";
   onPress: () => void;
   isSelected: boolean;
+  layout: "fan" | "linear" | "compact";
 }
 
 const AnimatedCard = React.memo(function AnimatedCard({
@@ -41,27 +43,45 @@ const AnimatedCard = React.memo(function AnimatedCard({
   state,
   onPress,
   isSelected,
+  layout,
 }: AnimatedCardProps) {
   const translateY = useSharedValue(100);
   const opacity = useSharedValue(0);
   const selectedOffset = useSharedValue(0);
-  const offset = totalCards > 4 ? 20 : 40;
 
   const screenWidth = Dimensions.get("window").width;
   const cardWidth = 100;
 
-  // Spacing dynamique : moins de cartes = plus d'espace
-  const baseSpacing = Math.max(0.5, 0.85 - totalCards * 0.05);
-  const spacing = cardWidth * baseSpacing * 1.2;
+  // Calcul selon le layout
+  let spacing, rotation, offset;
+
+  switch (layout) {
+    case "fan": {
+      offset = totalCards > 4 ? 20 : 40;
+      const baseSpacing = Math.max(0.5, 0.85 - totalCards * 0.05);
+      spacing = cardWidth * baseSpacing * 1.2;
+      const centerIndex = (totalCards - 1) / 2;
+      const rotationPerCard = (totalCards / 2) * 2;
+      rotation = (index - centerIndex) * rotationPerCard;
+      break;
+    }
+    case "linear": {
+      offset = 0;
+      spacing = cardWidth * 0.8;
+      rotation = 0;
+      break;
+    }
+    case "compact": {
+      offset = 0;
+      spacing = cardWidth * 0.5;
+      rotation = 0;
+      break;
+    }
+  }
 
   const totalWidth = (totalCards - 1) * spacing + cardWidth;
   const startX = (screenWidth - totalWidth) / 2 - offset;
   const cardX = startX + index * spacing;
-
-  // Rotation progressive depuis le centre (carte du milieu = 0°)
-  const centerIndex = (totalCards - 1) / 2;
-  const rotationPerCard = (totalCards / 2) * 2; // 6° par carte depuis le centre
-  const rotation = (index - centerIndex) * rotationPerCard;
 
   React.useEffect(() => {
     translateY.value = withDelay(
@@ -118,6 +138,8 @@ export function CardHand({
   selectedCard,
   disabled = false,
 }: CardHandProps) {
+  const { cardLayout } = useSettings();
+
   // Store last tap time for double tap detection
   const lastTapRef = React.useRef<{ time: number; cardId: string } | null>(
     null
@@ -179,6 +201,7 @@ export function CardHand({
           state={getCardState(card)}
           onPress={() => handleCardPress(card)}
           isSelected={!!(selectedCard && selectedCard.id === card.id)}
+          layout={cardLayout}
         />
       ))}
     </View>

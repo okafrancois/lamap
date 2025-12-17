@@ -1,3 +1,4 @@
+import { CardLayoutPreview } from "@/components/settings/CardLayoutPreview";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/useColors";
 import { useSettings } from "@/hooks/useSettings";
@@ -17,7 +18,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { themeMode, setThemeMode, isLoading } = useSettings();
+  const { themeMode, cardLayout, setThemeMode, setCardLayout, isLoading } =
+    useSettings();
 
   const styles = StyleSheet.create({
     container: {
@@ -105,6 +107,20 @@ export default function SettingsScreen() {
     closeButton: {
       padding: 8,
     },
+    layoutOptions: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 12,
+    },
+    layoutOption: {
+      alignItems: "center",
+      gap: 8,
+    },
+    layoutLabel: {
+      fontSize: 12,
+      color: colors.text,
+      textAlign: "center",
+    },
   });
 
   if (isLoading) {
@@ -131,6 +147,7 @@ export default function SettingsScreen() {
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Apparence</Text>
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
                 <Text style={styles.settingTitle}>Mode sombre</Text>
@@ -149,6 +166,51 @@ export default function SettingsScreen() {
                 }}
                 thumbColor={colors.card}
               />
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Disposition des cartes</Text>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingDescription}>
+                  Choisissez comment vos cartes sont affichées dans votre main
+                </Text>
+              </View>
+            </View>
+            <View style={styles.layoutOptions}>
+              <TouchableOpacity
+                style={styles.layoutOption}
+                onPress={() => setCardLayout("fan")}
+              >
+                <CardLayoutPreview
+                  layout="fan"
+                  isSelected={cardLayout === "fan"}
+                />
+                <Text style={styles.layoutLabel}>Éventail</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.layoutOption}
+                onPress={() => setCardLayout("linear")}
+              >
+                <CardLayoutPreview
+                  layout="linear"
+                  isSelected={cardLayout === "linear"}
+                />
+                <Text style={styles.layoutLabel}>Linéaire</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.layoutOption}
+                onPress={() => setCardLayout("compact")}
+              >
+                <CardLayoutPreview
+                  layout="compact"
+                  isSelected={cardLayout === "compact"}
+                />
+                <Text style={styles.layoutLabel}>Compact</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
