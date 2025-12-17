@@ -42,21 +42,22 @@ export function ResultModal({
   const modalOpacity = useSharedValue(0);
 
   const isWinner = game.winnerId === myUserId;
-  const myPlayer = game.players.find((p) => p.userId === myUserId);
   const totalBet = game.bet.amount * 2;
   const platformFee = totalBet * 0.02;
-  
-  // Calculate actual winnings from the game
+
+  // Calculate net winnings (what the player wins minus fees)
   let winnings = 0;
   if (isWinner) {
+    const opponentBet = game.bet.amount;
     if (game.victoryType === "triple_kora") {
-      winnings = (totalBet - platformFee) * 8;
+      winnings = opponentBet * 8 - platformFee;
     } else if (game.victoryType === "double_kora") {
-      winnings = (totalBet - platformFee) * 4;
+      winnings = opponentBet * 4 - platformFee;
     } else if (game.victoryType === "simple_kora") {
-      winnings = (totalBet - platformFee) * 2;
+      winnings = opponentBet * 2 - platformFee;
     } else {
-      winnings = totalBet - platformFee;
+      // Normal victory: win opponent's bet minus commission
+      winnings = opponentBet - platformFee;
     }
   }
 
@@ -177,7 +178,7 @@ export function ResultModal({
       borderColor: colors.primary,
     },
     resultTitle: {
-      fontSize: 36,
+      fontSize: 25,
       fontWeight: "700",
       color: colors.text,
       textAlign: "center",
@@ -257,7 +258,7 @@ export function ResultModal({
           ]}
         >
           <Text style={styles.resultTitle}>
-            {isWinner ? "🎉 Victoire !" : "😔 Défaite"}
+            {isWinner ? "🎉 Vous avez gagné !" : "💀 Vous avez perdu"}
           </Text>
 
           {isWinner && (
@@ -290,7 +291,7 @@ export function ResultModal({
                   {totalBet} {game.bet.currency}
                 </Text>
               </View>
-              {isWinner ? (
+              {isWinner ?
                 <>
                   <View style={styles.statRow}>
                     <Text style={styles.statLabel}>Commission (2%)</Text>
@@ -311,14 +312,13 @@ export function ResultModal({
                     </Text>
                   </View>
                 </>
-              ) : (
-                <View style={[styles.statRow, styles.totalRow]}>
+              : <View style={[styles.statRow, styles.totalRow]}>
                   <Text style={styles.totalLabel}>Perte</Text>
                   <Text style={[styles.totalValue, { color: colors.primary }]}>
                     -{game.bet.amount} {game.bet.currency}
                   </Text>
                 </View>
-              )}
+              }
             </View>
           )}
 
