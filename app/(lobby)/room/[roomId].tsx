@@ -37,6 +37,16 @@ export default function RoomScreen() {
   const previousGameStatus = useRef<string | undefined>(undefined);
   const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedTimerRef = useRef(false);
+  const currentGameIdRef = useRef<string | null>(null);
+
+  // Réinitialiser le timer si on change de partie
+  useEffect(() => {
+    if (game?.gameId && game.gameId !== currentGameIdRef.current) {
+      currentGameIdRef.current = game.gameId;
+      hasStartedTimerRef.current = false;
+      setCountdown(null);
+    }
+  }, [game?.gameId]);
 
   // Son quand la partie démarre (détection du changement de status)
   useEffect(() => {
@@ -54,9 +64,11 @@ export default function RoomScreen() {
   useEffect(() => {
     if (
       game?.status === "WAITING" &&
+      game?.players &&
       game.players.length >= 2 &&
       !hasStartedTimerRef.current
     ) {
+      console.log("Starting countdown for game:", game.gameId);
       hasStartedTimerRef.current = true;
       setCountdown(3);
 
@@ -73,6 +85,7 @@ export default function RoomScreen() {
       const timeout = setTimeout(async () => {
         try {
           if (game?.status === "WAITING") {
+            console.log("Starting game:", game.gameId);
             await startGame({ gameId: game.gameId });
           }
         } catch (error: any) {
@@ -93,8 +106,14 @@ export default function RoomScreen() {
         clearTimeout(timeout);
         clearInterval(interval);
       };
+    } else if (game) {
+      console.log("Countdown not starting:", {
+        status: game.status,
+        playersLength: game.players?.length,
+        hasStarted: hasStartedTimerRef.current,
+      });
     }
-  }, [game?.status, game?.players.length, game?.gameId, startGame]);
+  }, [game?.status, game?.players?.length, game?.gameId, startGame]);
 
   // Réinitialiser le timer si le statut change
   useEffect(() => {
@@ -153,6 +172,7 @@ export default function RoomScreen() {
     },
     handArea: {
       backgroundColor: colors.card,
+      paddingTop: 16,
       borderTopWidth: 2,
       borderTopColor: colors.border,
       position: "relative",
@@ -256,7 +276,8 @@ export default function RoomScreen() {
           <Button
             title="Quitter"
             onPress={() => router.back()}
-            variant="ghost"
+            variant="outline"
+            size="sm"
           />
         </View>
       </View>

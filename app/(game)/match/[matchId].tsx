@@ -102,10 +102,11 @@ export default function MatchScreen() {
     }
   }, [game?.status]);
 
-  // Démarrage automatique pour les parties en WAITING (notamment contre IA)
+  // Démarrage automatique pour les parties contre IA en WAITING
   useEffect(() => {
     if (
       game?.status === "WAITING" &&
+      game.mode === "AI" &&
       game.players.length >= 2 &&
       !hasStartedGameRef.current
     ) {
@@ -124,7 +125,7 @@ export default function MatchScreen() {
 
       startGameAsync();
     }
-  }, [game?.status, game?.players.length, game?.gameId, startGame]);
+  }, [game?.status, game?.mode, game?.players.length, game?.gameId, startGame]);
 
   const handleCardSelect = useCallback(
     (card: Card) => {

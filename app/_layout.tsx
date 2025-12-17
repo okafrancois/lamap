@@ -1,11 +1,16 @@
-import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-expo";
+import {
+  ClerkProvider,
+  useAuth,
+  useAuth as useClerkAuth,
+} from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider,
 } from "@react-navigation/native";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
@@ -75,9 +80,9 @@ export default function RootLayout() {
         publishableKey={clerkPublishableKey}
         tokenCache={tokenCache}
       >
-        <ConvexProvider client={convex}>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <RootLayoutNav />
-        </ConvexProvider>
+        </ConvexProviderWithClerk>
       </ClerkProvider>
     </SafeAreaProvider>
   );

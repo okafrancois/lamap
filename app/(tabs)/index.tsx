@@ -425,7 +425,7 @@ export default function HomeScreen() {
           )}
 
           <View style={styles.achievementsSection}>
-            <Text style={styles.sectionTitle}>Achievements</Text>
+            <Text style={styles.sectionTitle}>Trophées</Text>
             {achievements
               .filter((a) => a.unlocked)
               .map((achievement) => (
