@@ -227,8 +227,10 @@ export default function HistoryScreen() {
               <Avatar
                 name={item.opponent?.username || "Adversaire"}
                 imageUrl={item.opponent?.avatarUrl || undefined}
-                size={48}
+                size={40}
+                variant="secondary"
               />
+
               <View style={styles.opponentInfo}>
                 <Text style={styles.opponentName}>
                   {item.opponent?.username || "Adversaire"}

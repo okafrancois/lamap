@@ -1,9 +1,7 @@
 import { BattleLayoutPreview } from "@/components/settings/BattleLayoutPreview";
 import { CardLayoutPreview } from "@/components/settings/CardLayoutPreview";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/useColors";
 import { useSettings } from "@/hooks/useSettings";
-import { useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
@@ -18,7 +16,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   const colors = useColors();
-  const router = useRouter();
   const {
     themeMode,
     cardLayout,
@@ -143,15 +140,6 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Paramètres</Text>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.closeButton}
-        >
-          <IconSymbol name="xmark" size={24} color={colors.text} />
-        </TouchableOpacity>
-      </View>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           <View style={styles.section}>

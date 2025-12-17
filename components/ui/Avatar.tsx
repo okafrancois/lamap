@@ -7,9 +7,16 @@ interface AvatarProps {
   imageUrl?: string;
   size?: number;
   style?: ViewStyle;
+  variant?: "primary" | "secondary" | "default";
 }
 
-export function Avatar({ name, imageUrl, size = 40, style }: AvatarProps) {
+export function Avatar({
+  name,
+  imageUrl,
+  size = 40,
+  style,
+  variant = "default",
+}: AvatarProps) {
   const colors = useColors();
   const initials =
     name
@@ -20,7 +27,10 @@ export function Avatar({ name, imageUrl, size = 40, style }: AvatarProps) {
       .slice(0, 2) || "?";
 
   const baseStyle: ViewStyle = {
-    backgroundColor: colors.card,
+    backgroundColor:
+      variant === "default" ? colors.card
+      : variant === "primary" ? colors.primary
+      : colors.secondary,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
