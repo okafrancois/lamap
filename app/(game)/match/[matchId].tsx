@@ -1,6 +1,7 @@
 import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
 import { OpponentZone } from "@/components/game/OpponentZone";
+import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
@@ -217,6 +218,19 @@ export default function MatchScreen() {
       color: colors.text,
       marginBottom: 16,
     },
+    loadingOverlay: {
+      alignItems: "center",
+      gap: 12,
+    },
+    loadingLabel: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.mutedForeground,
+    },
+    quitButtonContainer: {
+      padding: 16,
+      paddingBottom: 24,
+    },
   });
 
   // Conditional rendering after all hooks are called
@@ -231,17 +245,81 @@ export default function MatchScreen() {
   if (!game) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <ActivityIndicator size="large" color={colors.secondary} />
-        <Text style={styles.loadingText}>Chargement de la partie...</Text>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.headerLeft} />
+          </View>
+        </View>
+
+        <OpponentZone name="?" hasHand={false} cardsRemaining={5} />
+
+        <View style={styles.playArea}>
+          <BattleZone
+            opponentCards={[]}
+            playerCards={[]}
+            battleLayout={battleLayout}
+          />
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+            <Text style={styles.loadingLabel}>Chargement de la partie...</Text>
+          </View>
+        </View>
+
+        <View style={styles.handArea}>
+          <PlaceholderCardHand cardCount={5} />
+        </View>
       </SafeAreaView>
     );
   }
 
   if (game.status === "WAITING") {
+    const opponent = game.players.find((p) => {
+      const playerId = p.userId || p.botId;
+      return playerId !== myUserId;
+    });
+
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <Text style={styles.title}>Préparation de la partie...</Text>
-        <ActivityIndicator size="large" color={colors.secondary} />
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.headerLeft}>
+              {game.bet.amount > 0 && (
+                <View style={styles.betBadge}>
+                  <Ionicons
+                    name="trophy"
+                    size={12}
+                    color={colors.secondaryForeground}
+                  />
+                  <Text style={styles.betText}>
+                    {game.bet.amount} {game.bet.currency}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        </View>
+
+        <OpponentZone
+          name={opponent?.username || "?"}
+          hasHand={false}
+          cardsRemaining={5}
+        />
+
+        <View style={styles.playArea}>
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+            <Text style={styles.loadingLabel}>Préparation de la partie...</Text>
+          </View>
+          <BattleZone
+            opponentCards={[]}
+            playerCards={[]}
+            battleLayout={battleLayout}
+          />
+        </View>
+
+        <View style={styles.handArea}>
+          <PlaceholderCardHand cardCount={5} />
+        </View>
       </SafeAreaView>
     );
   }

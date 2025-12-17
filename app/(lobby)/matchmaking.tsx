@@ -1,20 +1,18 @@
-import { Avatar } from "@/components/ui/Avatar";
+import { BattleZone } from "@/components/game/BattleZone";
+import { OpponentZone } from "@/components/game/OpponentZone";
+import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useMatchmaking } from "@/hooks/useMatchmaking";
+import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import { ActivityIndicator, Alert, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MatchmakingScreen() {
@@ -22,6 +20,7 @@ export default function MatchmakingScreen() {
   const router = useRouter();
   const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
   const { userId } = useAuth();
+  const { battleLayout } = useSettings();
   const user = useQuery(
     api.users.getCurrentUser,
     userId ? { clerkUserId: userId } : "skip"
@@ -29,7 +28,6 @@ export default function MatchmakingScreen() {
   const { status, opponent, gameId, joinQueue, leaveQueue, timeInQueue } =
     useMatchmaking();
   const { playSound } = useSound();
-  const pulseScale = useSharedValue(1);
   const previousStatus = useRef<string | undefined>(undefined);
 
   const bet = betAmount ? parseInt(betAmount, 10) : 0;
@@ -51,29 +49,12 @@ export default function MatchmakingScreen() {
     }
   }, [bet, status, joinQueue, playSound, user, currency]);
 
-  // Son quand un adversaire est trouvé
   useEffect(() => {
     if (previousStatus.current !== "matched" && status === "matched") {
       playSound("gameStart");
     }
     previousStatus.current = status;
   }, [status, playSound]);
-
-  useEffect(() => {
-    if (status === "searching") {
-      pulseScale.value = withRepeat(
-        withTiming(1.15, { duration: 800 }),
-        -1,
-        true
-      );
-    } else {
-      pulseScale.value = withTiming(1, { duration: 200 });
-    }
-  }, [status, pulseScale]);
-
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
 
   useEffect(() => {
     if (status === "matched" && gameId) {
@@ -97,95 +78,130 @@ export default function MatchmakingScreen() {
       flex: 1,
       backgroundColor: colors.background,
     },
-    content: {
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerContent: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    betBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: colors.secondary,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    betText: {
+      fontSize: 12,
+      color: colors.secondaryForeground,
+      fontWeight: "600",
+    },
+    timeText: {
+      fontSize: 12,
+      color: colors.mutedForeground,
+      fontWeight: "500",
+    },
+    playArea: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
-      padding: 24,
     },
-    searchIcon: {
-      marginBottom: 32,
+    handArea: {
+      backgroundColor: colors.card,
+      borderTopWidth: 2,
+      borderTopColor: colors.border,
+      position: "relative",
     },
-    title: {
-      fontSize: 24,
-      fontWeight: "700",
-      color: colors.text,
-      textAlign: "center",
-      marginBottom: 16,
+    cancelButtonContainer: {
+      padding: 16,
+      paddingBottom: 24,
     },
-    foundTitle: {
-      fontSize: 28,
-      fontWeight: "700",
-      color: colors.secondary,
-      textAlign: "center",
-      marginBottom: 24,
+    searchingIndicator: {
+      position: "absolute",
+      top: "50%",
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      gap: 12,
+      zIndex: 10,
+      transform: [{ translateY: -40 }],
     },
-    subtitle: {
-      fontSize: 18,
-      color: colors.mutedForeground,
-      textAlign: "center",
-      marginBottom: 8,
-    },
-    timeText: {
-      fontSize: 16,
-      color: colors.mutedForeground,
-      textAlign: "center",
-      marginBottom: 32,
-    },
-    opponentName: {
-      fontSize: 20,
+    searchingText: {
+      fontSize: 14,
       fontWeight: "600",
-      color: colors.text,
-      marginTop: 16,
-      marginBottom: 8,
-    },
-    cancelButton: {
-      marginTop: 32,
-      minWidth: 200,
+      color: colors.mutedForeground,
     },
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <View style={styles.content}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            {bet > 0 && (
+              <View style={styles.betBadge}>
+                <Ionicons
+                  name="trophy"
+                  size={12}
+                  color={colors.secondaryForeground}
+                />
+                <Text style={styles.betText}>
+                  {bet} {currency}
+                </Text>
+              </View>
+            )}
+            {status === "searching" && (
+              <Text style={styles.timeText}>
+                Temps: {formatTime(timeInQueue)}
+              </Text>
+            )}
+          </View>
+        </View>
+      </View>
+
+      <OpponentZone
+        name={
+          status === "matched" && opponent ? opponent.username
+          : status === "searching" ?
+            "Recherche d'adversaire..."
+          : "En attente..."
+        }
+        hasHand={false}
+        cardsRemaining={status === "matched" ? 8 : 0}
+      />
+
+      <View style={styles.playArea}>
         {status === "searching" && (
-          <>
-            <Animated.View style={[styles.searchIcon, pulseAnimatedStyle]}>
-              <ActivityIndicator size="large" color={colors.secondary} />
-            </Animated.View>
-            <Text style={styles.title}>Recherche d&apos;adversaire...</Text>
-            <Text style={styles.subtitle}>
-              Mise: {bet} {currency}
-            </Text>
-            <Text style={styles.timeText}>
-              Temps écoulé: {formatTime(timeInQueue)}
-            </Text>
-            <Button
-              title="Annuler"
-              onPress={handleCancel}
-              variant="secondary"
-              style={styles.cancelButton}
-            />
-          </>
-        )}
-
-        {status === "matched" && opponent && (
-          <>
-            <Text style={styles.foundTitle}>Adversaire trouvé !</Text>
-            <Avatar name={opponent.username} size={80} />
-            <Text style={styles.opponentName}>{opponent.username}</Text>
-            <Text style={styles.subtitle}>
-              Mise: {bet} {currency}
-            </Text>
-          </>
-        )}
-
-        {status === "idle" && (
-          <>
+          <View style={styles.searchingIndicator}>
             <ActivityIndicator size="large" color={colors.secondary} />
-            <Text style={styles.title}>Préparation...</Text>
-          </>
+            <Text style={styles.searchingText}>En recherche...</Text>
+          </View>
         )}
+        <BattleZone
+          opponentCards={[]}
+          playerCards={[]}
+          battleLayout={battleLayout}
+        />
+      </View>
+
+      <View style={styles.handArea}>
+        <PlaceholderCardHand cardCount={4} />
+        <View style={styles.cancelButtonContainer}>
+          <Button title="Annuler" onPress={handleCancel} variant="secondary" />
+        </View>
       </View>
     </SafeAreaView>
   );

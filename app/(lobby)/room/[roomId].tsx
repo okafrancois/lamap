@@ -1,19 +1,17 @@
-import { Avatar } from "@/components/ui/Avatar";
+import { BattleZone } from "@/components/game/BattleZone";
+import { OpponentZone } from "@/components/game/OpponentZone";
+import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
+import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RoomScreen() {
@@ -21,6 +19,7 @@ export default function RoomScreen() {
   const router = useRouter();
   const { roomId } = useLocalSearchParams<{ roomId: string }>();
   const { userId } = useAuth();
+  const { battleLayout } = useSettings();
   const user = useQuery(
     api.users.getCurrentUser,
     userId ? { clerkUserId: userId } : "skip"
@@ -38,11 +37,6 @@ export default function RoomScreen() {
   const previousGameStatus = useRef<string | undefined>(undefined);
   const startTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedTimerRef = useRef(false);
-
-  const player1Opacity = useSharedValue(0);
-  const player1Scale = useSharedValue(0.8);
-  const player2Opacity = useSharedValue(0);
-  const player2Scale = useSharedValue(0.8);
 
   // Son quand la partie démarre (détection du changement de status)
   useEffect(() => {
@@ -114,169 +108,157 @@ export default function RoomScreen() {
     }
   }, [game?.status]);
 
-  useEffect(() => {
-    player1Opacity.value = withDelay(100, withTiming(1, { duration: 300 }));
-    player1Scale.value = withDelay(100, withTiming(1, { duration: 300 }));
-  }, [player1Opacity, player1Scale]);
-
-  const me = game?.players.find((p) => p.userId === myUserId);
   const opponent = game?.players.find((p) => p.userId !== myUserId);
-
-  useEffect(() => {
-    if (opponent) {
-      player2Opacity.value = withDelay(300, withTiming(1, { duration: 300 }));
-      player2Scale.value = withDelay(300, withTiming(1, { duration: 300 }));
-    }
-  }, [opponent, player2Opacity, player2Scale]);
-
-  const player1AnimatedStyle = useAnimatedStyle(() => ({
-    opacity: player1Opacity.value,
-    transform: [{ scale: player1Scale.value }],
-  }));
-
-  const player2AnimatedStyle = useAnimatedStyle(() => ({
-    opacity: player2Opacity.value,
-    transform: [{ scale: player2Scale.value }],
-  }));
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    content: {
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 10,
+      backgroundColor: colors.card,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerContent: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    betBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: colors.secondary,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    betText: {
+      fontSize: 12,
+      color: colors.secondaryForeground,
+      fontWeight: "600",
+    },
+    playArea: {
       flex: 1,
       justifyContent: "center",
-      padding: 24,
+      alignItems: "center",
+    },
+    handArea: {
+      backgroundColor: colors.card,
+      borderTopWidth: 2,
+      borderTopColor: colors.border,
+      position: "relative",
+    },
+    quitButtonContainer: {
+      padding: 16,
+      paddingBottom: 24,
+    },
+    countdownOverlay: {
+      position: "absolute",
+      top: "50%",
+      left: 0,
+      right: 0,
+      alignItems: "center",
+      gap: 12,
+      zIndex: 10,
+      transform: [{ translateY: -60 }],
+    },
+    countdownText: {
+      fontSize: 48,
+      fontWeight: "700",
+      color: colors.secondary,
+    },
+    countdownLabel: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: colors.mutedForeground,
     },
     loadingText: {
       color: colors.text,
       marginTop: 16,
       fontSize: 16,
     },
-    title: {
-      fontSize: 28,
-      fontWeight: "700",
-      color: colors.text,
-      textAlign: "center",
-      marginBottom: 8,
-    },
-    subtitle: {
-      fontSize: 18,
-      color: colors.secondary,
-      textAlign: "center",
-      marginBottom: 48,
-      fontWeight: "600",
-    },
-    players: {
-      alignItems: "center",
-      marginBottom: 48,
-    },
-    playerCard: {
-      alignItems: "center",
-      backgroundColor: colors.card,
-      borderRadius: 16,
-      padding: 24,
-      minWidth: 200,
-      marginVertical: 16,
-    },
-    playerName: {
-      fontSize: 18,
-      fontWeight: "600",
-      color: colors.text,
-      marginTop: 12,
-    },
-    vs: {
-      fontSize: 24,
-      fontWeight: "700",
-      color: colors.secondary,
-      marginVertical: 16,
-    },
-    waitingText: {
-      fontSize: 16,
-      color: colors.mutedForeground,
-      marginTop: 12,
-      textAlign: "center",
-    },
-    countdownText: {
-      fontSize: 24,
-      fontWeight: "700",
-      color: colors.secondary,
-      textAlign: "center",
-      marginTop: 12,
-    },
-    readySection: {
-      alignItems: "center",
-      marginBottom: 24,
-    },
-    leaveButton: {
-      marginTop: 16,
-    },
   });
 
   if (!game) {
     return (
-      <SafeAreaView style={styles.container} edges={[]}>
-        <ActivityIndicator size="large" color={colors.secondary} />
-        <Text style={styles.loadingText}>Chargement de la salle...</Text>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.playArea}>
+          <ActivityIndicator size="large" color={colors.secondary} />
+          <Text style={styles.loadingText}>Chargement de la salle...</Text>
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Salle d&apos;attente</Text>
-        <Text style={styles.subtitle}>
-          Mise: {game.bet.amount} {game.bet.currency}
-        </Text>
-
-        <View style={styles.players}>
-          <Animated.View style={[styles.playerCard, player1AnimatedStyle]}>
-            <Avatar name={me?.username || "Vous"} size={60} />
-            <Text style={styles.playerName}>{me?.username || "Vous"}</Text>
-          </Animated.View>
-
-          <Text style={styles.vs}>VS</Text>
-
-          <Animated.View style={[styles.playerCard, player2AnimatedStyle]}>
-            {opponent ?
-              <>
-                <Avatar name={opponent.username} size={60} />
-                <Text style={styles.playerName}>{opponent.username}</Text>
-              </>
-            : <>
-                <ActivityIndicator size="small" color={colors.secondary} />
-                <Text style={styles.waitingText}>En attente...</Text>
-              </>
-            }
-          </Animated.View>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            {game.bet.amount > 0 && (
+              <View style={styles.betBadge}>
+                <Ionicons
+                  name="trophy"
+                  size={12}
+                  color={colors.secondaryForeground}
+                />
+                <Text style={styles.betText}>
+                  {game.bet.amount} {game.bet.currency}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
+      </View>
 
+      <OpponentZone
+        name={opponent ? opponent.username : "?"}
+        hasHand={false}
+        cardsRemaining={5}
+      />
+
+      <View style={styles.playArea}>
         {countdown !== null && countdown > 0 && (
-          <View style={styles.readySection}>
-            <Text style={styles.countdownText}>
-              Démarrage dans {countdown}...
+          <View style={styles.countdownOverlay}>
+            <Text style={styles.countdownText}>{countdown}</Text>
+            <Text style={styles.countdownLabel}>Démarrage...</Text>
+          </View>
+        )}
+
+        {!opponent && (
+          <View style={styles.countdownOverlay}>
+            <ActivityIndicator size="large" color={colors.secondary} />
+            <Text style={styles.countdownLabel}>
+              En attente d&apos;un adversaire
             </Text>
           </View>
         )}
 
-        {game.players.length >= 2 &&
-          countdown === null &&
-          game.status === "WAITING" && (
-            <View style={styles.readySection}>
-              <Text style={styles.waitingText}>
-                Préparation de la partie...
-              </Text>
-            </View>
-          )}
-
-        <Button
-          title="Quitter"
-          onPress={() => router.back()}
-          variant="ghost"
-          style={styles.leaveButton}
+        <BattleZone
+          opponentCards={[]}
+          playerCards={[]}
+          battleLayout={battleLayout}
         />
+      </View>
+
+      <View style={styles.handArea}>
+        <PlaceholderCardHand cardCount={5} />
+        <View style={styles.quitButtonContainer}>
+          <Button
+            title="Quitter"
+            onPress={() => router.back()}
+            variant="ghost"
+          />
+        </View>
       </View>
     </SafeAreaView>
   );

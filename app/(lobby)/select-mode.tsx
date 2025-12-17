@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/Button";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { api } from "@/convex/_generated/api";
+import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
+import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import React from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
@@ -9,8 +12,48 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SelectModeScreen() {
   const colors = useColors();
   const router = useRouter();
+  const { userId } = useAuth();
+
+  const activeGame = useQuery(
+    api.games.getActiveMatch,
+    userId ? { clerkId: userId } : "skip"
+  );
 
   const styles = StyleSheet.create({
+    activeMatchCard: {
+      backgroundColor: colors.accent,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 20,
+      borderWidth: 2,
+      borderColor: colors.secondary,
+    },
+    activeMatchContent: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 16,
+    },
+    activeMatchLabel: {
+      fontSize: 14,
+      color: colors.secondary,
+      fontWeight: "700",
+      marginBottom: 4,
+    },
+    activeMatchInfo: {
+      fontSize: 16,
+      color: colors.text,
+      fontWeight: "600",
+    },
+    rejoinButton: {
+      minHeight: 40,
+      paddingHorizontal: 16,
+      backgroundColor: colors.secondary,
+    },
+    rejoinButtonText: {
+      color: colors.secondaryForeground,
+      fontSize: 14,
+    },
     container: {
       flex: 1,
       backgroundColor: colors.background,
@@ -106,6 +149,30 @@ export default function SelectModeScreen() {
     <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
+          {activeGame && (
+            <View style={styles.activeMatchCard}>
+              <View style={styles.activeMatchContent}>
+                <View>
+                  <Text style={styles.activeMatchLabel}>Partie en cours</Text>
+                  <Text style={styles.activeMatchInfo}>
+                    {activeGame.mode === "AI" ?
+                      "Contre l'IA"
+                    : "Contre un joueur"}{" "}
+                    • {activeGame.bet.amount} {activeGame.bet.currency}
+                  </Text>
+                </View>
+                <Button
+                  title="Rejoindre"
+                  onPress={() =>
+                    router.push(`/(game)/match/${activeGame.gameId}`)
+                  }
+                  style={styles.rejoinButton}
+                  textStyle={styles.rejoinButtonText}
+                />
+              </View>
+            </View>
+          )}
+
           <View style={styles.header}>
             <Text style={styles.title}>Choisir un mode</Text>
             <Text style={styles.subtitle}>Comment voulez-vous jouer ?</Text>

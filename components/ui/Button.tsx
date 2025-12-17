@@ -15,7 +15,13 @@ import {
 interface ButtonProps {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "oauth";
+  variant?:
+    | "primary"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "destructive"
+    | "oauth";
   size?: "sm" | "default" | "lg";
   disabled?: boolean;
   loading?: boolean;
@@ -43,6 +49,8 @@ export function Button({
   const [isPressed, setIsPressed] = useState(false);
 
   const getButtonStyles = (): ViewStyle[] => {
+    const shouldHaveShadow = variant !== "outline" && variant !== "ghost";
+
     const baseStyle: ViewStyle = {
       paddingVertical:
         size === "sm" ? 8
@@ -52,14 +60,14 @@ export function Button({
         size === "sm" ? 16
         : size === "lg" ? 32
         : 24,
-      borderRadius: Spacing.radius.full, // Full arrondi (pill shape)
+      borderRadius: Spacing.radius.full,
       alignItems: "center",
       justifyContent: "center",
       minHeight:
         size === "sm" ? 32
         : size === "lg" ? 40
         : 36,
-      ...getButtonShadow(),
+      ...(shouldHaveShadow ? getButtonShadow() : {}),
     };
 
     const variantStyles: Record<string, ViewStyle> = {
@@ -89,7 +97,7 @@ export function Button({
       baseStyle,
       variantStyles[variant] || variantStyles.primary,
       ...(disabled ? [{ opacity: 0.5 }] : []),
-      ...(isPressed ? [getButtonShadowHover()] : []),
+      ...(isPressed && shouldHaveShadow ? [getButtonShadowHover()] : []),
     ];
   };
 

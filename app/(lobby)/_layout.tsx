@@ -13,7 +13,12 @@ export default function LobbyLayout() {
       <Stack.Screen name="select-bet" />
       <Stack.Screen name="select-difficulty" />
       <Stack.Screen name="matchmaking" />
-      <Stack.Screen name="room/[roomId]" />
+      <Stack.Screen
+        name="room/[roomId]"
+        options={{
+          headerShown: false,
+        }}
+      />
       <Stack.Screen name="create-friendly" />
       <Stack.Screen name="join-friendly" />
     </Stack>
