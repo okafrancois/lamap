@@ -1,12 +1,12 @@
 import { CardHand, type Card } from "@/components/game/CardHand";
+import { PlayerIndicator } from "@/components/game/PlayerIndicator";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TurnHistory } from "@/components/game/TurnHistory";
-import { Badge } from "@/components/ui/Badge";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { api } from "@/convex/_generated/api";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useSound } from "@/hooks/useSound";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
@@ -153,88 +153,63 @@ export default function MatchScreen() {
       fontSize: 16,
     },
     header: {
-      padding: 16,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
       backgroundColor: colors.card,
-      borderBottomWidth: 2,
-      borderBottomColor: colors.secondary,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      gap: 12,
+    },
+    headerTop: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      alignItems: "center",
+      gap: 8,
+    },
+    betBadge: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      backgroundColor: colors.secondary,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 12,
+    },
+    betText: {
+      fontSize: 13,
+      color: colors.secondaryForeground,
+      fontWeight: "600",
+    },
+    chatButton: {
+      padding: 6,
+    },
+    playersRow: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
     },
-    headerRight: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 12,
-    },
-    turnIndicator: {
-      alignItems: "center",
+    turnBadge: {
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      backgroundColor: colors.muted,
+      borderRadius: 20,
+      borderWidth: 2,
+      borderColor: colors.border,
     },
     turnText: {
-      fontSize: 20,
+      fontSize: 14,
       fontWeight: "700",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    betInfo: {
-      alignItems: "center",
-    },
-    chatButton: {
-      padding: 8,
-    },
-    betText: {
-      fontSize: 16,
-      color: colors.secondary,
-      fontWeight: "600",
+      color: colors.foreground,
     },
     playArea: {
-      flex: 1,
-      padding: 16,
-    },
-    centerArea: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
     },
-    leadSuitContainer: {
-      marginBottom: 8,
-    },
-    turnHistory: {
-      backgroundColor: colors.card,
-      borderRadius: 12,
-      padding: 12,
-      minWidth: 200,
-    },
-    historyTitle: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.text,
-      marginBottom: 8,
-    },
-    historyItem: {
-      fontSize: 12,
-      color: colors.mutedForeground,
-      marginBottom: 4,
-    },
     handArea: {
-      padding: 16,
       backgroundColor: colors.card,
-      borderTopWidth: 2,
-      borderTopColor: colors.secondary,
-    },
-    yourTurnText: {
-      fontSize: 18,
-      fontWeight: "700",
-      color: colors.secondary,
-      marginBottom: 8,
-    },
-    waitingText: {
-      fontSize: 16,
-      color: colors.mutedForeground,
-      marginBottom: 8,
-    },
-    playButtonContainer: {
-      marginTop: 16,
-      alignItems: "center",
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
     },
     title: {
       fontSize: 24,
@@ -271,24 +246,47 @@ export default function MatchScreen() {
     );
   }
 
+  const currentTurnPlayer = game.players.find((p) => {
+    const playerId = p.userId || p.botId;
+    return playerId === game.currentTurnPlayerId;
+  });
+
   const hasHandPlayer = game.players.find((p) => {
     const playerId = p.userId || p.botId;
     return playerId === game.hasHandPlayerId;
   });
 
+  const opponent = game.players.find((p) => {
+    const playerId = p.userId || p.botId;
+    return playerId !== myUserId;
+  });
+
+  const me = game.players.find((p) => {
+    const playerId = p.userId || p.botId;
+    return playerId === myUserId;
+  });
+
+  const isOpponentTurn =
+    currentTurnPlayer &&
+    (currentTurnPlayer.userId || currentTurnPlayer.botId) !== myUserId;
+  const opponentHasHand =
+    hasHandPlayer && (hasHandPlayer.userId || hasHandPlayer.botId) !== myUserId;
+  const iHaveHand =
+    hasHandPlayer && (hasHandPlayer.userId || hasHandPlayer.botId) === myUserId;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <View style={styles.turnIndicator}>
-          <Text style={styles.turnText}>
-            Tour {game.currentRound} / {game.maxRounds}
-          </Text>
-        </View>
-        <View style={styles.headerRight}>
+        <View style={styles.headerTop}>
           {game.bet.amount > 0 && (
-            <View style={styles.betInfo}>
+            <View style={styles.betBadge}>
+              <Ionicons
+                name="trophy"
+                size={14}
+                color={colors.secondaryForeground}
+              />
               <Text style={styles.betText}>
-                Mise: {game.bet.amount} {game.bet.currency}
+                {game.bet.amount} {game.bet.currency}
               </Text>
             </View>
           )}
@@ -297,49 +295,48 @@ export default function MatchScreen() {
               onPress={() => router.push(`/(game)/chat/${matchId}`)}
               style={styles.chatButton}
             >
-              <IconSymbol
-                name="message.fill"
-                size={24}
-                color={colors.secondary}
-              />
+              <Ionicons name="chatbubble" size={20} color={colors.secondary} />
             </TouchableOpacity>
+          )}
+        </View>
+
+        <View style={styles.playersRow}>
+          {opponent && (
+            <PlayerIndicator
+              name={opponent.username}
+              hasHand={opponentHasHand}
+              isCurrentTurn={isOpponentTurn}
+              position="top"
+            />
+          )}
+          <View style={styles.turnBadge}>
+            <Text style={styles.turnText}>
+              Tour {game.currentRound} / {game.maxRounds}
+            </Text>
+          </View>
+          {me && (
+            <PlayerIndicator
+              name={me.username}
+              hasHand={iHaveHand}
+              isCurrentTurn={isMyTurn}
+              isMe
+              position="bottom"
+            />
           )}
         </View>
       </View>
 
       <View style={styles.playArea}>
-        <View style={styles.centerArea}>
-          {hasHandPlayer && (
-            <View style={styles.leadSuitContainer}>
-              <Badge
-                label={`${hasHandPlayer.username} a la main`}
-                variant="default"
-              />
-            </View>
-          )}
-          <TurnHistory
-            results={turnResults}
-            myPlayerId={myUserId}
-            game={game}
-            currentPlays={currentPlays}
-            currentRound={game.currentRound}
-          />
-        </View>
+        <TurnHistory
+          results={turnResults}
+          myPlayerId={myUserId}
+          game={game}
+          currentPlays={currentPlays}
+          currentRound={game.currentRound}
+        />
       </View>
 
       <View style={styles.handArea}>
-        {isMyTurn && (
-          <View style={styles.turnIndicator}>
-            <Text style={styles.yourTurnText}>C&apos;est votre tour !</Text>
-          </View>
-        )}
-        {!isMyTurn && (
-          <View style={styles.turnIndicator}>
-            <Text style={styles.waitingText}>
-              En attente de l&apos;adversaire...
-            </Text>
-          </View>
-        )}
         <CardHand
           cards={myHand}
           isMyTurn={isMyTurn}
