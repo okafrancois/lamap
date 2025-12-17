@@ -9,6 +9,7 @@ interface PlayerIndicatorProps {
   isCurrentTurn?: boolean;
   isMe?: boolean;
   position?: "top" | "bottom";
+  leadSuit?: "hearts" | "diamonds" | "clubs" | "spades";
 }
 
 export function PlayerIndicator({
@@ -16,15 +17,29 @@ export function PlayerIndicator({
   hasHand = false,
   isCurrentTurn = false,
   isMe = false,
-  position = "top",
+  leadSuit,
 }: PlayerIndicatorProps) {
   const colors = useColors();
+
+  const suitSymbols = {
+    hearts: "♥",
+    diamonds: "♦",
+    clubs: "♣",
+    spades: "♠",
+  };
+
+  const suitColors = {
+    hearts: "#E53E3E",
+    diamonds: "#E53E3E",
+    clubs: "#2D3748",
+    spades: "#2D3748",
+  };
 
   const styles = StyleSheet.create({
     container: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: 6,
       paddingHorizontal: 12,
       paddingVertical: 8,
       backgroundColor: isCurrentTurn ? colors.secondary : colors.card,
@@ -37,9 +52,9 @@ export function PlayerIndicator({
       fontWeight: "600",
       color: isCurrentTurn ? colors.secondaryForeground : colors.foreground,
     },
-    iconContainer: {
-      flexDirection: "row",
-      gap: 4,
+    suitText: {
+      fontSize: 16,
+      fontWeight: "700",
     },
   });
 
@@ -48,7 +63,7 @@ export function PlayerIndicator({
       {hasHand && (
         <Ionicons
           name="crown"
-          size={16}
+          size={14}
           color={isCurrentTurn ? colors.secondaryForeground : colors.secondary}
         />
       )}
@@ -56,11 +71,25 @@ export function PlayerIndicator({
       {isCurrentTurn && (
         <Ionicons
           name="play-circle"
-          size={16}
+          size={14}
           color={colors.secondaryForeground}
         />
+      )}
+      {hasHand && leadSuit && (
+        <Text
+          style={[
+            styles.suitText,
+            {
+              color:
+                isCurrentTurn ?
+                  colors.secondaryForeground
+                : suitColors[leadSuit],
+            },
+          ]}
+        >
+          {suitSymbols[leadSuit]}
+        </Text>
       )}
     </View>
   );
 }
-

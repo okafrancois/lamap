@@ -1,3 +1,4 @@
+import { useColors } from "@/hooks/useColors";
 import React from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
@@ -17,6 +18,7 @@ interface CardStackProps {
   cards: Card[];
   size?: "small" | "medium" | "large" | "xl" | "xxl";
   layout?: "compact" | "fan" | "linear" | "verycompact";
+  highlightLastN?: number;
 }
 
 function AnimatedCard({
@@ -24,24 +26,45 @@ function AnimatedCard({
   index,
   cardX,
   size = "large",
+  isOldCard = false,
 }: {
   card: Card;
   index: number;
   cardX: number;
   size?: "small" | "medium" | "large" | "xl" | "xxl";
+  isOldCard?: boolean;
 }) {
+  const colors = useColors();
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.8);
 
   React.useEffect(() => {
-    opacity.value = withDelay(index * 100, withTiming(1, { duration: 200 }));
+    const targetOpacity = isOldCard ? 0.9 : 1;
+    opacity.value = withDelay(
+      index * 100,
+      withTiming(targetOpacity, { duration: 200 })
+    );
     scale.value = withDelay(index * 100, withTiming(1, { duration: 200 }));
-  }, [index, opacity, scale]);
+  }, [index, isOldCard, opacity, scale]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ scale: scale.value }],
   }));
+
+  const desaturateOverlayStyle = StyleSheet.create({
+    overlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.background,
+      opacity: 0.6,
+      pointerEvents: "none",
+      borderRadius: 8,
+    },
+  });
 
   return (
     <Animated.View
@@ -59,6 +82,7 @@ function AnimatedCard({
         state="played"
         size={size}
       />
+      {isOldCard && <View style={desaturateOverlayStyle.overlay} />}
     </Animated.View>
   );
 }
@@ -67,6 +91,7 @@ export function CardStack({
   cards,
   size = "large",
   layout = "compact",
+  highlightLastN = 1,
 }: CardStackProps) {
   if (cards.length === 0) return null;
 
@@ -90,6 +115,7 @@ export function CardStack({
     <View style={[styles.container, { height: cardWidth * 1.4 + 20 }]}>
       {cards.map((card, index) => {
         const cardX = startX + index * spacing;
+        const isOldCard = index < cards.length - highlightLastN;
         return (
           <AnimatedCard
             key={index}
@@ -97,6 +123,7 @@ export function CardStack({
             index={index}
             cardX={cardX}
             size={size}
+            isOldCard={isOldCard}
           />
         );
       })}

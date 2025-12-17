@@ -158,13 +158,22 @@ export default function MatchScreen() {
       backgroundColor: colors.card,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      gap: 12,
     },
     headerTop: {
       flexDirection: "row",
-      justifyContent: "flex-end",
+      justifyContent: "space-between",
       alignItems: "center",
-      gap: 8,
+      marginBottom: 12,
+    },
+    headerLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 12,
+    },
+    turnText: {
+      fontSize: 16,
+      fontWeight: "700",
+      color: colors.foreground,
     },
     betBadge: {
       flexDirection: "row",
@@ -172,13 +181,18 @@ export default function MatchScreen() {
       gap: 4,
       backgroundColor: colors.secondary,
       paddingHorizontal: 10,
-      paddingVertical: 6,
+      paddingVertical: 4,
       borderRadius: 12,
     },
     betText: {
       fontSize: 13,
       color: colors.secondaryForeground,
       fontWeight: "600",
+    },
+    headerRight: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
     },
     chatButton: {
       padding: 6,
@@ -187,19 +201,6 @@ export default function MatchScreen() {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-    },
-    turnBadge: {
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      backgroundColor: colors.muted,
-      borderRadius: 20,
-      borderWidth: 2,
-      borderColor: colors.border,
-    },
-    turnText: {
-      fontSize: 14,
-      fontWeight: "700",
-      color: colors.foreground,
     },
     playArea: {
       flex: 1,
@@ -278,26 +279,37 @@ export default function MatchScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          {game.bet.amount > 0 && (
-            <View style={styles.betBadge}>
-              <Ionicons
-                name="trophy"
-                size={14}
-                color={colors.secondaryForeground}
-              />
-              <Text style={styles.betText}>
-                {game.bet.amount} {game.bet.currency}
-              </Text>
-            </View>
-          )}
-          {game.mode === "ONLINE" && (
-            <TouchableOpacity
-              onPress={() => router.push(`/(game)/chat/${matchId}`)}
-              style={styles.chatButton}
-            >
-              <Ionicons name="chatbubble" size={20} color={colors.secondary} />
-            </TouchableOpacity>
-          )}
+          <View style={styles.headerLeft}>
+            <Text style={styles.turnText}>
+              Tour {game.currentRound} / {game.maxRounds}
+            </Text>
+            {game.bet.amount > 0 && (
+              <View style={styles.betBadge}>
+                <Ionicons
+                  name="trophy"
+                  size={14}
+                  color={colors.secondaryForeground}
+                />
+                <Text style={styles.betText}>
+                  {game.bet.amount} {game.bet.currency}
+                </Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.headerRight}>
+            {game.mode === "ONLINE" && (
+              <TouchableOpacity
+                onPress={() => router.push(`/(game)/chat/${matchId}`)}
+                style={styles.chatButton}
+              >
+                <Ionicons
+                  name="chatbubble"
+                  size={20}
+                  color={colors.secondary}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         <View style={styles.playersRow}>
@@ -307,13 +319,14 @@ export default function MatchScreen() {
               hasHand={opponentHasHand}
               isCurrentTurn={isOpponentTurn}
               position="top"
+              leadSuit={
+                opponentHasHand && currentPlays && currentPlays.length > 0 ?
+                  currentPlays.find((pc) => pc.playerId !== myUserId)?.card
+                    ?.suit
+                : undefined
+              }
             />
           )}
-          <View style={styles.turnBadge}>
-            <Text style={styles.turnText}>
-              Tour {game.currentRound} / {game.maxRounds}
-            </Text>
-          </View>
           {me && (
             <PlayerIndicator
               name={me.username}
@@ -321,6 +334,12 @@ export default function MatchScreen() {
               isCurrentTurn={isMyTurn}
               isMe
               position="bottom"
+              leadSuit={
+                iHaveHand && currentPlays && currentPlays.length > 0 ?
+                  currentPlays.find((pc) => pc.playerId === myUserId)?.card
+                    ?.suit
+                : undefined
+              }
             />
           )}
         </View>
