@@ -1307,7 +1307,7 @@ export const autoStartGame = internalMutation({
 });
 
 export const getUserGameHistory = query({
-  args: { 
+  args: {
     clerkUserId: v.string(),
     limit: v.optional(v.number()),
   },

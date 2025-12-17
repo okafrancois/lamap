@@ -1,5 +1,5 @@
-import { Stack } from 'expo-router';
 import { TopBar } from "@/components/ui/TopBar";
+import { Stack } from "expo-router";
 
 export default function MessagesLayout() {
   return (
@@ -13,4 +13,3 @@ export default function MessagesLayout() {
     </Stack>
   );
 }
-
