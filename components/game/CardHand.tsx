@@ -1,6 +1,7 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -27,6 +28,7 @@ interface CardHandProps {
 interface AnimatedCardProps {
   card: Card;
   index: number;
+  totalCards: number;
   state: "playable" | "disabled" | "selected";
   onPress: () => void;
   isSelected: boolean;
@@ -35,29 +37,66 @@ interface AnimatedCardProps {
 const AnimatedCard = React.memo(function AnimatedCard({
   card,
   index,
+  totalCards,
   state,
   onPress,
   isSelected,
 }: AnimatedCardProps) {
   const translateY = useSharedValue(100);
   const opacity = useSharedValue(0);
+  const selectedOffset = useSharedValue(0);
+  const offset = totalCards > 4 ? 20 : 40;
+
+  const screenWidth = Dimensions.get("window").width;
+  const cardWidth = 100;
+
+  // Spacing dynamique : moins de cartes = plus d'espace
+  const baseSpacing = Math.max(0.5, 0.85 - totalCards * 0.05);
+  const spacing = cardWidth * baseSpacing * 1.2;
+
+  const totalWidth = (totalCards - 1) * spacing + cardWidth;
+  const startX = (screenWidth - totalWidth) / 2 - offset;
+  const cardX = startX + index * spacing;
+
+  // Rotation progressive depuis le centre (carte du milieu = 0°)
+  const centerIndex = (totalCards - 1) / 2;
+  const rotationPerCard = (totalCards / 2) * 2; // 6° par carte depuis le centre
+  const rotation = (index - centerIndex) * rotationPerCard;
 
   React.useEffect(() => {
-    translateY.value = withDelay(index * 30, withTiming(0, { duration: 200 }));
-    opacity.value = withDelay(index * 30, withTiming(1, { duration: 200 }));
+    translateY.value = withDelay(
+      index * 50,
+      withTiming(0, { duration: 300, easing: Easing.out(Easing.ease) })
+    );
+    opacity.value = withDelay(
+      index * 50,
+      withTiming(1, { duration: 300, easing: Easing.out(Easing.ease) })
+    );
   }, [index, opacity, translateY]);
 
+  React.useEffect(() => {
+    selectedOffset.value = withTiming(isSelected ? -30 : 0, {
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [isSelected, selectedOffset]);
+
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
     opacity: opacity.value,
+    transform: [
+      { translateY: translateY.value + selectedOffset.value },
+      { rotate: `${rotation}deg` },
+    ],
   }));
 
   return (
     <Animated.View
       style={[
         styles.cardWrapper,
+        {
+          left: cardX,
+        },
         animatedStyle,
-        isSelected && styles.selectedWrapper,
       ]}
     >
       <PlayingCard
@@ -65,7 +104,7 @@ const AnimatedCard = React.memo(function AnimatedCard({
         rank={card.rank}
         state={state}
         onPress={onPress}
-        size="medium"
+        size="xxl"
       />
     </Animated.View>
   );
@@ -136,6 +175,7 @@ export function CardHand({
           key={card.id}
           card={card}
           index={index}
+          totalCards={cards.length}
           state={getCardState(card)}
           onPress={() => handleCardPress(card)}
           isSelected={!!(selectedCard && selectedCard.id === card.id)}
@@ -147,17 +187,12 @@ export function CardHand({
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "flex-end",
-    gap: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
+    position: "relative",
+    width: "100%",
+    height: 160,
   },
   cardWrapper: {
-    marginHorizontal: -8,
-  },
-  selectedWrapper: {
-    marginBottom: 16,
+    position: "absolute",
+    bottom: -30,
   },
 });
