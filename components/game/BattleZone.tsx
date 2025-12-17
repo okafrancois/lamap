@@ -3,7 +3,7 @@ import { useColors } from "@/hooks/useColors";
 import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { PlayingCard } from "./PlayingCard";
+import { CardStack } from "./CardStack";
 
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";
 type Rank = "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
@@ -14,9 +14,10 @@ interface Card {
 }
 
 interface BattleZoneProps {
-  opponentCard?: Card | null;
-  playerCard?: Card | null;
+  opponentCards: Card[];
+  playerCards: Card[];
   leadSuit?: Suit;
+  battleLayout?: "vertical" | "horizontal";
 }
 
 const SUIT_IMAGES: Record<Suit, any> = {
@@ -27,9 +28,10 @@ const SUIT_IMAGES: Record<Suit, any> = {
 };
 
 export function BattleZone({
-  opponentCard,
-  playerCard,
+  opponentCards,
+  playerCards,
   leadSuit,
+  battleLayout = "vertical",
 }: BattleZoneProps) {
   const colors = useColors();
   const isDark = colors.background === Colors.dark.background;
@@ -66,12 +68,20 @@ export function BattleZone({
     battleRow: {
       flexDirection: "row",
       alignItems: "center",
+      justifyContent: "center",
       gap: 16,
       marginTop: 8,
     },
-    cardSlot: {
+    battleColumn: {
+      flexDirection: "column",
       alignItems: "center",
-      gap: 8,
+      justifyContent: "center",
+      gap: 12,
+      marginTop: 8,
+    },
+    playerSection: {
+      alignItems: "center",
+      gap: 6,
     },
     slotLabel: {
       fontSize: 10,
@@ -79,23 +89,6 @@ export function BattleZone({
       textTransform: "uppercase",
       color: isDark ? Colors.gameUI.bleuSurface : colors.mutedForeground,
       fontWeight: "500",
-    },
-    emptySlot: {
-      width: 90,
-      height: 126,
-      borderRadius: 8,
-      backgroundColor:
-        isDark ? `rgba(42, 59, 77, 0.4)` : `rgba(70, 93, 116, 0.15)`,
-      borderWidth: 2,
-      borderStyle: "dashed",
-      borderColor:
-        isDark ? `rgba(166, 130, 88, 0.35)` : `rgba(166, 130, 88, 0.3)`,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-    emptyHint: {
-      fontSize: 28,
-      color: isDark ? `rgba(166, 130, 88, 0.35)` : `rgba(166, 130, 88, 0.3)`,
     },
     vsDivider: {
       width: 36,
@@ -133,41 +126,62 @@ export function BattleZone({
         </View>
       )}
 
-      <View style={styles.battleRow}>
-        <View style={styles.cardSlot}>
-          <Text style={styles.slotLabel}>Adversaire</Text>
-          {opponentCard ?
-            <PlayingCard
-              suit={opponentCard.suit}
-              rank={opponentCard.rank}
-              state="played"
+      {battleLayout === "vertical" ?
+        <View style={styles.battleRow}>
+          <View style={styles.playerSection}>
+            <Text style={styles.slotLabel}>Adversaire</Text>
+            <CardStack
+              cards={opponentCards}
+              orientation="vertical"
+              layout="compact"
               size="large"
+              showEmptySlot={opponentCards.length === 0}
             />
-          : <View style={styles.emptySlot}>
-              <Text style={styles.emptyHint}>?</Text>
-            </View>
-          }
-        </View>
+          </View>
 
-        <View style={styles.vsDivider}>
-          <Text style={styles.vsText}>VS</Text>
-        </View>
+          <View style={styles.vsDivider}>
+            <Text style={styles.vsText}>VS</Text>
+          </View>
 
-        <View style={styles.cardSlot}>
-          <Text style={styles.slotLabel}>Vous</Text>
-          {playerCard ?
-            <PlayingCard
-              suit={playerCard.suit}
-              rank={playerCard.rank}
-              state="played"
+          <View style={styles.playerSection}>
+            <Text style={styles.slotLabel}>Vous</Text>
+            <CardStack
+              cards={playerCards}
+              orientation="vertical"
+              layout="compact"
               size="large"
+              showEmptySlot={playerCards.length === 0}
             />
-          : <View style={styles.emptySlot}>
-              <Text style={styles.emptyHint}>?</Text>
-            </View>
-          }
+          </View>
         </View>
-      </View>
+      : <View style={styles.battleColumn}>
+          <View style={styles.playerSection}>
+            <Text style={styles.slotLabel}>Adversaire</Text>
+            <CardStack
+              cards={opponentCards}
+              orientation="horizontal"
+              layout="verycompact"
+              size="large"
+              showEmptySlot={opponentCards.length === 0}
+            />
+          </View>
+
+          <View style={styles.vsDivider}>
+            <Text style={styles.vsText}>VS</Text>
+          </View>
+
+          <View style={styles.playerSection}>
+            <Text style={styles.slotLabel}>Vous</Text>
+            <CardStack
+              cards={playerCards}
+              orientation="horizontal"
+              layout="verycompact"
+              size="large"
+              showEmptySlot={playerCards.length === 0}
+            />
+          </View>
+        </View>
+      }
     </View>
   );
 }

@@ -102,10 +102,7 @@ export function OpponentZone({
     },
   });
 
-  const cards = Array.from(
-    { length: Math.min(cardsRemaining, 3) },
-    (_, i) => i
-  );
+  const cards = Array.from({ length: cardsRemaining }, (_, i) => i);
 
   return (
     <View style={styles.container}>

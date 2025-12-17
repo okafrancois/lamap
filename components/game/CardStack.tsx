@@ -1,6 +1,7 @@
+import { Colors } from "@/constants/theme";
 import { useColors } from "@/hooks/useColors";
 import React from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -20,6 +21,7 @@ interface CardStackProps {
   layout?: "compact" | "fan" | "linear" | "verycompact";
   orientation?: "horizontal" | "vertical";
   highlightLastN?: number;
+  showEmptySlot?: boolean;
 }
 
 function AnimatedCard({
@@ -75,7 +77,7 @@ function AnimatedCard({
         styles.card,
         animatedStyle,
         {
-          left: cardX,
+          ...(cardX !== 0 && { left: cardX }),
           ...(cardY !== undefined && { top: cardY }),
         },
       ]}
@@ -97,10 +99,11 @@ export function CardStack({
   layout = "compact",
   orientation = "horizontal",
   highlightLastN = 1,
+  showEmptySlot = false,
 }: CardStackProps) {
-  if (cards.length === 0) return null;
+  const colors = useColors();
+  const isDark = colors.background === Colors.dark.background;
 
-  const screenWidth = Dimensions.get("window").width;
   const cardWidth =
     size === "large" ? 100
     : size === "medium" ? 80
@@ -109,14 +112,65 @@ export function CardStack({
 
   const cardHeight = cardWidth * 1.4;
 
+  if (cards.length === 0 && showEmptySlot) {
+    const emptySlotStyles = StyleSheet.create({
+      emptySlot: {
+        width: cardWidth,
+        height: cardHeight,
+        borderRadius: 8,
+        backgroundColor:
+          isDark ? `rgba(42, 59, 77, 0.4)` : `rgba(70, 93, 116, 0.15)`,
+        borderWidth: 2,
+        borderStyle: "dashed",
+        borderColor:
+          isDark ? `rgba(166, 130, 88, 0.35)` : `rgba(166, 130, 88, 0.3)`,
+        justifyContent: "center",
+        alignItems: "center",
+      },
+      emptyHint: {
+        fontSize: 28,
+        color: isDark ? `rgba(166, 130, 88, 0.35)` : `rgba(166, 130, 88, 0.3)`,
+      },
+    });
+
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            height: cardHeight + 20,
+            width: cardWidth,
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        ]}
+      >
+        <View style={emptySlotStyles.emptySlot}>
+          <Text style={emptySlotStyles.emptyHint}>?</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (cards.length === 0) return null;
+
   if (orientation === "vertical") {
     const verticalSpacing = cardHeight * 0.25;
     const totalHeight = (cards.length - 1) * verticalSpacing + cardHeight;
     const startY = 0;
-    const centerX = (screenWidth - cardWidth) / 2;
 
     return (
-      <View style={[styles.container, { height: totalHeight + 20 }]}>
+      <View
+        style={[
+          styles.container,
+          {
+            height: totalHeight + 20,
+            width: cardWidth,
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        ]}
+      >
         {cards.map((card, index) => {
           const cardY = startY + index * verticalSpacing;
           const isOldCard = index < cards.length - highlightLastN;
@@ -125,7 +179,7 @@ export function CardStack({
               key={index}
               card={card}
               index={index}
-              cardX={centerX}
+              cardX={0}
               cardY={cardY}
               size={size}
               isOldCard={isOldCard}
@@ -135,6 +189,8 @@ export function CardStack({
       </View>
     );
   }
+
+  const screenWidth = Dimensions.get("window").width;
 
   const spacing =
     layout === "compact" ? cardWidth * 0.5

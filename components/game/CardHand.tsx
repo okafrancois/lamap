@@ -57,7 +57,7 @@ const AnimatedCard = React.memo(function AnimatedCard({
 
   switch (layout) {
     case "fan": {
-      offset = totalCards > 4 ? 0 : 40;
+      offset = totalCards > 4 ? 0 : 20;
       const baseSpacing = Math.max(0.5, 0.85 - totalCards * 0.05);
       spacing = cardWidth * baseSpacing * 1.2;
       const centerIndex = (totalCards - 1) / 2;
@@ -213,6 +213,10 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "100%",
     height: 160,
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
   cardWrapper: {
     position: "absolute",

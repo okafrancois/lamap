@@ -12,9 +12,10 @@ import Animated, {
 
 interface TurnBadgeProps {
   visible: boolean;
+  hasHand?: boolean;
 }
 
-export function TurnBadge({ visible }: TurnBadgeProps) {
+export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
   const colors = useColors();
   const isDark = colors.background === Colors.dark.background;
 
@@ -54,14 +55,10 @@ export function TurnBadge({ visible }: TurnBadgeProps) {
       paddingVertical: 8,
       borderRadius: 18,
       backgroundColor:
-        isDark ? Colors.gameUI.rougeTerre : Colors.gameUI.rougeSombre,
+        isDark ? `rgba(180, 68, 62, 0.25)` : `rgba(180, 68, 62, 0.2)`,
       borderWidth: 1,
-      borderColor: colors.secondary,
-      shadowColor: Colors.gameUI.rougeTerre,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.4,
-      shadowRadius: 12,
-      elevation: 8,
+      borderColor:
+        isDark ? `rgba(201, 82, 75, 0.4)` : `rgba(180, 68, 62, 0.35)`,
     },
     icon: {
       fontSize: 14,
@@ -70,7 +67,7 @@ export function TurnBadge({ visible }: TurnBadgeProps) {
       fontSize: 12,
       fontWeight: "600",
       letterSpacing: 0.4,
-      color: Colors.derived.white,
+      color: isDark ? Colors.gameUI.rougeVif : Colors.gameUI.rougeTerre,
     },
   });
 
@@ -78,7 +75,7 @@ export function TurnBadge({ visible }: TurnBadgeProps) {
 
   return (
     <Animated.View style={[styles.badge, animatedStyle]}>
-      <Text style={styles.icon}>⚔️</Text>
+      <Text style={styles.icon}>{hasHand ? "👑" : "⚔️"}</Text>
       <Text style={styles.text}>À vous de jouer</Text>
     </Animated.View>
   );

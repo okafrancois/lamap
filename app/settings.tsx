@@ -1,3 +1,4 @@
+import { BattleLayoutPreview } from "@/components/settings/BattleLayoutPreview";
 import { CardLayoutPreview } from "@/components/settings/CardLayoutPreview";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/useColors";
@@ -18,8 +19,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SettingsScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { themeMode, cardLayout, setThemeMode, setCardLayout, isLoading } =
-    useSettings();
+  const {
+    themeMode,
+    cardLayout,
+    battleLayout,
+    setThemeMode,
+    setCardLayout,
+    setBattleLayout,
+    isLoading,
+  } = useSettings();
 
   const styles = StyleSheet.create({
     container: {
@@ -210,6 +218,41 @@ export default function SettingsScreen() {
                   isSelected={cardLayout === "compact"}
                 />
                 <Text style={styles.layoutLabel}>Compact</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Affichage des cartes jouées</Text>
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingDescription}>
+                  Choisissez comment les cartes jouées sont affichées pendant la
+                  partie
+                </Text>
+              </View>
+            </View>
+            <View style={styles.layoutOptions}>
+              <TouchableOpacity
+                style={styles.layoutOption}
+                onPress={() => setBattleLayout("vertical")}
+              >
+                <BattleLayoutPreview
+                  layout="vertical"
+                  isSelected={battleLayout === "vertical"}
+                />
+                <Text style={styles.layoutLabel}>Côte à côte</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.layoutOption}
+                onPress={() => setBattleLayout("horizontal")}
+              >
+                <BattleLayoutPreview
+                  layout="horizontal"
+                  isSelected={battleLayout === "horizontal"}
+                />
+                <Text style={styles.layoutLabel}>Haut/Bas</Text>
               </TouchableOpacity>
             </View>
           </View>

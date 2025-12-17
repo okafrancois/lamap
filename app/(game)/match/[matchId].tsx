@@ -1,6 +1,5 @@
 import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
-import { ConfirmPlayButton } from "@/components/game/ConfirmPlayButton";
 import { OpponentZone } from "@/components/game/OpponentZone";
 import { ResultModal } from "@/components/game/ResultModal";
 import { TurnBadge } from "@/components/game/TurnBadge";
@@ -29,7 +28,7 @@ export default function MatchScreen() {
   const colors = useColors();
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const router = useRouter();
-  const { playAreaMode } = useSettings();
+  const { playAreaMode, battleLayout } = useSettings();
 
   const {
     game,
@@ -147,26 +146,6 @@ export default function MatchScreen() {
     [isPlaying, playCard, playSound]
   );
 
-  const handleConfirmPlay = useCallback(async () => {
-    if (!selectedCard || isPlaying) return;
-
-    setIsPlaying(true);
-    playSound("cardPlay");
-
-    try {
-      await playCard(selectedCard);
-      setSelectedCard(null);
-    } catch (error: any) {
-      Alert.alert(
-        "Carte non jouable",
-        error.message ||
-          "Cette carte ne peut pas être jouée pour le moment. Vérifiez que c'est votre tour et que vous suivez la couleur demandée."
-      );
-    } finally {
-      setIsPlaying(false);
-    }
-  }, [selectedCard, isPlaying, playCard, playSound]);
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -223,19 +202,21 @@ export default function MatchScreen() {
     },
     handArea: {
       backgroundColor: colors.card,
-      borderTopWidth: 1,
+      borderTopWidth: 2,
       borderTopColor: colors.border,
-      paddingBottom: 8,
+      paddingTop: 16,
       position: "relative",
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "center",
     },
     turnBadgeContainer: {
       alignItems: "center",
       paddingVertical: 8,
       position: "absolute",
-      top: -70,
-      left: 0,
-      right: 0,
-      zIndex: 100,
+      width: "100%",
+      top: -80,
+      zIndex: 0,
     },
     confirmButtonContainer: {
       position: "absolute",
@@ -313,6 +294,30 @@ export default function MatchScreen() {
     : opponentHasHand && playerPlayedCard ? playerPlayedCard.suit
     : undefined;
 
+  const allOpponentCards = [
+    ...(turnResults
+      ?.map(
+        (result) =>
+          game.playedCards
+            ?.filter((pc: any) => pc.round === result.turn)
+            .find((pc: any) => pc.playerId !== myUserId)?.card
+      )
+      .filter(Boolean) || []),
+    ...(opponentPlayedCard ? [opponentPlayedCard] : []),
+  ].filter(Boolean);
+
+  const allPlayerCards = [
+    ...(turnResults
+      ?.map(
+        (result) =>
+          game.playedCards
+            ?.filter((pc: any) => pc.round === result.turn)
+            .find((pc: any) => pc.playerId === myUserId)?.card
+      )
+      .filter(Boolean) || []),
+    ...(playerPlayedCard ? [playerPlayedCard] : []),
+  ].filter(Boolean);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
@@ -365,49 +370,34 @@ export default function MatchScreen() {
       <View style={styles.playArea}>
         {playAreaMode === "battle" ?
           <BattleZone
-            opponentCard={
-              opponentPlayedCard ?
-                {
-                  suit: opponentPlayedCard.suit as
-                    | "hearts"
-                    | "diamonds"
-                    | "clubs"
-                    | "spades",
-                  rank: opponentPlayedCard.rank as
-                    | "3"
-                    | "4"
-                    | "5"
-                    | "6"
-                    | "7"
-                    | "8"
-                    | "9"
-                    | "10",
-                }
-              : null
-            }
-            playerCard={
-              playerPlayedCard ?
-                {
-                  suit: playerPlayedCard.suit as
-                    | "hearts"
-                    | "diamonds"
-                    | "clubs"
-                    | "spades",
-                  rank: playerPlayedCard.rank as
-                    | "3"
-                    | "4"
-                    | "5"
-                    | "6"
-                    | "7"
-                    | "8"
-                    | "9"
-                    | "10",
-                }
-              : null
-            }
+            opponentCards={allOpponentCards.map((card: any) => ({
+              suit: card?.suit as "hearts" | "diamonds" | "clubs" | "spades",
+              rank: card?.rank as
+                | "3"
+                | "4"
+                | "5"
+                | "6"
+                | "7"
+                | "8"
+                | "9"
+                | "10",
+            }))}
+            playerCards={allPlayerCards.map((card: any) => ({
+              suit: card?.suit as "hearts" | "diamonds" | "clubs" | "spades",
+              rank: card?.rank as
+                | "3"
+                | "4"
+                | "5"
+                | "6"
+                | "7"
+                | "8"
+                | "9"
+                | "10",
+            }))}
             leadSuit={
               leadSuit as "hearts" | "diamonds" | "clubs" | "spades" | undefined
             }
+            battleLayout={battleLayout}
           />
         : <TurnHistory
             results={turnResults}
@@ -421,7 +411,7 @@ export default function MatchScreen() {
 
       <View style={styles.handArea}>
         <View style={styles.turnBadgeContainer}>
-          <TurnBadge visible={isMyTurn} />
+          <TurnBadge visible={isMyTurn} hasHand={iHaveHand} />
         </View>
         <CardHand
           cards={myHand}
@@ -429,14 +419,6 @@ export default function MatchScreen() {
           onCardSelect={handleCardSelect}
           onCardDoubleTap={handleDoubleTapCard}
           selectedCard={selectedCard}
-          disabled={isPlaying}
-        />
-      </View>
-
-      <View style={styles.confirmButtonContainer}>
-        <ConfirmPlayButton
-          visible={!!selectedCard && isMyTurn}
-          onPress={handleConfirmPlay}
           disabled={isPlaying}
         />
       </View>
