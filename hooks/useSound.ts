@@ -126,10 +126,15 @@ export function useSound() {
       const player = players[type];
       if (player && isLoaded) {
         try {
-          player.seekTo(0);
+          if (player.playing) {
+            await player.pause();
+          }
+          player.currentTime = 0;
           player.play();
         } catch (error: any) {
-          if (!error?.message?.includes("Seeking interrupted")) {
+          if (!error?.message?.includes("Seeking interrupted") && 
+              !error?.message?.includes("shared object") &&
+              !error?.message?.includes("already released")) {
             console.warn(`Failed to play sound ${type}:`, error);
           }
         }
