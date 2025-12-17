@@ -1,10 +1,14 @@
 import { useColors } from "@/hooks/useColors";
 import { useRouter } from "expo-router";
-import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IconSymbol } from "./icon-symbol";
 
-export function TopBar() {
+interface TopBarProps {
+  title?: string;
+}
+
+export function TopBar({ title }: TopBarProps) {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -23,6 +27,20 @@ export function TopBar() {
     },
     button: {
       padding: 8,
+      width: 44,
+      height: 44,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    titleContainer: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: colors.text,
     },
   });
 
@@ -34,6 +52,9 @@ export function TopBar() {
       >
         <IconSymbol name="person.circle.fill" size={28} color={colors.tint} />
       </TouchableOpacity>
+      <View style={styles.titleContainer}>
+        {title && <Text style={styles.title}>{title}</Text>}
+      </View>
       <TouchableOpacity
         style={styles.button}
         onPress={() => router.push("/settings")}

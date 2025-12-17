@@ -324,11 +324,6 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.greeting}>Bonjour, {user.username} !</Text>
-            <Text style={styles.subtitle}>Prêt pour une nouvelle partie ?</Text>
-          </View>
-
           {activeGame && (
             <View style={styles.activeMatchCard}>
               <View style={styles.activeMatchContent}>

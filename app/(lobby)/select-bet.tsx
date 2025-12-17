@@ -6,7 +6,16 @@ import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const BET_AMOUNTS = [100, 500, 1000, 5000];
@@ -162,7 +171,7 @@ export default function SelectBetScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Choisir la mise</Text>
         <Text style={styles.subtitle}>
@@ -233,7 +242,10 @@ export default function SelectBetScreen() {
           activeOpacity={1}
           onPress={() => setCustomModalVisible(false)}
         >
-          <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={(e) => e.stopPropagation()}
+          >
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Montant personnalisé</Text>
               <Text style={styles.modalSubtitle}>

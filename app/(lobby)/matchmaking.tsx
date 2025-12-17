@@ -146,7 +146,7 @@ export default function MatchmakingScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.content}>
         {status === "searching" && (
           <>

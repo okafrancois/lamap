@@ -98,7 +98,7 @@ export default function SelectDifficultyScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.content}>
         <Text style={styles.title}>Choisir la difficulté</Text>
         <Text style={styles.subtitle}>Partie gratuite</Text>

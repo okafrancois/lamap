@@ -1,12 +1,12 @@
+import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React from "react";
-import { BlurView } from "expo-blur";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { TopBar } from "@/components/ui/TopBar";
-import { useColors } from "@/hooks/useColors";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -18,7 +18,6 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.tint,
         tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: true,
-        header: () => <TopBar />,
         tabBarStyle: {
           position: "absolute",
           borderTopWidth: 0,
@@ -44,6 +43,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Jouer",
+          header: () => <TopBar title="Accueil" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="gamecontroller.fill" color={color} />
           ),
@@ -53,6 +53,7 @@ export default function TabLayout() {
         name="messages"
         options={{
           title: "Messages",
+          header: () => <TopBar title="Messages" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="message.fill" color={color} />
           ),
@@ -62,6 +63,7 @@ export default function TabLayout() {
         name="wallet"
         options={{
           title: "Portefeuille",
+          header: () => <TopBar title="Portefeuille" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="wallet.pass.fill" color={color} />
           ),
@@ -71,6 +73,7 @@ export default function TabLayout() {
         name="history"
         options={{
           title: "Mes parties",
+          header: () => <TopBar title="Mes parties" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="clock.fill" color={color} />
           ),

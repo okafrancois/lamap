@@ -210,7 +210,7 @@ export default function RoomScreen() {
 
   if (!game) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={[]}>
         <ActivityIndicator size="large" color={colors.secondary} />
         <Text style={styles.loadingText}>Chargement de la salle...</Text>
       </SafeAreaView>
@@ -218,7 +218,7 @@ export default function RoomScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.content}>
         <Text style={styles.title}>Salle d&apos;attente</Text>
         <Text style={styles.subtitle}>

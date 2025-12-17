@@ -208,7 +208,7 @@ export default function ConversationScreen() {
 
   if (!conversation) {
     return (
-      <SafeAreaView style={styles.container} edges={["top"]}>
+      <SafeAreaView style={styles.container} edges={[]}>
         <ActivityIndicator size="large" color={colors.secondary} />
       </SafeAreaView>
     );
@@ -217,7 +217,7 @@ export default function ConversationScreen() {
   const otherParticipant = conversation.otherParticipant;
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.header}>
         <Button
           title="←"

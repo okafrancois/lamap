@@ -70,6 +70,7 @@ export default function WalletScreen() {
     },
     content: {
       padding: 24,
+      paddingBottom: 100,
     },
     balanceCard: {
       backgroundColor: colors.card,

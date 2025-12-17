@@ -50,6 +50,7 @@ export default function HistoryScreen() {
     },
     listContent: {
       padding: 16,
+      paddingBottom: 100,
     },
     gameCard: {
       backgroundColor: colors.card,
@@ -165,7 +166,7 @@ export default function HistoryScreen() {
       <SafeAreaView style={styles.container} edges={[]}>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>
-            Vous n'avez pas encore joué de partie.{"\n"}
+            Vous n&apos;avez pas encore joué de partie.{"\n"}
             Lancez votre première partie !
           </Text>
           <Button

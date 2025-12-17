@@ -74,6 +74,7 @@ export default function MessagesScreen() {
     },
     conversationsList: {
       padding: 16,
+      paddingBottom: 100,
     },
     conversationItem: {
       flexDirection: "row",
@@ -156,9 +157,6 @@ export default function MessagesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Messages</Text>
-      </View>
       <ScrollView style={styles.scrollView}>
         {conversations === undefined ?
           <View style={styles.loadingContainer}>
