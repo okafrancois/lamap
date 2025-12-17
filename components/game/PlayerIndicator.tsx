@@ -31,8 +31,8 @@ export function PlayerIndicator({
   const suitColors = {
     hearts: "#E53E3E",
     diamonds: "#E53E3E",
-    clubs: "#2D3748",
-    spades: "#2D3748",
+    clubs: colors.foreground,
+    spades: colors.foreground,
   };
 
   const styles = StyleSheet.create({
