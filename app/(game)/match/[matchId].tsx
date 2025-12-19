@@ -49,7 +49,7 @@ export default function MatchScreen() {
     canPlayCard,
     myUserId,
   } = useGame(matchId || null);
-  
+
   const { userId } = useAuth();
   const concedeGameMutation = useMutation(api.games.concedeGame);
   const { playSound } = useSound();
@@ -219,7 +219,9 @@ export default function MatchScreen() {
     } catch (error) {
       Alert.alert(
         "Erreur",
-        error instanceof Error ? error.message : "Impossible d'abandonner la partie",
+        error instanceof Error ?
+          error.message
+        : "Impossible d'abandonner la partie",
         [{ text: "OK" }]
       );
     }
