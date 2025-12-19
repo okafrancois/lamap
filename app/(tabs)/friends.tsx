@@ -8,10 +8,11 @@ import { useColors } from "@/hooks/useColors";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Image,
   ScrollView,
   StyleSheet,
@@ -21,6 +22,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SceneMap, TabBar, TabView } from "react-native-tab-view";
 
 export default function FriendsScreen() {
   const colors = useColors();
@@ -32,10 +34,9 @@ export default function FriendsScreen() {
   );
   const myUserId = user?._id;
 
-  const [activeTab, setActiveTab] = useState<"friends" | "requests" | "search">(
-    "friends"
-  );
+  const [index, setIndex] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
+  const layout = Dimensions.get("window");
 
   // Queries
   const friends = useQuery(
@@ -64,119 +65,108 @@ export default function FriendsScreen() {
   const cancelRequest = useMutation(api.friends.cancelFriendRequest);
   const removeFriend = useMutation(api.friends.removeFriend);
 
-  const handleSendRequest = async (receiverUsername: string) => {
-    if (!myUserId) return;
+  const handleSendRequest = useCallback(
+    async (receiverUsername: string) => {
+      if (!myUserId) return;
 
-    try {
-      await sendRequest({ senderId: myUserId, receiverUsername });
-      Alert.alert("Succès", "Demande d'amitié envoyée !");
-    } catch (error: any) {
-      Alert.alert("Erreur", error.message || "Impossible d'envoyer la demande");
-    }
-  };
+      try {
+        await sendRequest({ senderId: myUserId, receiverUsername });
+        Alert.alert("Succès", "Demande d'amitié envoyée !");
+      } catch (error: any) {
+        Alert.alert(
+          "Erreur",
+          error.message || "Impossible d'envoyer la demande"
+        );
+      }
+    },
+    [myUserId, sendRequest]
+  );
 
-  const handleAcceptRequest = async (requestId: Id<"friendRequests">) => {
-    if (!myUserId) return;
+  const handleAcceptRequest = useCallback(
+    async (requestId: Id<"friendRequests">) => {
+      if (!myUserId) return;
 
-    try {
-      await acceptRequest({ requestId, userId: myUserId });
-      Alert.alert("Succès", "Demande acceptée !");
-    } catch (error: any) {
+      try {
+        await acceptRequest({ requestId, userId: myUserId });
+        Alert.alert("Succès", "Demande acceptée !");
+      } catch (error: any) {
+        Alert.alert(
+          "Erreur",
+          error.message || "Impossible d'accepter la demande"
+        );
+      }
+    },
+    [myUserId, acceptRequest]
+  );
+
+  const handleRejectRequest = useCallback(
+    async (requestId: Id<"friendRequests">) => {
+      if (!myUserId) return;
+
+      try {
+        await rejectRequest({ requestId, userId: myUserId });
+      } catch (error: any) {
+        Alert.alert(
+          "Erreur",
+          error.message || "Impossible de rejeter la demande"
+        );
+      }
+    },
+    [myUserId, rejectRequest]
+  );
+
+  const handleCancelRequest = useCallback(
+    async (requestId: Id<"friendRequests">) => {
+      if (!myUserId) return;
+
+      try {
+        await cancelRequest({ requestId, userId: myUserId });
+      } catch (error: any) {
+        Alert.alert(
+          "Erreur",
+          error.message || "Impossible d'annuler la demande"
+        );
+      }
+    },
+    [myUserId, cancelRequest]
+  );
+
+  const handleRemoveFriend = useCallback(
+    async (friendId: Id<"users">) => {
+      if (!myUserId) return;
+
       Alert.alert(
-        "Erreur",
-        error.message || "Impossible d'accepter la demande"
-      );
-    }
-  };
-
-  const handleRejectRequest = async (requestId: Id<"friendRequests">) => {
-    if (!myUserId) return;
-
-    try {
-      await rejectRequest({ requestId, userId: myUserId });
-    } catch (error: any) {
-      Alert.alert(
-        "Erreur",
-        error.message || "Impossible de rejeter la demande"
-      );
-    }
-  };
-
-  const handleCancelRequest = async (requestId: Id<"friendRequests">) => {
-    if (!myUserId) return;
-
-    try {
-      await cancelRequest({ requestId, userId: myUserId });
-    } catch (error: any) {
-      Alert.alert("Erreur", error.message || "Impossible d'annuler la demande");
-    }
-  };
-
-  const handleRemoveFriend = async (friendId: Id<"users">) => {
-    if (!myUserId) return;
-
-    Alert.alert(
-      "Supprimer cet ami ?",
-      "Êtes-vous sûr de vouloir retirer cette personne de votre liste d'amis ?",
-      [
-        { text: "Annuler", style: "cancel" },
-        {
-          text: "Supprimer",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await removeFriend({ userId: myUserId, friendId });
-            } catch (error: any) {
-              Alert.alert(
-                "Erreur",
-                error.message || "Impossible de supprimer cet ami"
-              );
-            }
+        "Supprimer cet ami ?",
+        "Êtes-vous sûr de vouloir retirer cette personne de votre liste d'amis ?",
+        [
+          { text: "Annuler", style: "cancel" },
+          {
+            text: "Supprimer",
+            style: "destructive",
+            onPress: async () => {
+              try {
+                await removeFriend({ userId: myUserId, friendId });
+              } catch (error: any) {
+                Alert.alert(
+                  "Erreur",
+                  error.message || "Impossible de supprimer cet ami"
+                );
+              }
+            },
           },
-        },
-      ]
-    );
-  };
+        ]
+      );
+    },
+    [myUserId, removeFriend]
+  );
 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: colors.background,
     },
-    header: {
-      padding: 16,
-      backgroundColor: colors.card,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: "700",
-      color: colors.text,
-      marginBottom: 16,
-    },
-    tabs: {
-      flexDirection: "row",
-      gap: 8,
-    },
-    tab: {
+    sceneContainer: {
       flex: 1,
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 8,
-      backgroundColor: colors.muted,
-      alignItems: "center",
-    },
-    activeTab: {
-      backgroundColor: colors.primary,
-    },
-    tabText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.mutedForeground,
-    },
-    activeTabText: {
-      color: colors.primaryForeground,
     },
     searchContainer: {
       padding: 16,
@@ -243,149 +233,137 @@ export default function FriendsScreen() {
     },
   });
 
-  if (!myUserId) {
-    return (
-      <SafeAreaView style={styles.container} edges={[]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
-      </SafeAreaView>
+  const FriendsScene = React.useMemo(() => {
+    const FriendsSceneComponent = () => (
+      <ScrollView style={styles.sceneContainer}>
+        {!friends || friends.length === 0 ?
+          <View style={styles.emptyContainer}>
+            <Ionicons
+              name="people-outline"
+              size={64}
+              color={colors.mutedForeground}
+            />
+            <Text style={styles.emptyText}>
+              Vous n&apos;avez pas encore d&apos;amis.{"\n"}Recherchez des
+              joueurs pour les ajouter !
+            </Text>
+          </View>
+        : friends.map((friend) => (
+            <TouchableOpacity
+              key={friend._id}
+              style={styles.userCard}
+              onPress={() => router.push(`/user/${friend._id}`)}
+            >
+              {friend.avatarUrl ?
+                <Image
+                  source={{ uri: friend.avatarUrl }}
+                  style={styles.avatar}
+                />
+              : <View style={styles.avatar}>
+                  <Ionicons
+                    name="person"
+                    size={24}
+                    color={colors.mutedForeground}
+                    style={{ alignSelf: "center", marginTop: 12 }}
+                  />
+                </View>
+              }
+              <View style={styles.userInfo}>
+                <Text style={styles.username}>{friend.username}</Text>
+                <View style={styles.badge}>
+                  <RankBadge
+                    rank={getRankFromPR(friend.pr || INITIAL_PR)}
+                    size="small"
+                  />
+                </View>
+              </View>
+              <View style={styles.actions}>
+                <Button
+                  title="Supprimer"
+                  onPress={() => handleRemoveFriend(friend._id)}
+                  variant="destructive"
+                  size="sm"
+                />
+              </View>
+            </TouchableOpacity>
+          ))
+        }
+      </ScrollView>
     );
-  }
+    FriendsSceneComponent.displayName = "FriendsScene";
+    return FriendsSceneComponent;
+  }, [friends, router, handleRemoveFriend, colors, styles]);
 
-  return (
-    <SafeAreaView style={styles.container} edges={[]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Amis</Text>
-        <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "friends" && styles.activeTab]}
-            onPress={() => setActiveTab("friends")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "friends" && styles.activeTabText,
-              ]}
-            >
-              Amis ({friends?.length || 0})
+  const RequestsScene = React.useMemo(() => {
+    const RequestsSceneComponent = () => (
+      <ScrollView style={styles.sceneContainer}>
+        {!receivedRequests || receivedRequests.length === 0 ?
+          <View style={styles.emptyContainer}>
+            <Ionicons
+              name="mail-outline"
+              size={64}
+              color={colors.mutedForeground}
+            />
+            <Text style={styles.emptyText}>
+              Aucune demande d&apos;amitié en attente.
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "requests" && styles.activeTab]}
-            onPress={() => setActiveTab("requests")}
-          >
+          </View>
+        : <>
             <Text
-              style={[
-                styles.tabText,
-                activeTab === "requests" && styles.activeTabText,
-              ]}
+              style={{
+                fontSize: 14,
+                fontWeight: "600",
+                color: colors.mutedForeground,
+                padding: 16,
+                paddingBottom: 8,
+              }}
             >
-              Demandes ({receivedRequests?.length || 0})
+              Demandes reçues
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === "search" && styles.activeTab]}
-            onPress={() => setActiveTab("search")}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === "search" && styles.activeTabText,
-              ]}
-            >
-              Rechercher
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {activeTab === "search" && (
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Rechercher un joueur..."
-            placeholderTextColor={colors.mutedForeground}
-            value={searchTerm}
-            onChangeText={setSearchTerm}
-            autoCapitalize="none"
-            autoCorrect={false}
-          />
-        </View>
-      )}
-
-      <ScrollView style={styles.content}>
-        {activeTab === "friends" && (
-          <>
-            {!friends || friends.length === 0 ?
-              <View style={styles.emptyContainer}>
-                <Ionicons
-                  name="people-outline"
-                  size={64}
-                  color={colors.mutedForeground}
-                />
-                <Text style={styles.emptyText}>
-                  Vous n&apos;avez pas encore d&apos;amis.{"\n"}Recherchez des
-                  joueurs pour les ajouter !
-                </Text>
-              </View>
-            : friends.map((friend) => (
-                <TouchableOpacity
-                  key={friend._id}
-                  style={styles.userCard}
-                  onPress={() => router.push(`/user/${friend._id}`)}
-                >
-                  {friend.avatarUrl ?
-                    <Image
-                      source={{ uri: friend.avatarUrl }}
-                      style={styles.avatar}
-                    />
-                  : <View style={styles.avatar}>
-                      <Ionicons
-                        name="person"
-                        size={24}
-                        color={colors.mutedForeground}
-                        style={{ alignSelf: "center", marginTop: 12 }}
-                      />
-                    </View>
-                  }
-                  <View style={styles.userInfo}>
-                    <Text style={styles.username}>{friend.username}</Text>
-                    <View style={styles.badge}>
-                      <RankBadge
-                        rank={getRankFromPR(friend.pr || INITIAL_PR)}
-                        size="small"
-                      />
-                    </View>
-                  </View>
-                  <View style={styles.actions}>
-                    <Button
-                      title="Supprimer"
-                      onPress={() => handleRemoveFriend(friend._id)}
-                      variant="destructive"
-                      size="sm"
+            {receivedRequests.map((request) => (
+              <View key={request._id} style={styles.userCard}>
+                {request.sender.avatarUrl ?
+                  <Image
+                    source={{ uri: request.sender.avatarUrl }}
+                    style={styles.avatar}
+                  />
+                : <View style={styles.avatar}>
+                    <Ionicons
+                      name="person"
+                      size={24}
+                      color={colors.mutedForeground}
+                      style={{ alignSelf: "center", marginTop: 12 }}
                     />
                   </View>
-                </TouchableOpacity>
-              ))
-            }
-          </>
-        )}
-
-        {activeTab === "requests" && (
-          <>
-            {!receivedRequests || receivedRequests.length === 0 ?
-              <View style={styles.emptyContainer}>
-                <Ionicons
-                  name="mail-outline"
-                  size={64}
-                  color={colors.mutedForeground}
-                />
-                <Text style={styles.emptyText}>
-                  Aucune demande d&apos;amitié en attente.
-                </Text>
+                }
+                <View style={styles.userInfo}>
+                  <Text style={styles.username}>{request.sender.username}</Text>
+                  <View style={styles.badge}>
+                    <RankBadge
+                      rank={getRankFromPR(request.sender.pr || INITIAL_PR)}
+                      size="small"
+                    />
+                  </View>
+                </View>
+                <View style={styles.actions}>
+                  <Button
+                    title="Accepter"
+                    onPress={() => handleAcceptRequest(request._id)}
+                    variant="primary"
+                    size="sm"
+                  />
+                  <Button
+                    title="Refuser"
+                    onPress={() => handleRejectRequest(request._id)}
+                    variant="secondary"
+                    size="sm"
+                  />
+                </View>
               </View>
-            : <>
+            ))}
+
+            {sentRequests && sentRequests.length > 0 && (
+              <>
                 <Text
                   style={{
                     fontSize: 14,
@@ -393,15 +371,16 @@ export default function FriendsScreen() {
                     color: colors.mutedForeground,
                     padding: 16,
                     paddingBottom: 8,
+                    paddingTop: 24,
                   }}
                 >
-                  Demandes reçues
+                  Demandes envoyées
                 </Text>
-                {receivedRequests.map((request) => (
+                {sentRequests.map((request) => (
                   <View key={request._id} style={styles.userCard}>
-                    {request.sender.avatarUrl ?
+                    {request.receiver.avatarUrl ?
                       <Image
-                        source={{ uri: request.sender.avatarUrl }}
+                        source={{ uri: request.receiver.avatarUrl }}
                         style={styles.avatar}
                       />
                     : <View style={styles.avatar}>
@@ -415,187 +394,231 @@ export default function FriendsScreen() {
                     }
                     <View style={styles.userInfo}>
                       <Text style={styles.username}>
-                        {request.sender.username}
+                        {request.receiver.username}
                       </Text>
                       <View style={styles.badge}>
                         <RankBadge
-                          rank={getRankFromPR(request.sender.pr || INITIAL_PR)}
+                          rank={getRankFromPR(
+                            request.receiver.pr || INITIAL_PR
+                          )}
                           size="small"
                         />
                       </View>
                     </View>
                     <View style={styles.actions}>
                       <Button
-                        title="Accepter"
-                        onPress={() => handleAcceptRequest(request._id)}
-                        variant="primary"
-                        size="sm"
-                      />
-                      <Button
-                        title="Refuser"
-                        onPress={() => handleRejectRequest(request._id)}
+                        title="Annuler"
+                        onPress={() => handleCancelRequest(request._id)}
                         variant="secondary"
                         size="sm"
                       />
                     </View>
                   </View>
                 ))}
-
-                {sentRequests && sentRequests.length > 0 && (
-                  <>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: "600",
-                        color: colors.mutedForeground,
-                        padding: 16,
-                        paddingBottom: 8,
-                        paddingTop: 24,
-                      }}
-                    >
-                      Demandes envoyées
-                    </Text>
-                    {sentRequests.map((request) => (
-                      <View key={request._id} style={styles.userCard}>
-                        {request.receiver.avatarUrl ?
-                          <Image
-                            source={{ uri: request.receiver.avatarUrl }}
-                            style={styles.avatar}
-                          />
-                        : <View style={styles.avatar}>
-                            <Ionicons
-                              name="person"
-                              size={24}
-                              color={colors.mutedForeground}
-                              style={{ alignSelf: "center", marginTop: 12 }}
-                            />
-                          </View>
-                        }
-                        <View style={styles.userInfo}>
-                          <Text style={styles.username}>
-                            {request.receiver.username}
-                          </Text>
-                          <View style={styles.badge}>
-                            <RankBadge
-                              rank={getRankFromPR(
-                                request.receiver.pr || INITIAL_PR
-                              )}
-                              size="small"
-                            />
-                          </View>
-                        </View>
-                        <View style={styles.actions}>
-                          <Button
-                            title="Annuler"
-                            onPress={() => handleCancelRequest(request._id)}
-                            variant="secondary"
-                            size="sm"
-                          />
-                        </View>
-                      </View>
-                    ))}
-                  </>
-                )}
               </>
-            }
+            )}
           </>
-        )}
+        }
+      </ScrollView>
+    );
+    RequestsSceneComponent.displayName = "RequestsScene";
+    return RequestsSceneComponent;
+  }, [
+    receivedRequests,
+    sentRequests,
+    handleAcceptRequest,
+    handleRejectRequest,
+    handleCancelRequest,
+    colors,
+    styles,
+  ]);
 
-        {activeTab === "search" && (
-          <>
-            {searchTerm.length < 2 ?
-              <View style={styles.emptyContainer}>
-                <Ionicons
-                  name="search-outline"
-                  size={64}
-                  color={colors.mutedForeground}
-                />
-                <Text style={styles.emptyText}>
-                  Entrez au moins 2 caractères pour rechercher un joueur.
-                </Text>
-              </View>
-            : !searchResults ?
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-              </View>
-            : searchResults.length === 0 ?
-              <View style={styles.emptyContainer}>
-                <Ionicons
-                  name="sad-outline"
-                  size={64}
-                  color={colors.mutedForeground}
-                />
-                <Text style={styles.emptyText}>
-                  Aucun joueur trouvé pour &quot;{searchTerm}&quot;.
-                </Text>
-              </View>
-            : searchResults.map((result) => (
-                <View key={result._id} style={styles.userCard}>
-                  {result.avatarUrl ?
-                    <Image
-                      source={{ uri: result.avatarUrl }}
-                      style={styles.avatar}
+  const SearchScene = React.useMemo(() => {
+    const SearchSceneComponent = () => (
+      <View style={styles.sceneContainer}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Rechercher un joueur..."
+            placeholderTextColor={colors.mutedForeground}
+            value={searchTerm}
+            onChangeText={setSearchTerm}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        </View>
+        <ScrollView style={styles.content}>
+          {searchTerm.length < 2 ?
+            <View style={styles.emptyContainer}>
+              <Ionicons
+                name="search-outline"
+                size={64}
+                color={colors.mutedForeground}
+              />
+              <Text style={styles.emptyText}>
+                Entrez au moins 2 caractères pour rechercher un joueur.
+              </Text>
+            </View>
+          : !searchResults ?
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          : searchResults.length === 0 ?
+            <View style={styles.emptyContainer}>
+              <Ionicons
+                name="sad-outline"
+                size={64}
+                color={colors.mutedForeground}
+              />
+              <Text style={styles.emptyText}>
+                Aucun joueur trouvé pour &quot;{searchTerm}&quot;.
+              </Text>
+            </View>
+          : searchResults.map((result) => (
+              <View key={result._id} style={styles.userCard}>
+                {result.avatarUrl ?
+                  <Image
+                    source={{ uri: result.avatarUrl }}
+                    style={styles.avatar}
+                  />
+                : <View style={styles.avatar}>
+                    <Ionicons
+                      name="person"
+                      size={24}
+                      color={colors.mutedForeground}
+                      style={{ alignSelf: "center", marginTop: 12 }}
                     />
-                  : <View style={styles.avatar}>
-                      <Ionicons
-                        name="person"
-                        size={24}
-                        color={colors.mutedForeground}
-                        style={{ alignSelf: "center", marginTop: 12 }}
-                      />
-                    </View>
-                  }
-                  <View style={styles.userInfo}>
-                    <Text style={styles.username}>{result.username}</Text>
-                    <View style={styles.badge}>
-                      <RankBadge
-                        rank={getRankFromPR(result.pr || INITIAL_PR)}
-                        size="small"
-                      />
-                    </View>
                   </View>
-                  <View style={styles.actions}>
-                    {result.status === "friends" && (
-                      <Button
-                        title="Ami"
-                        onPress={() => {}}
-                        variant="secondary"
-                        size="sm"
-                        disabled
-                      />
-                    )}
-                    {result.status === "request_sent" && (
-                      <Button
-                        title="En attente"
-                        onPress={() => {}}
-                        variant="secondary"
-                        size="sm"
-                        disabled
-                      />
-                    )}
-                    {result.status === "request_received" && (
-                      <Button
-                        title="Répondre"
-                        onPress={() => setActiveTab("requests")}
-                        variant="primary"
-                        size="sm"
-                      />
-                    )}
-                    {result.status === "none" && (
-                      <Button
-                        title="Ajouter"
-                        onPress={() => handleSendRequest(result.username)}
-                        variant="primary"
-                        size="sm"
-                      />
-                    )}
+                }
+                <View style={styles.userInfo}>
+                  <Text style={styles.username}>{result.username}</Text>
+                  <View style={styles.badge}>
+                    <RankBadge
+                      rank={getRankFromPR(result.pr || INITIAL_PR)}
+                      size="small"
+                    />
                   </View>
                 </View>
-              ))
-            }
-          </>
-        )}
-      </ScrollView>
+                <View style={styles.actions}>
+                  {result.status === "friends" && (
+                    <Button
+                      title="Ami"
+                      onPress={() => {}}
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                    />
+                  )}
+                  {result.status === "request_sent" && (
+                    <Button
+                      title="En attente"
+                      onPress={() => {}}
+                      variant="secondary"
+                      size="sm"
+                      disabled
+                    />
+                  )}
+                  {result.status === "request_received" && (
+                    <Button
+                      title="Répondre"
+                      onPress={() => setIndex(1)}
+                      variant="primary"
+                      size="sm"
+                    />
+                  )}
+                  {result.status === "none" && (
+                    <Button
+                      title="Ajouter"
+                      onPress={() => handleSendRequest(result.username)}
+                      variant="primary"
+                      size="sm"
+                    />
+                  )}
+                </View>
+              </View>
+            ))
+          }
+        </ScrollView>
+      </View>
+    );
+    SearchSceneComponent.displayName = "SearchScene";
+    return SearchSceneComponent;
+  }, [searchTerm, searchResults, handleSendRequest, colors, styles, setIndex]);
+
+  const routes = React.useMemo(
+    () => [
+      {
+        key: "friends",
+        title: `Amis (${friends?.length || 0})`,
+      },
+      {
+        key: "requests",
+        title: `Demandes (${receivedRequests?.length || 0})`,
+      },
+      {
+        key: "search",
+        title: "Rechercher",
+      },
+    ],
+    [friends?.length, receivedRequests?.length]
+  );
+
+  const renderScene = SceneMap({
+    friends: FriendsScene,
+    requests: RequestsScene,
+    search: SearchScene,
+  });
+
+  if (!myUserId) {
+    return (
+      <SafeAreaView style={styles.container} edges={[]}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const renderTabBar = (props: any) => (
+    <TabBar
+      {...props}
+      indicatorStyle={{
+        backgroundColor: colors.primary,
+        height: 3,
+        borderRadius: 2,
+      }}
+      style={{
+        backgroundColor: colors.background,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+      }}
+      activeColor={colors.primary}
+      inactiveColor={colors.mutedForeground}
+      labelStyle={{
+        fontSize: 14,
+        fontWeight: "600",
+        textTransform: "none",
+      }}
+      tabStyle={{
+        width: "auto",
+        paddingHorizontal: 12,
+      }}
+      scrollEnabled={true}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+      }}
+    />
+  );
+
+  return (
+    <SafeAreaView style={styles.container} edges={[]}>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={{ width: layout.width }}
+        renderTabBar={renderTabBar}
+      />
     </SafeAreaView>
   );
 }
