@@ -6,7 +6,7 @@ import { INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
-import { useRouter } from "expo-router";
+import { type ErrorBoundaryProps, useRouter } from "expo-router";
 import React from "react";
 import {
   ActivityIndicator,
@@ -16,6 +16,71 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const colors = useColors();
+  const router = useRouter();
+
+  const errorStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+      gap: 16,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      textAlign: "center",
+      color: colors.text,
+    },
+    message: {
+      fontSize: 16,
+      textAlign: "center",
+      lineHeight: 22,
+      maxWidth: 300,
+      color: colors.mutedForeground,
+    },
+    actions: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 8,
+    },
+    button: {
+      minWidth: 120,
+    },
+  });
+
+  return (
+    <SafeAreaView style={errorStyles.container}>
+      <View style={errorStyles.content}>
+        <Ionicons name="alert-circle" size={64} color={colors.destructive} />
+        <Text style={errorStyles.title}>Erreur de chargement</Text>
+        <Text style={errorStyles.message}>{error.message}</Text>
+        <View style={errorStyles.actions}>
+          <Button
+            title="Réessayer"
+            onPress={retry}
+            variant="primary"
+            style={errorStyles.button}
+          />
+          <Button
+            title="Retour"
+            onPress={() => router.back()}
+            variant="outline"
+            style={errorStyles.button}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
 
 export default function HomeScreen() {
   const colors = useColors();
