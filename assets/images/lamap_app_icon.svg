@@ -1,32 +1,89 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Icône App Mobile LaMap - Format carré 512x512 -->
-  
-  <!-- Fond carré arrondi (style iOS/Android) -->
-  <rect x="0" y="0" width="512" height="512" rx="100" ry="100" fill="#B4443E"/>
-  
-  <!-- Forme de carte inclinée -->
-  <g transform="translate(256, 240) rotate(-8)">
-    <rect x="-120" y="-160" width="240" height="320" rx="20" ry="20" fill="#F5F2ED"/>
-    <rect x="-105" y="-145" width="210" height="290" rx="14" ry="14" 
-          fill="none" stroke="#A68258" stroke-width="4"/>
-  </g>
-  
-  <!-- Trèfle central -->
-  <g transform="translate(256, 220)">
-    <circle cx="0" cy="-35" r="40" fill="#1A1A1A"/>
-    <circle cx="-38" cy="10" r="40" fill="#1A1A1A"/>
-    <circle cx="38" cy="10" r="40" fill="#1A1A1A"/>
-    <path d="M0 38 L-24 110 L0 85 L24 110 Z" fill="#1A1A1A"/>
-    <!-- Accent rouge -->
-    <circle cx="0" cy="-35" r="12" fill="#B4443E"/>
-  </g>
-  
-  <!-- Texte "lamap" en bas -->
-  <text x="256" y="460" 
-        font-family="Georgia, serif" 
-        font-size="52" 
-        font-weight="bold" 
-        fill="#F5F2ED"
-        text-anchor="middle"
-        letter-spacing="3">lamap</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="208" height="208" viewBox="0 0 208 208" 
+     xmlns="http://www.w3.org/2000/svg">
+    
+    <!-- Outer ring -->
+    <circle cx="104.0" cy="104.0" r="100.0" fill="none" stroke="#A68258" stroke-width="4"/>
+    
+    <!-- Second ring -->
+    <circle cx="104.0" cy="104.0" r="92.0" fill="none" stroke="#A68258" stroke-width="1.5"/>
+    
+    <!-- Inner fill - Rouge Terre -->
+    <circle cx="104.0" cy="104.0" r="88.0" fill="#B4443E"/>
+    
+    <!-- Inner depth ring -->
+    <circle cx="104.0" cy="104.0" r="84.0" fill="none" stroke="#8C322D" stroke-width="2"/>
+    
+    <!-- Decorative dots -->
+    <g>
+        <circle cx="104.0" cy="8.0" r="3" fill="#A68258"/>
+        <circle cx="140.73760950704863" cy="15.307564878916466" r="3" fill="#A68258"/>
+        <circle cx="171.88225099390854" cy="36.11774900609146" r="3" fill="#A68258"/>
+        <circle cx="192.69243512108352" cy="67.26239049295138" r="3" fill="#A68258"/>
+        <circle cx="200.0" cy="104.0" r="3" fill="#A68258"/>
+        <circle cx="192.69243512108352" cy="140.7376095070486" r="3" fill="#A68258"/>
+        <circle cx="171.88225099390854" cy="171.88225099390854" r="3" fill="#A68258"/>
+        <circle cx="140.73760950704863" cy="192.69243512108352" r="3" fill="#A68258"/>
+        <circle cx="104.0" cy="200.0" r="3" fill="#A68258"/>
+        <circle cx="67.26239049295138" cy="192.69243512108352" r="3" fill="#A68258"/>
+        <circle cx="36.11774900609146" cy="171.88225099390854" r="3" fill="#A68258"/>
+        <circle cx="15.307564878916466" cy="140.73760950704863" r="3" fill="#A68258"/>
+        <circle cx="8.0" cy="104.00000000000001" r="3" fill="#A68258"/>
+        <circle cx="15.307564878916466" cy="67.2623904929514" r="3" fill="#A68258"/>
+        <circle cx="36.11774900609143" cy="36.11774900609146" r="3" fill="#A68258"/>
+        <circle cx="67.26239049295141" cy="15.307564878916466" r="3" fill="#A68258"/>
+        
+    </g>
+    
+    <!-- Cards -->
+    
+    <g transform="rotate(-18 94.0 108.0)">
+        <rect x="60.0" y="58.0" width="68.0" height="100.0" 
+              rx="8" ry="8" fill="#465D74" stroke="#A68258" stroke-width="2"/>
+        <rect x="66.0" y="64.0" width="56.0" height="88.0" 
+              rx="6" ry="6" fill="none" stroke="#A68258" stroke-width="1"/>
+        <path d="M 94.0 100.3 L 98.9 108.0 L 94.0 115.7 L 89.1 108.0 Z"
+        fill="#A68258"/>
+    </g>
+    
+    <g transform="rotate(12 114.0 100.0)">
+        <rect x="80.0" y="50.0" width="68.0" height="100.0" 
+              rx="8" ry="8" fill="#F5F2ED" stroke="#A68258" stroke-width="2.5"/>
+        <rect x="85.0" y="55.0" width="58.0" height="90.0" 
+              rx="6" ry="6" fill="none" stroke="#A68258" stroke-width="0.75"/>
+        <text x="92.0" y="70.0" font-family="Georgia, serif" font-size="18" 
+              font-weight="bold" fill="#1A1A1A">3</text>
+        <path d="M 96.0 86.24 
+        C 97.6 88.16 100.8 90.4 100.8 92.64
+        C 100.8 95.2 98.56 96.16 96.96 94.88
+        L 97.6 97.76
+        L 94.4 97.76
+        L 95.04 94.88
+        C 93.44 96.16 91.2 95.2 91.2 92.64
+        C 91.2 90.4 94.4 88.16 96.0 86.24 Z"
+        fill="#1A1A1A"/>
+        <path d="M 114.0 84.16 
+        C 118.4 89.44 127.2 95.6 127.2 101.76
+        C 127.2 108.8 121.04 111.44 116.64 107.92
+        L 118.4 115.84
+        L 109.6 115.84
+        L 111.36 107.92
+        C 106.96 111.44 100.8 108.8 100.8 101.76
+        C 100.8 95.6 109.6 89.44 114.0 84.16 Z"
+        fill="#1A1A1A"/>
+        <g transform="rotate(180 114.0 100.0)">
+            <text x="92.0" y="70.0" font-family="Georgia, serif" font-size="18" 
+                  font-weight="bold" fill="#1A1A1A">3</text>
+            <path d="M 96.0 86.24 
+        C 97.6 88.16 100.8 90.4 100.8 92.64
+        C 100.8 95.2 98.56 96.16 96.96 94.88
+        L 97.6 97.76
+        L 94.4 97.76
+        L 95.04 94.88
+        C 93.44 96.16 91.2 95.2 91.2 92.64
+        C 91.2 90.4 94.4 88.16 96.0 86.24 Z"
+        fill="#1A1A1A"/>
+        </g>
+    </g>
+
 </svg>

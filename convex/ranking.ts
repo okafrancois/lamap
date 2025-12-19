@@ -416,7 +416,8 @@ export const getPRStats = query({
       minPR,
       totalPRGained,
       totalPRLost,
-      currentStreak,
+      currentStreak: Math.abs(currentStreak),
+      streakType: currentStreak >= 0 ? ("win" as const) : ("loss" as const),
     };
   },
 });

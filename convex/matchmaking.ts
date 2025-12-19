@@ -23,7 +23,8 @@ export const joinQueue = mutation({
   handler: async (ctx, args) => {
     // Déterminer le mode automatiquement si non spécifié
     const gameMode = args.mode || (args.betAmount === 0 ? "RANKED" : "CASH");
-    const isCompetitive = args.competitive !== undefined ? args.competitive : true; // Par défaut compétitif
+    const isCompetitive =
+      args.competitive !== undefined ? args.competitive : true; // Par défaut compétitif
 
     const existing = await ctx.db
       .query("matchmakingQueue")
@@ -215,18 +216,21 @@ export const joinQueue = mutation({
         rematchGameId: undefined,
         timerEnabled: args.timerEnabled || false,
         timerDuration: args.timerDuration,
-        playerTimers: args.timerEnabled ? [
-          {
-            playerId: args.userId,
-            timeRemaining: args.timerDuration || 60,
-            lastUpdated: now,
-          },
-          {
-            playerId: potentialMatch.userId,
-            timeRemaining: args.timerDuration || 60,
-            lastUpdated: now,
-          },
-        ] : undefined,
+        playerTimers:
+          args.timerEnabled ?
+            [
+              {
+                playerId: args.userId,
+                timeRemaining: args.timerDuration || 60,
+                lastUpdated: now,
+              },
+              {
+                playerId: potentialMatch.userId,
+                timeRemaining: args.timerDuration || 60,
+                lastUpdated: now,
+              },
+            ]
+          : undefined,
       };
 
       await ctx.db.insert("games", gameData as any);

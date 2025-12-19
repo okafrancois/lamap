@@ -1,6 +1,6 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
 import { Id } from "./_generated/dataModel";
+import { mutation, query } from "./_generated/server";
 
 // ========== HELPER FUNCTIONS ==========
 
@@ -61,7 +61,9 @@ export const sendFriendRequest = mutation({
     const { user1Id, user2Id } = getOrderedUserIds(args.senderId, receiver._id);
     const existingFriendship = await ctx.db
       .query("friendships")
-      .withIndex("by_users", (q) => q.eq("user1Id", user1Id).eq("user2Id", user2Id))
+      .withIndex("by_users", (q) =>
+        q.eq("user1Id", user1Id).eq("user2Id", user2Id)
+      )
       .first();
 
     if (existingFriendship) {
@@ -108,7 +110,10 @@ export const acceptFriendRequest = mutation({
     });
 
     // Créer l'amitié
-    const { user1Id, user2Id } = getOrderedUserIds(request.senderId, request.receiverId);
+    const { user1Id, user2Id } = getOrderedUserIds(
+      request.senderId,
+      request.receiverId
+    );
     await ctx.db.insert("friendships", {
       user1Id,
       user2Id,
@@ -191,7 +196,9 @@ export const removeFriend = mutation({
 
     const friendship = await ctx.db
       .query("friendships")
-      .withIndex("by_users", (q) => q.eq("user1Id", user1Id).eq("user2Id", user2Id))
+      .withIndex("by_users", (q) =>
+        q.eq("user1Id", user1Id).eq("user2Id", user2Id)
+      )
       .first();
 
     if (!friendship) {
@@ -327,11 +334,16 @@ export const areFriends = query({
     otherUserId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const { user1Id, user2Id } = getOrderedUserIds(args.userId, args.otherUserId);
+    const { user1Id, user2Id } = getOrderedUserIds(
+      args.userId,
+      args.otherUserId
+    );
 
     const friendship = await ctx.db
       .query("friendships")
-      .withIndex("by_users", (q) => q.eq("user1Id", user1Id).eq("user2Id", user2Id))
+      .withIndex("by_users", (q) =>
+        q.eq("user1Id", user1Id).eq("user2Id", user2Id)
+      )
       .first();
 
     return !!friendship;
@@ -364,12 +376,17 @@ export const searchUsers = query({
     // Pour chaque utilisateur, vérifier s'il est ami ou si une demande existe
     const usersWithStatus = await Promise.all(
       matchingUsers.map(async (user) => {
-        const { user1Id, user2Id } = getOrderedUserIds(args.currentUserId, user._id);
+        const { user1Id, user2Id } = getOrderedUserIds(
+          args.currentUserId,
+          user._id
+        );
 
         // Vérifier l'amitié
         const friendship = await ctx.db
           .query("friendships")
-          .withIndex("by_users", (q) => q.eq("user1Id", user1Id).eq("user2Id", user2Id))
+          .withIndex("by_users", (q) =>
+            q.eq("user1Id", user1Id).eq("user2Id", user2Id)
+          )
           .first();
 
         if (friendship) {
@@ -433,4 +450,3 @@ export const searchUsers = query({
     return usersWithStatus;
   },
 });
-

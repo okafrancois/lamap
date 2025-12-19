@@ -329,7 +329,7 @@ export default function FriendsScreen() {
                   joueurs pour les ajouter !
                 </Text>
               </View>
-            :               friends.map((friend) => (
+            : friends.map((friend) => (
                 <TouchableOpacity
                   key={friend._id}
                   style={styles.userCard}

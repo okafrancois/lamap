@@ -2,7 +2,10 @@ import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { useEffect, useState } from "react";
 
-export function useGameTimer(gameId: string | undefined, currentPlayerId: string | null | undefined) {
+export function useGameTimer(
+  gameId: string | undefined,
+  currentPlayerId: string | null | undefined
+) {
   const timers = useQuery(
     api.timer.getGameTimers,
     gameId ? { gameId } : "skip"
@@ -16,7 +19,9 @@ export function useGameTimer(gameId: string | undefined, currentPlayerId: string
       return;
     }
 
-    const playerTimer = timers.timers.find((t) => t.playerId === currentPlayerId);
+    const playerTimer = timers.timers.find(
+      (t) => t.playerId === currentPlayerId
+    );
     if (playerTimer) {
       setLocalTimeRemaining(playerTimer.timeRemaining);
     }
@@ -41,4 +46,3 @@ export function useGameTimer(gameId: string | undefined, currentPlayerId: string
     timers: timers?.timers || [],
   };
 }
-

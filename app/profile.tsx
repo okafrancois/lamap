@@ -24,7 +24,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProfileScreen() {
   const colors = useColors();
-  const { userId, isSignedIn, clerkUser } = useAuth();
+  const { userId, clerkUser } = useAuth();
   const { signOut } = useClerk();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"profile" | "history">("profile");
@@ -295,8 +295,8 @@ export default function ProfileScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <Avatar
-              src={user.avatarUrl || undefined}
-              alt={user.username}
+              imageUrl={user.avatarUrl || undefined}
+              name={user.username}
               size={100}
             />
             <Text style={styles.username}>{user.username}</Text>
@@ -336,7 +336,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
 
-          {activeTab === "profile" ? (
+          {activeTab === "profile" ?
             <>
               <View style={styles.rankSection}>
                 <RankBadge
@@ -409,8 +409,7 @@ export default function ProfileScreen() {
                 />
               </View>
             </>
-          ) : (
-            <>
+          : <>
               <View style={styles.filterContainer}>
                 <Button
                   title={
@@ -422,7 +421,7 @@ export default function ProfileScreen() {
                 />
               </View>
 
-              {!filteredGames || filteredGames.length === 0 ? (
+              {!filteredGames || filteredGames.length === 0 ?
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyText}>
                     Aucune partie dans l&apos;historique.
@@ -433,8 +432,7 @@ export default function ProfileScreen() {
                     variant="primary"
                   />
                 </View>
-              ) : (
-                <FlatList
+              : <FlatList
                   data={filteredGames}
                   scrollEnabled={false}
                   keyExtractor={(item) => item.gameId}
@@ -443,13 +441,13 @@ export default function ProfileScreen() {
                     <View style={styles.gameCard}>
                       <View style={styles.gameHeader}>
                         <Avatar
-                          src={undefined}
-                          alt={item.opponentName}
+                          imageUrl={item.opponent?.avatarUrl || undefined}
+                          name={item.opponent?.username || "Adversaire"}
                           size={40}
                         />
                         <View style={styles.opponentInfo}>
                           <Text style={styles.opponentName}>
-                            {item.opponentName}
+                            {item.opponent?.username || "Adversaire"}
                           </Text>
                           <Text style={styles.gameDate}>
                             {formatDate(item.endedAt || 0)}
@@ -461,7 +459,7 @@ export default function ProfileScreen() {
                             {
                               backgroundColor:
                                 item.result === "win" ?
-                                  colors.success + "20"
+                                  colors.secondary + "20"
                                 : colors.destructive + "20",
                             },
                           ]}
@@ -472,7 +470,7 @@ export default function ProfileScreen() {
                               {
                                 color:
                                   item.result === "win" ?
-                                    colors.success
+                                    colors.secondary
                                   : colors.destructive,
                               },
                             ]}
@@ -485,12 +483,12 @@ export default function ProfileScreen() {
                         <View style={styles.betInfo}>
                           <Badge
                             label={
-                              item.betAmount > 0 ?
-                                `${item.betAmount} ${user.currency || "XAF"}`
+                              item.bet.amount > 0 ?
+                                `${item.bet.amount} ${item.bet.currency}`
                               : "Gratuit"
                             }
                             variant={
-                              item.betAmount > 0 ? "default" : "secondary"
+                              item.bet.amount > 0 ? "default" : "warning"
                             }
                           />
                         </View>
@@ -498,9 +496,9 @@ export default function ProfileScreen() {
                     </View>
                   )}
                 />
-              )}
+              }
             </>
-          )}
+          }
         </View>
       </ScrollView>
     </SafeAreaView>

@@ -164,8 +164,8 @@ export default function UserProfileScreen() {
         <View style={styles.content}>
           <View style={styles.header}>
             <Avatar
-              src={targetUser.avatarUrl || undefined}
-              alt={targetUser.username}
+              imageUrl={targetUser.avatarUrl || undefined}
+              name={targetUser.username}
               size={100}
             />
             <Text style={styles.username}>{targetUser.username}</Text>
