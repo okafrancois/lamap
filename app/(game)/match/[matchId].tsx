@@ -10,6 +10,7 @@ import { ResultPanel } from "@/components/game/ResultPanel";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
+import { BackgroundGradient } from "@/components/ui/BackgroundGradient";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
 import { Rank, Suit } from "@/convex/validators";
@@ -19,7 +20,6 @@ import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
-import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -482,12 +482,7 @@ export default function MatchScreen() {
   ].filter(Boolean);
 
   return (
-    <LinearGradient
-      colors={["#2E3D4D", "#3A4D5F", "#2E3D4D"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <BackgroundGradient>
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
@@ -616,9 +611,9 @@ export default function MatchScreen() {
                 router.replace("/(tabs)");
               }}
             />
-          </>
-        )}
+        </>
+      )}
       </SafeAreaView>
-    </LinearGradient>
+    </BackgroundGradient>
   );
 }
