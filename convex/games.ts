@@ -1441,3 +1441,81 @@ export const getRecentGames = query({
     );
   },
 });
+
+// ========== CONCEDE GAME ==========
+
+export const concedeGame = mutation({
+  args: {
+    gameId: v.string(),
+    clerkUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Get the game
+    const game = await ctx.db
+      .query("games")
+      .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
+      .first();
+
+    if (!game) {
+      throw new Error("Game not found");
+    }
+
+    // Check if game is in progress
+    if (game.status !== "PLAYING") {
+      throw new Error("Game is not in progress");
+    }
+
+    // Get the user
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", args.clerkUserId))
+      .first();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Check if user is a player in this game
+    const playerIndex = game.players.findIndex((p) => p.userId === user._id);
+    if (playerIndex === -1) {
+      throw new Error("User is not a player in this game");
+    }
+
+    // Determine the winner (the other player)
+    const opponentIndex = playerIndex === 0 ? 1 : 0;
+    const opponent = game.players[opponentIndex];
+    const winnerId = opponent.userId;
+
+    // Update game status to ENDED
+    await ctx.db.patch(game._id, {
+      status: "ENDED",
+      winnerId: winnerId,
+      endedAt: Date.now(),
+    });
+
+    // Handle transactions if there's a bet
+    if (game.bet.amount > 0 && winnerId) {
+      const winnings = game.bet.amount * 2;
+      const winner = await ctx.db.get(winnerId);
+
+      if (winner) {
+        // Credit winnings to winner
+        await ctx.db.patch(winnerId, {
+          balance: (winner.balance || 0) + winnings,
+        });
+
+        await ctx.db.insert("transactions", {
+          userId: winnerId,
+          type: "win",
+          amount: winnings,
+          currency: game.bet.currency,
+          gameId: game.gameId,
+          description: `Gain de ${winnings} ${game.bet.currency} (adversaire a abandonné)`,
+          createdAt: Date.now(),
+        });
+      }
+    }
+
+    return { success: true, winnerId };
+  },
+});

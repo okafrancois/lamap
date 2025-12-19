@@ -232,7 +232,7 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      {gameHistory && gameHistory.some(g => g.mode === "AI") && (
+      {gameHistory && gameHistory.some((g) => g.mode === "AI") && (
         <View style={styles.filterContainer}>
           <Button
             title={showAIGames ? "Masquer parties IA" : "Afficher parties IA"}
