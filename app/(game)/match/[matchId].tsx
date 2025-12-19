@@ -14,6 +14,7 @@ import { BackgroundGradient } from "@/components/ui/BackgroundGradient";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
 import { Rank, Suit } from "@/convex/validators";
+import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useSettings } from "@/hooks/useSettings";
@@ -48,6 +49,9 @@ export default function MatchScreen() {
     canPlayCard,
     myUserId,
   } = useGame(matchId || null);
+  
+  const { userId } = useAuth();
+  const concedeGameMutation = useMutation(api.games.concedeGame);
   const { playSound } = useSound();
   const startGame = useMutation(api.games.startGame);
 
@@ -190,22 +194,36 @@ export default function MatchScreen() {
     [isPlaying, playCard, playSound]
   );
 
-  const handleConcede = useCallback(() => {
-    // TODO: Implémenter la logique backend pour abandonner
-    Alert.alert(
-      "Abandon",
-      "La fonctionnalité d'abandon sera bientôt disponible côté serveur.",
-      [
-        {
-          text: "OK",
-          onPress: () => {
-            // Pour l'instant, on retourne simplement à l'accueil
-            router.replace("/(tabs)");
+  const handleConcede = useCallback(async () => {
+    if (!userId || !matchId) return;
+
+    try {
+      await concedeGameMutation({
+        gameId: matchId,
+        clerkUserId: userId,
+      });
+
+      // Show success message and navigate
+      Alert.alert(
+        "Partie abandonnée",
+        "Vous avez abandonné la partie. Votre adversaire a gagné.",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              router.replace("/(tabs)");
+            },
           },
-        },
-      ]
-    );
-  }, [router]);
+        ]
+      );
+    } catch (error) {
+      Alert.alert(
+        "Erreur",
+        error instanceof Error ? error.message : "Impossible d'abandonner la partie",
+        [{ text: "OK" }]
+      );
+    }
+  }, [userId, matchId, concedeGameMutation, router]);
 
   const styles = StyleSheet.create({
     container: {
