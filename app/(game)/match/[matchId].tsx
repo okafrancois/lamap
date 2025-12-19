@@ -11,7 +11,6 @@ import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
 import { Button } from "@/components/ui/Button";
-import { LinearGradient } from "expo-linear-gradient";
 import { api } from "@/convex/_generated/api";
 import { Rank, Suit } from "@/convex/validators";
 import { useColors } from "@/hooks/useColors";
@@ -20,6 +19,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "convex/react";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -454,6 +454,9 @@ export default function MatchScreen() {
     : opponentHasHand && playerPlayedCard ? playerPlayedCard.suit
     : undefined;
 
+  // Ne pas inclure les cartes du currentPlays si le jeu est terminé (évite les doublons)
+  const includeCurrentPlays = game.status !== "ENDED";
+
   const allOpponentCards = [
     ...(turnResults
       ?.map(
@@ -463,7 +466,7 @@ export default function MatchScreen() {
             .find((pc: any) => pc.playerId !== myUserId)?.card
       )
       .filter(Boolean) || []),
-    ...(opponentPlayedCard ? [opponentPlayedCard] : []),
+    ...(includeCurrentPlays && opponentPlayedCard ? [opponentPlayedCard] : []),
   ].filter(Boolean);
 
   const allPlayerCards = [
@@ -475,7 +478,7 @@ export default function MatchScreen() {
             .find((pc: any) => pc.playerId === myUserId)?.card
       )
       .filter(Boolean) || []),
-    ...(playerPlayedCard ? [playerPlayedCard] : []),
+    ...(includeCurrentPlays && playerPlayedCard ? [playerPlayedCard] : []),
   ].filter(Boolean);
 
   return (
@@ -487,134 +490,134 @@ export default function MatchScreen() {
     >
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.headerLeft}>
-            <TurnPips
-              totalRounds={game.maxRounds}
-              currentRound={game.currentRound}
-              roundsWonByPlayer={roundsWonByPlayer}
-              roundsWonByOpponent={roundsWonByOpponent}
-            />
-            {game.bet.amount > 0 && (
-              <View style={styles.betBadge}>
-                <Ionicons
-                  name="trophy"
-                  size={12}
-                  color={colors.secondaryForeground}
-                />
-                <Text style={styles.betText}>
-                  {game.bet.amount} {game.bet.currency}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.headerRight}>
-            {isTimerActive && game.status === "PLAYING" && (
-              <GameTimer
-                timeRemaining={timeRemaining}
-                totalTime={totalTime}
-                isMyTurn={isMyTurn}
-                isActive={true}
+          <View style={styles.headerTop}>
+            <View style={styles.headerLeft}>
+              <TurnPips
+                totalRounds={game.maxRounds}
+                currentRound={game.currentRound}
+                roundsWonByPlayer={roundsWonByPlayer}
+                roundsWonByOpponent={roundsWonByOpponent}
               />
-            )}
-            {game.status === "PLAYING" && (
-              <ConcedeButton onConcede={handleConcede} disabled={isPlaying} />
-            )}
-            {game.mode === "ONLINE" && (
-              <TouchableOpacity
-                onPress={() => router.push(`/(game)/chat/${matchId}`)}
-                style={styles.chatButton}
-              >
-                <Ionicons
-                  name="chatbubble"
-                  size={20}
-                  color={colors.secondary}
+              {game.bet.amount > 0 && (
+                <View style={styles.betBadge}>
+                  <Ionicons
+                    name="trophy"
+                    size={12}
+                    color={colors.secondaryForeground}
+                  />
+                  <Text style={styles.betText}>
+                    {game.bet.amount} {game.bet.currency}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.headerRight}>
+              {isTimerActive && game.status === "PLAYING" && (
+                <GameTimer
+                  timeRemaining={timeRemaining}
+                  totalTime={totalTime}
+                  isMyTurn={isMyTurn}
+                  isActive={true}
                 />
-              </TouchableOpacity>
-            )}
+              )}
+              {game.status === "PLAYING" && (
+                <ConcedeButton onConcede={handleConcede} disabled={isPlaying} />
+              )}
+              {game.mode === "ONLINE" && (
+                <TouchableOpacity
+                  onPress={() => router.push(`/(game)/chat/${matchId}`)}
+                  style={styles.chatButton}
+                >
+                  <Ionicons
+                    name="chatbubble"
+                    size={20}
+                    color={colors.secondary}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
-      </View>
 
-      {opponent && (
-        <OpponentZone
-          name={opponent.username}
-          hasHand={opponentHasHand}
-          cardsRemaining={opponentCardsRemaining}
-        />
-      )}
-
-      <View style={styles.playArea}>
-        {leadSuit && game.status === "PLAYING" && (
-          <DemandedSuitIndicator suit={leadSuit as Suit} visible={true} />
+        {opponent && (
+          <OpponentZone
+            name={opponent.username}
+            hasHand={opponentHasHand}
+            cardsRemaining={opponentCardsRemaining}
+          />
         )}
-        {playAreaMode === "battle" ?
-          <BattleZone
-            opponentCards={allOpponentCards.map((card: any) => ({
-              suit: card?.suit as Suit,
-              rank: card?.rank as Rank,
-            }))}
-            playerCards={allPlayerCards.map((card: any) => ({
-              suit: card?.suit as Suit,
-              rank: card?.rank as Rank,
-            }))}
-            leadSuit={leadSuit as Suit | undefined}
-            battleLayout={battleLayout}
-          />
-        : <TurnHistory
-            results={turnResults}
-            myPlayerId={myUserId}
-            game={game}
-            currentPlays={currentPlays}
-            currentRound={game.currentRound}
-          />
-        }
-      </View>
 
-      <View style={styles.handArea}>
-        <View style={styles.turnBadgeContainer}>
-          <TurnBadge visible={isMyTurn} hasHand={iHaveHand} />
+        <View style={styles.playArea}>
+          {leadSuit && game.status === "PLAYING" && (
+            <DemandedSuitIndicator suit={leadSuit as Suit} visible={true} />
+          )}
+          {playAreaMode === "battle" ?
+            <BattleZone
+              opponentCards={allOpponentCards.map((card: any) => ({
+                suit: card?.suit as Suit,
+                rank: card?.rank as Rank,
+              }))}
+              playerCards={allPlayerCards.map((card: any) => ({
+                suit: card?.suit as Suit,
+                rank: card?.rank as Rank,
+              }))}
+              leadSuit={leadSuit as Suit | undefined}
+              battleLayout={battleLayout}
+            />
+          : <TurnHistory
+              results={turnResults}
+              myPlayerId={myUserId}
+              game={game}
+              currentPlays={currentPlays}
+              currentRound={game.currentRound}
+            />
+          }
         </View>
-        <CardHand
-          cards={myHand}
-          isMyTurn={isMyTurn}
-          onCardSelect={handleCardSelect}
-          onCardDoubleTap={handleDoubleTapCard}
-          selectedCard={selectedCard}
-          disabled={isPlaying}
-        />
-      </View>
 
-      {game.status === "ENDED" && (
-        <>
-          <ResultAnimation
-            visible={resultPanelVisible}
-            victoryType={
-              game.victoryType as
-                | "normal"
-                | "simple_kora"
-                | "double_kora"
-                | "triple_kora"
-                | "auto_sum"
-                | "auto_sevens"
-                | "auto_lowest"
-            }
+        <View style={styles.handArea}>
+          <View style={styles.turnBadgeContainer}>
+            <TurnBadge visible={isMyTurn} hasHand={iHaveHand} />
+          </View>
+          <CardHand
+            cards={myHand}
+            isMyTurn={isMyTurn}
+            onCardSelect={handleCardSelect}
+            onCardDoubleTap={handleDoubleTapCard}
+            selectedCard={selectedCard}
+            disabled={isPlaying}
           />
-          <ResultPanel
-            visible={resultPanelVisible}
-            game={game}
-            myUserId={myUserId ?? null}
-            onPlayAgain={() => {
-              setResultPanelVisible(false);
-              router.replace("/(lobby)/select-mode");
-            }}
-            onGoHome={() => {
-              setResultPanelVisible(false);
-              router.replace("/(tabs)");
-            }}
-          />
-        </>
-      )}
+        </View>
+
+        {game.status === "ENDED" && (
+          <>
+            <ResultAnimation
+              visible={resultPanelVisible}
+              victoryType={
+                game.victoryType as
+                  | "normal"
+                  | "simple_kora"
+                  | "double_kora"
+                  | "triple_kora"
+                  | "auto_sum"
+                  | "auto_sevens"
+                  | "auto_lowest"
+              }
+            />
+            <ResultPanel
+              visible={resultPanelVisible}
+              game={game}
+              myUserId={myUserId ?? null}
+              onPlayAgain={() => {
+                setResultPanelVisible(false);
+                router.replace("/(lobby)/select-mode");
+              }}
+              onGoHome={() => {
+                setResultPanelVisible(false);
+                router.replace("/(tabs)");
+              }}
+            />
+          </>
+        )}
       </SafeAreaView>
     </LinearGradient>
   );
