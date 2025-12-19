@@ -611,8 +611,8 @@ export default function MatchScreen() {
                 router.replace("/(tabs)");
               }}
             />
-        </>
-      )}
+          </>
+        )}
       </SafeAreaView>
     </BackgroundGradient>
   );
