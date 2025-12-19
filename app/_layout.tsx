@@ -85,14 +85,7 @@ function RootLayoutNav() {
               ...modalHeaderOptions,
             }}
           />
-          <Stack.Screen
-            name="user/[userId]"
-            options={{
-              presentation: "modal",
-              title: "Profil",
-              ...modalHeaderOptions,
-            }}
-          />
+          <Stack.Screen name="user" options={{ headerShown: false }} />
         </Stack.Protected>
       </Stack>
       <StatusBar style="light" />

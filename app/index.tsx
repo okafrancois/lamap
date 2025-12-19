@@ -1,9 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "expo-router";
+import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  const router = useRouter();
   const {
     isSignedIn,
     isLoaded,
@@ -36,11 +35,10 @@ export default function Index() {
 
   if (isSignedIn) {
     if (needsOnboarding === true) {
-      router.push("/(onboarding)/username");
+      return <Redirect href="/(onboarding)/username" />;
     }
-
-    router.push("/(tabs)/index");
-  } else {
-    router.push("/welcome");
+    return <Redirect href="/(tabs)/index" />;
   }
+
+  return <Redirect href="/welcome" />;
 }
