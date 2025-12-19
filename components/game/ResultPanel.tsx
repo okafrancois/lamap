@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/Button";
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
@@ -36,6 +37,7 @@ export function ResultPanel({
   onPlayAgain,
   onGoHome,
 }: ResultPanelProps) {
+  const colors = useColors();
   const colorScheme = useColorScheme();
   const { playSound } = useSound();
   const soundPlayedRef = useRef(false);
@@ -267,10 +269,10 @@ export function ResultPanel({
             style={[
               styles.title,
               {
-                color: isWinner && isKoraWin ? "#A68258" : "#F5F2ED",
+                color: isWinner && isKoraWin ? colors.secondary : colors.text,
                 textShadowColor:
                   isWinner && isKoraWin ?
-                    "rgba(166, 130, 88, 0.5)"
+                    colors.secondary + "80"
                   : "transparent",
               },
             ]}
@@ -291,8 +293,12 @@ export function ResultPanel({
           </View>
 
           {/* Gains */}
-          <View style={styles.gainsContainer}>
-            <Text style={styles.gainsLabel}>
+          <View
+            style={[styles.gainsContainer, { backgroundColor: colors.muted }]}
+          >
+            <Text
+              style={[styles.gainsLabel, { color: colors.mutedForeground }]}
+            >
               {isWinner ? "Gains" : "Perte"}
             </Text>
             <Text
@@ -409,9 +415,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   star: {
-    color: "#A68258",
+    color: "#FFD700", // Or pour les étoiles
     fontSize: 28,
-    textShadowColor: "rgba(166, 130, 88, 0.6)",
+    textShadowColor: "rgba(255, 215, 0, 0.6)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 10,
   },
@@ -427,10 +433,10 @@ const styles = StyleSheet.create({
   multiplier: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#A68258",
+    color: "#FFD700", // Or pour le multiplicateur
     textAlign: "center",
     marginBottom: 16,
-    textShadowColor: "rgba(166, 130, 88, 0.4)",
+    textShadowColor: "rgba(255, 215, 0, 0.4)",
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
   },
@@ -444,11 +450,11 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#A68258",
+    backgroundColor: "#A68258", // Couleur gold vintage (fixe pour le design)
     opacity: 0.5,
   },
   separatorDiamond: {
-    color: "#A68258",
+    color: "#A68258", // Couleur gold vintage (fixe pour le design)
     fontSize: 12,
   },
   gainsContainer: {
@@ -457,13 +463,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     paddingHorizontal: 20,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
     borderRadius: 8,
     marginBottom: 24,
   },
   gainsLabel: {
     fontSize: 12,
-    color: "#8A9BA8",
     textTransform: "uppercase",
     letterSpacing: 1,
     fontWeight: "600",

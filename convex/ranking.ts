@@ -89,7 +89,7 @@ export const RANK_TIERS: Record<RankTier, RankInfo> = {
 };
 
 // PR de départ pour les nouveaux joueurs
-export const INITIAL_PR = 1000;
+export const INITIAL_PR = 500;
 
 // Constantes pour le calcul de PR
 export const K_FACTOR = 32; // Facteur K standard (peut être ajusté)

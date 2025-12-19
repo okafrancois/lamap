@@ -28,8 +28,8 @@ const usersTable = defineTable({
   onboardingCompleted: v.optional(v.boolean()),
   tutorialCompleted: v.optional(v.boolean()),
   // Système de ranking
-  pr: v.optional(v.number()), // Points de Rang (1000 par défaut)
-  kora: v.optional(v.number()), // Tokens cosmétiques
+  pr: v.optional(v.number()), // Points de Rang (1000 par défaut) - arrondi à l'entier
+  kora: v.optional(v.number()), // Tokens cosmétiques - arrondi à l'entier
   rankHistory: v.optional(v.array(v.string())), // Historique des rangs atteints (pour les récompenses)
 })
   .index("by_clerk_id", ["clerkUserId"])
@@ -43,11 +43,11 @@ const numbersTable = defineTable({
 // Table pour l'historique des changements de PR
 const prHistoryTable = defineTable({
   userId: v.id("users"),
-  oldPR: v.number(),
-  newPR: v.number(),
-  change: v.number(),
+  oldPR: v.number(), // Arrondi à l'entier
+  newPR: v.number(), // Arrondi à l'entier
+  change: v.number(), // Arrondi à l'entier
   opponentId: v.id("users"),
-  opponentPR: v.number(),
+  opponentPR: v.number(), // Arrondi à l'entier
   won: v.boolean(),
   gameId: v.optional(v.string()),
   timestamp: v.number(),

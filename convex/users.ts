@@ -18,7 +18,6 @@ export const updateOrCreateUser = internalMutation({
     // Extraire le nom complet
     const firstName = clerkUser.first_name || "";
     const lastName = clerkUser.last_name || "";
-    const fullName = `${firstName} ${lastName}`.trim() || "Utilisateur";
 
     // Trouver l'email principal (gérer le cas où email_addresses est vide)
     const primaryEmail = clerkUser.email_addresses?.find?.(
@@ -58,11 +57,8 @@ export const updateOrCreateUser = internalMutation({
         avatarUrl: avatarUrl || undefined,
         createdAt: Date.now(),
         isActive: true,
-        username:
-          clerkUser.username || fullName.toLowerCase().replace(/ /g, "-"),
+        username: clerkUser.username ?? email.split("@")[0],
         clerkUserId: clerkUser.id,
-        balance: 1000, // Starting balance for new users
-        currency: "XAF", // Default currency (Franc CFA)
       });
       return newUserId;
     }
@@ -109,6 +105,10 @@ const getUserQuery = {
       country: v.optional(v.string()),
       onboardingCompleted: v.optional(v.boolean()),
       tutorialCompleted: v.optional(v.boolean()),
+      // Système de ranking
+      pr: v.optional(v.number()),
+      kora: v.optional(v.number()),
+      rankHistory: v.optional(v.array(v.string())),
     }),
     v.null()
   ),
