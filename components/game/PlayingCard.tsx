@@ -15,10 +15,10 @@ import Animated, {
   Easing,
   useAnimatedStyle,
   useSharedValue,
-  withSequence,
-  withTiming,
   withRepeat,
+  withSequence,
   withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";

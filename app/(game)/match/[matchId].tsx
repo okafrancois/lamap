@@ -11,6 +11,7 @@ import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
 import { Button } from "@/components/ui/Button";
+import { LinearGradient } from "expo-linear-gradient";
 import { api } from "@/convex/_generated/api";
 import { Rank, Suit } from "@/convex/validators";
 import { useColors } from "@/hooks/useColors";
@@ -209,7 +210,6 @@ export default function MatchScreen() {
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
     },
     loadingText: {
       color: colors.text,
@@ -479,8 +479,14 @@ export default function MatchScreen() {
   ].filter(Boolean);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
+    <LinearGradient
+      colors={["#2E3D4D", "#3A4D5F", "#2E3D4D"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={{ flex: 1 }}
+    >
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
             <TurnPips
@@ -609,6 +615,7 @@ export default function MatchScreen() {
           />
         </>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }

@@ -13,7 +13,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
-const PANEL_HEIGHT = 340;
+const PANEL_HEIGHT = 280;
 
 interface ResultPanelProps {
   visible: boolean;
@@ -75,7 +75,7 @@ export function ResultPanel({
     if (game.victoryType === "auto_sum") return "Auto-victoire (Somme)";
     if (game.victoryType === "auto_sevens") return "Auto-victoire (7)";
     if (game.victoryType === "auto_lowest") return "Auto-victoire";
-    return "Victoire";
+    return "Victoire 🎉 !";
   };
 
   const isKoraWin =
@@ -382,9 +382,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
-    paddingTop: 32,
-    paddingBottom: 32,
+    padding: 20,
+    paddingTop: 20,
+    paddingBottom: 20,
   },
   starsContainer: {
     flexDirection: "row",
