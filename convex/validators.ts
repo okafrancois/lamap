@@ -21,7 +21,11 @@ export const gameModeValidator = v.union(
   v.literal("LOCAL")
 );
 
-export const currencyValidator = v.union(v.literal("EUR"), v.literal("XAF"));
+export const currencyValidator = v.union(
+  v.literal("XAF"),
+  v.literal("EUR"),
+  v.literal("USD")
+);
 
 export const suitValidator = v.union(
   v.literal("hearts"),

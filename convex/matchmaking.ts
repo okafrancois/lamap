@@ -11,8 +11,8 @@ export const joinQueue = mutation({
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("matchmakingQueue")
-      .withIndex("by_status_bet", (q) =>
-        q.eq("status", "searching").eq("betAmount", args.betAmount)
+      .withIndex("by_status_bet_currency", (q) =>
+        q.eq("status", "searching").eq("betAmount", args.betAmount).eq("currency", args.currency)
       )
       .filter((q) => q.eq(q.field("userId"), args.userId))
       .first();
@@ -33,14 +33,15 @@ export const joinQueue = mutation({
     const queueEntry = await ctx.db.insert("matchmakingQueue", {
       userId: args.userId,
       betAmount: args.betAmount,
+      currency: args.currency,
       status: "searching",
       joinedAt: Date.now(),
     });
 
     const potentialMatch = await ctx.db
       .query("matchmakingQueue")
-      .withIndex("by_status_bet", (q) =>
-        q.eq("status", "searching").eq("betAmount", args.betAmount)
+      .withIndex("by_status_bet_currency", (q) =>
+        q.eq("status", "searching").eq("betAmount", args.betAmount).eq("currency", args.currency)
       )
       .filter((q) => q.neq(q.field("userId"), args.userId))
       .first();
@@ -75,6 +76,7 @@ export const joinQueue = mutation({
         userId: args.userId,
         type: "bet",
         amount: -args.betAmount,
+        currency: args.currency,
         gameId,
         description: `Mise de ${args.betAmount} ${args.currency} pour la partie`,
         createdAt: Date.now(),
@@ -84,6 +86,7 @@ export const joinQueue = mutation({
         userId: potentialMatch.userId,
         type: "bet",
         amount: -args.betAmount,
+        currency: args.currency,
         gameId,
         description: `Mise de ${args.betAmount} ${args.currency} pour la partie`,
         createdAt: Date.now(),
@@ -339,6 +342,7 @@ export const createMatchVsAI = mutation({
         userId: args.playerId,
         type: "bet",
         amount: -args.betAmount,
+        currency: args.currency,
         gameId,
         description: `Mise de ${args.betAmount} ${args.currency} pour la partie vs IA`,
         createdAt: Date.now(),

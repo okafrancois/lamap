@@ -72,21 +72,27 @@ const gameMessagesTable = defineTable(gameChatMessageValidator)
 
 const transactionsTable = defineTable({
   userId: v.id("users"),
-  type: v.string(), // "bet" | "win" | "deposit" | "withdrawal"
+  type: v.string(),
   amount: v.number(),
+  currency: v.string(),
   gameId: v.optional(v.string()),
   description: v.string(),
   createdAt: v.number(),
-}).index("by_user", ["userId"]);
+})
+  .index("by_user", ["userId"])
+  .index("by_user_currency", ["userId", "currency"]);
 
 const matchmakingQueueTable = defineTable({
   userId: v.id("users"),
   betAmount: v.number(),
-  status: v.string(), // "searching" | "matched" | "cancelled"
+  currency: v.string(),
+  status: v.string(),
   matchedWith: v.optional(v.id("users")),
   gameId: v.optional(v.string()),
   joinedAt: v.number(),
-}).index("by_status_bet", ["status", "betAmount"]);
+})
+  .index("by_status_bet", ["status", "betAmount"])
+  .index("by_status_bet_currency", ["status", "betAmount", "currency"]);
 
 const conversationsTable = defineTable({
   participants: v.array(v.id("users")),
