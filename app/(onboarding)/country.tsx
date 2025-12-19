@@ -8,7 +8,6 @@ import { useColors } from "@/hooks/useColors";
 import { Button } from "@/components/ui/Button";
 import { CountrySelector } from "@/components/onboarding/CountrySelector";
 import { useAuth } from "@/hooks/useAuth";
-import { CURRENCY_SYMBOLS } from "@/convex/currencies";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -19,7 +18,6 @@ export default function CountryScreen() {
   const router = useRouter();
   const { convexUser } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState<string>();
-  const [selectedCurrency, setSelectedCurrency] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const setCountryMutation = useMutation(api.onboarding.setCountry);
@@ -35,12 +33,10 @@ export default function CountryScreen() {
     try {
       setIsSubmitting(true);
       
-      const result = await setCountryMutation({
+      await setCountryMutation({
         userId: convexUser._id,
         countryCode: selectedCountry,
       });
-      
-      setSelectedCurrency(result.currency);
       
       await completeOnboardingMutation({
         userId: convexUser._id,
