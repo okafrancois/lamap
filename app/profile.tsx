@@ -3,13 +3,17 @@ import { RankProgress } from "@/components/ranking/RankProgress";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { useRouter } from "expo-router";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -17,6 +21,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -52,25 +57,6 @@ export default function ProfileScreen() {
     return gameHistory.filter((game) => game.mode !== "AI");
   }, [gameHistory, showAIGames]);
 
-  const formatDate = useCallback((timestamp: number) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return "À l'instant";
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays < 7) return `Il y a ${diffDays}j`;
-
-    return date.toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "short",
-    });
-  }, []);
-
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -83,35 +69,58 @@ export default function ProfileScreen() {
       padding: 24,
     },
     header: {
-      flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 8,
+      paddingVertical: 10,
       paddingHorizontal: 16,
       backgroundColor: colors.background,
-      gap: 12,
     },
     headerInfo: {
-      flex: 1,
+      alignItems: "center",
+      marginTop: 16,
+    },
+    avatarContainer: {
+      position: "relative",
+    },
+    avatarEditButton: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      width: 32,
+      height: 32,
       justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 2,
+      borderColor: colors.background,
     },
     username: {
-      fontSize: 18,
+      fontSize: 24,
       fontWeight: "700",
       color: colors.text,
-      marginTop: 0,
+      marginTop: 8,
+    },
+    usernameRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginTop: 8,
     },
     email: {
-      fontSize: 12,
+      fontSize: 14,
       color: colors.mutedForeground,
-      marginTop: 2,
+      marginTop: 4,
     },
     sceneContainer: {
       flex: 1,
     },
     rankSection: {
-      alignItems: "center",
-      gap: 16,
-      marginBottom: 32,
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 24,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     statsSection: {
       marginBottom: 24,
@@ -137,40 +146,74 @@ export default function ProfileScreen() {
       borderWidth: 1,
       borderColor: colors.border,
     },
+    statItemHighlight: {
+      backgroundColor: colors.accent,
+      borderWidth: 2,
+      borderColor: Colors.gameUI.orSable,
+    },
+    statIcon: {
+      fontSize: 24,
+      marginBottom: 8,
+    },
     statValue: {
       fontSize: 24,
       fontWeight: "700",
       color: colors.text,
       marginBottom: 4,
     },
+    statValueHighlight: {
+      fontSize: 28,
+      color: Colors.gameUI.orSable,
+    },
     statLabel: {
       fontSize: 12,
       color: colors.mutedForeground,
       textAlign: "center",
+    },
+    statLabelHighlight: {
+      fontSize: 14,
+      fontWeight: "600",
     },
     balanceSection: {
       backgroundColor: colors.card,
       borderRadius: 16,
       padding: 20,
       marginBottom: 24,
-      borderWidth: 1,
-      borderColor: colors.border,
+      borderWidth: 2,
+      borderColor: Colors.gameUI.orSable,
     },
     balanceLabel: {
       fontSize: 14,
       color: colors.mutedForeground,
-      marginBottom: 8,
+      marginBottom: 12,
+      fontWeight: "600",
+    },
+    balanceRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 12,
     },
     balanceAmount: {
       fontSize: 32,
       fontWeight: "700",
       color: colors.text,
-      marginBottom: 4,
+    },
+    koraRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+      marginBottom: 16,
     },
     koraAmount: {
-      fontSize: 18,
+      fontSize: 20,
       fontWeight: "600",
-      color: colors.secondary,
+      color: Colors.gameUI.orSable,
+    },
+    balanceActions: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 8,
     },
     actions: {
       gap: 12,
@@ -252,57 +295,132 @@ export default function ProfileScreen() {
     },
   });
 
+  const currentRank = getRankFromPR(user?.pr || INITIAL_PR);
+
   const ProfileScene = React.useMemo(() => {
     const ProfileSceneComponent = () => (
       <ScrollView style={styles.sceneContainer}>
         <View style={styles.content}>
           <View style={styles.rankSection}>
-            <RankBadge
-              rank={getRankFromPR(user?.pr || INITIAL_PR)}
-              size="large"
-            />
             <RankProgress pr={user?.pr || INITIAL_PR} />
           </View>
 
           <View style={styles.balanceSection}>
             <Text style={styles.balanceLabel}>Solde</Text>
-            <Text style={styles.balanceAmount}>
-              {user?.balance?.toLocaleString() || 0} {user?.currency || "XAF"}
-            </Text>
-            <Text style={styles.koraAmount}>
-              {user?.kora?.toLocaleString() || 0} Kora
-            </Text>
+            <View style={styles.balanceRow}>
+              <IconSymbol
+                name="dollarsign.circle.fill"
+                size={24}
+                color={colors.text}
+              />
+              <Text style={styles.balanceAmount}>
+                {user?.balance?.toLocaleString() || 0} {user?.currency || "XAF"}
+              </Text>
+            </View>
+            <View style={styles.koraRow}>
+              <IconSymbol
+                name="circle.fill"
+                size={20}
+                color={Colors.gameUI.orSable}
+              />
+              <Text style={styles.koraAmount}>
+                {user?.kora?.toLocaleString() || 0} Kora
+              </Text>
+            </View>
+            <View style={styles.balanceActions}>
+              <Button
+                title="Déposer"
+                onPress={() => router.push("/(tabs)/wallet")}
+                variant="outline"
+                size="sm"
+                style={{ flex: 1 }}
+              />
+              <Button
+                title="Retirer"
+                onPress={() => router.push("/(tabs)/wallet")}
+                variant="outline"
+                size="sm"
+                style={{ flex: 1 }}
+              />
+            </View>
           </View>
 
           <View style={styles.statsSection}>
             <Text style={styles.sectionTitle}>Statistiques de classement</Text>
             <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>{prStats?.currentPR || 0}</Text>
-                <Text style={styles.statLabel}>PR Actuel</Text>
+              <View style={[styles.statItem, styles.statItemHighlight]}>
+                <IconSymbol
+                  name="scope"
+                  size={24}
+                  color={Colors.gameUI.orSable}
+                  style={styles.statIcon}
+                />
+                <Text style={[styles.statValue, styles.statValueHighlight]}>
+                  {prStats?.currentPR || 0}
+                </Text>
+                <Text style={[styles.statLabel, styles.statLabelHighlight]}>
+                  PR Actuel
+                </Text>
               </View>
               <View style={styles.statItem}>
+                <IconSymbol
+                  name="gamecontroller.fill"
+                  size={24}
+                  color={colors.mutedForeground}
+                  style={styles.statIcon}
+                />
                 <Text style={styles.statValue}>{prStats?.totalGames || 0}</Text>
                 <Text style={styles.statLabel}>Parties jouées</Text>
               </View>
               <View style={styles.statItem}>
+                <IconSymbol
+                  name="trophy.fill"
+                  size={24}
+                  color={colors.mutedForeground}
+                  style={styles.statIcon}
+                />
                 <Text style={styles.statValue}>{prStats?.wins || 0}</Text>
                 <Text style={styles.statLabel}>Victoires</Text>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statValue}>
+              <View style={[styles.statItem, styles.statItemHighlight]}>
+                <IconSymbol
+                  name="chart.bar"
+                  size={24}
+                  color={Colors.gameUI.orSable}
+                  style={styles.statIcon}
+                />
+                <Text style={[styles.statValue, styles.statValueHighlight]}>
                   {prStats?.winRate.toFixed(1) || "0.0"}%
                 </Text>
-                <Text style={styles.statLabel}>Taux de victoire</Text>
+                <Text style={[styles.statLabel, styles.statLabelHighlight]}>
+                  Taux de victoire
+                </Text>
               </View>
               <View style={styles.statItem}>
+                <IconSymbol
+                  name="star.fill"
+                  size={24}
+                  color={colors.mutedForeground}
+                  style={styles.statIcon}
+                />
                 <Text style={styles.statValue}>{prStats?.maxPR || 0}</Text>
                 <Text style={styles.statLabel}>PR Maximum</Text>
               </View>
               <View style={styles.statItem}>
+                <IconSymbol
+                  name={
+                    prStats?.streakType === "win" ? "flame.fill" : "drop.fill"
+                  }
+                  size={24}
+                  color={
+                    prStats?.streakType === "win" ?
+                      colors.secondary
+                    : colors.mutedForeground
+                  }
+                  style={styles.statIcon}
+                />
                 <Text style={styles.statValue}>
                   {prStats?.currentStreak || 0}
-                  {prStats?.streakType === "win" ? " 🔥" : ""}
                 </Text>
                 <Text style={styles.statLabel}>
                   Série actuelle ({prStats?.streakType === "win" ? "V" : "D"})
@@ -316,6 +434,13 @@ export default function ProfileScreen() {
               title="Paramètres"
               onPress={() => router.push("/settings")}
               variant="secondary"
+              icon={
+                <IconSymbol
+                  name="gearshape.fill"
+                  size={20}
+                  color={colors.secondaryForeground}
+                />
+              }
             />
           </View>
         </View>
@@ -323,7 +448,7 @@ export default function ProfileScreen() {
     );
     ProfileSceneComponent.displayName = "ProfileScene";
     return ProfileSceneComponent;
-  }, [user, prStats, router, styles]);
+  }, [user, prStats, router, styles, colors]);
 
   const HistoryScene = React.useMemo(() => {
     const HistorySceneComponent = () => (
@@ -365,7 +490,9 @@ export default function ProfileScreen() {
                       {item.opponent?.username || "Adversaire"}
                     </Text>
                     <Text style={styles.gameDate}>
-                      {formatDate(item.endedAt || 0)}
+                      {format(new Date(item.endedAt || 0), "d MMM", {
+                        locale: fr,
+                      })}
                     </Text>
                   </View>
                   <View
@@ -414,7 +541,7 @@ export default function ProfileScreen() {
     );
     HistorySceneComponent.displayName = "HistoryScene";
     return HistorySceneComponent;
-  }, [filteredGames, showAIGames, colors, router, formatDate, styles]);
+  }, [filteredGames, showAIGames, colors, router, styles]);
 
   const routes = [
     { key: "profile", title: "Profil" },
@@ -441,7 +568,7 @@ export default function ProfileScreen() {
       {...props}
       indicatorStyle={{
         backgroundColor: colors.primary,
-        height: 3,
+        height: 4,
         borderRadius: 2,
       }}
       style={{
@@ -463,19 +590,63 @@ export default function ProfileScreen() {
       contentContainerStyle={{
         paddingHorizontal: 16,
       }}
+      renderLabel={({
+        route,
+        focused,
+        color,
+      }: {
+        route: { title: string; key: string };
+        focused: boolean;
+        color: string;
+      }) => (
+        <View
+          style={{
+            paddingVertical: 8,
+            paddingHorizontal: 12,
+            borderRadius: 8,
+            backgroundColor: focused ? colors.accent : "transparent",
+          }}
+        >
+          <Text
+            style={{
+              color,
+              fontSize: 14,
+              fontWeight: "600",
+            }}
+          >
+            {route.title}
+          </Text>
+        </View>
+      )}
     />
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.header}>
-        <Avatar
-          imageUrl={user.avatarUrl || undefined}
-          name={user.username}
-          size={60}
-        />
+        <View style={styles.avatarContainer}>
+          <Avatar
+            imageUrl={user.avatarUrl || undefined}
+            name={user.username}
+            size={80}
+          />
+          <TouchableOpacity
+            style={styles.avatarEditButton}
+            onPress={() => router.push("/settings")}
+            activeOpacity={0.7}
+          >
+            <IconSymbol
+              name="pencil.circle.fill"
+              size={16}
+              color={colors.text}
+            />
+          </TouchableOpacity>
+        </View>
         <View style={styles.headerInfo}>
-          <Text style={styles.username}>{user.username}</Text>
+          <View style={styles.usernameRow}>
+            <Text style={styles.username}>{user.username}</Text>
+            <RankBadge rank={currentRank} size="small" showName />
+          </View>
           {clerkUser?.primaryEmailAddress && (
             <Text style={styles.email}>
               {clerkUser.primaryEmailAddress.emailAddress}

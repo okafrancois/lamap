@@ -29,6 +29,15 @@ const MAPPING = {
   "wallet.pass.fill": "account-balance-wallet",
   "person.fill": "person",
   "person.2.fill": "people",
+  "pencil.circle.fill": "edit",
+  "dollarsign.circle.fill": "account-balance-wallet",
+  "circle.fill": "lens",
+  scope: "track-changes",
+  "trophy.fill": "emoji-events",
+  "chart.bar": "bar-chart",
+  "star.fill": "star",
+  "flame.fill": "local-fire-department",
+  "drop.fill": "water-drop",
 } as IconMapping;
 
 /**

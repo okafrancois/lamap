@@ -1,4 +1,5 @@
-import { getRankFromPR, INITIAL_PR, RankInfo } from "@/convex/ranking";
+import { Colors } from "@/constants/theme";
+import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
 import { useColors } from "@/hooks/useColors";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
@@ -9,31 +10,30 @@ interface RankProgressProps {
   showDetails?: boolean;
 }
 
-export function RankProgress({ pr = INITIAL_PR, showDetails = true }: RankProgressProps) {
+export function RankProgress({
+  pr = INITIAL_PR,
+  showDetails = true,
+}: RankProgressProps) {
   const colors = useColors();
   const currentRank = getRankFromPR(pr);
-  
-  // Calculer la progression dans le rang actuel
+
   const progress =
-    currentRank.maxPR === Infinity
-      ? 100
-      : ((pr - currentRank.minPR) / (currentRank.maxPR - currentRank.minPR)) * 100;
+    currentRank.maxPR === Infinity ?
+      100
+    : ((pr - currentRank.minPR) / (currentRank.maxPR - currentRank.minPR)) *
+      100;
 
   const prInCurrentRank = pr - currentRank.minPR;
-  const prToNextRank = currentRank.maxPR === Infinity ? 0 : currentRank.maxPR - pr;
+  const prToNextRank =
+    currentRank.maxPR === Infinity ? 0 : currentRank.maxPR - pr;
+  const totalPRInRank =
+    currentRank.maxPR === Infinity ? 0 : currentRank.maxPR - currentRank.minPR;
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <RankBadge rank={currentRank} size="medium" showName />
-        <View style={styles.prContainer}>
-          <Text style={[styles.prValue, { color: colors.text }]}>
-            {pr}
-          </Text>
-          <Text style={[styles.prLabel, { color: colors.mutedForeground }]}>
-            PR
-          </Text>
-        </View>
+        <Text style={[styles.prValue, { color: colors.text }]}>{pr} PR</Text>
       </View>
 
       {showDetails && (
@@ -50,7 +50,7 @@ export function RankProgress({ pr = INITIAL_PR, showDetails = true }: RankProgre
                   styles.progressBarFill,
                   {
                     width: `${Math.min(progress, 100)}%`,
-                    backgroundColor: currentRank.color,
+                    backgroundColor: Colors.gameUI.orSable,
                   },
                 ]}
               />
@@ -58,20 +58,25 @@ export function RankProgress({ pr = INITIAL_PR, showDetails = true }: RankProgre
           </View>
 
           <View style={styles.details}>
-            {currentRank.maxPR !== Infinity ? (
+            {currentRank.maxPR !== Infinity ?
               <>
-                <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
-                  {prInCurrentRank} / {currentRank.maxPR - currentRank.minPR} PR
+                <Text
+                  style={[styles.detailText, { color: colors.mutedForeground }]}
+                >
+                  {prInCurrentRank} / {totalPRInRank} PR
                 </Text>
-                <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+                <Text
+                  style={[styles.detailText, { color: colors.mutedForeground }]}
+                >
                   {prToNextRank} PR pour le rang suivant
                 </Text>
               </>
-            ) : (
-              <Text style={[styles.detailText, { color: colors.mutedForeground }]}>
+            : <Text
+                style={[styles.detailText, { color: colors.mutedForeground }]}
+              >
                 Rang maximum atteint ! 🎉
               </Text>
-            )}
+            }
           </View>
         </>
       )}
@@ -87,24 +92,19 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  prContainer: {
-    alignItems: "flex-end",
+    marginBottom: 12,
   },
   prValue: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: "700",
-  },
-  prLabel: {
-    fontSize: 12,
-    fontWeight: "600",
   },
   progressBarContainer: {
     width: "100%",
+    marginBottom: 8,
   },
   progressBarBackground: {
-    height: 8,
-    borderRadius: 4,
+    height: 10,
+    borderRadius: 5,
     overflow: "hidden",
   },
   progressBarFill: {
@@ -121,4 +121,3 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
 });
-
