@@ -437,7 +437,7 @@ export default function HomeScreen() {
               ))}
               <Button
                 title="Voir toutes les parties"
-                onPress={() => router.push("/history")}
+                onPress={() => router.push("/profile")}
                 variant="outline"
                 style={styles.viewAllButton}
               />

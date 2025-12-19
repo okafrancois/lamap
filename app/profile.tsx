@@ -240,7 +240,7 @@ export default function ProfileScreen() {
       marginBottom: 24,
     },
     listContent: {
-      paddingBottom: 100,
+      paddingHorizontal: 24,
     },
     gameCard: {
       backgroundColor: colors.card,
@@ -545,7 +545,7 @@ export default function ProfileScreen() {
 
   const routes = [
     { key: "profile", title: "Profil" },
-    { key: "history", title: "Historique" },
+    { key: "history", title: "Mes parties" },
   ];
 
   const renderScene = SceneMap({
