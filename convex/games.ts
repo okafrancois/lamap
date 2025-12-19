@@ -1435,6 +1435,7 @@ export const getRecentGames = query({
           result: isWinner ? ("win" as const) : ("loss" as const),
           betAmount: game.bet.amount,
           endedAt: game.endedAt,
+          mode: game.mode,
         };
       })
     );
