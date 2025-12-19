@@ -1,9 +1,9 @@
 import { BattleLayoutPreview } from "@/components/settings/BattleLayoutPreview";
 import { CardLayoutPreview } from "@/components/settings/CardLayoutPreview";
+import { CURRENCY_NAMES, CURRENCY_SYMBOLS } from "@/convex/currencies";
+import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useSettings } from "@/hooks/useSettings";
-import { useAuth } from "@/hooks/useAuth";
-import { CURRENCY_SYMBOLS, CURRENCY_NAMES } from "@/convex/currencies";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
@@ -155,15 +155,19 @@ export default function SettingsScreen() {
         <View style={styles.content}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Compte</Text>
-            
+
             <TouchableOpacity style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>Nom d'utilisateur</Text>
+                <Text style={styles.settingTitle}>Nom d&apos;utilisateur</Text>
                 <Text style={styles.settingDescription}>
                   {convexUser?.username || "Non défini"}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.mutedForeground}
+              />
             </TouchableOpacity>
 
             <View style={{ height: 12 }} />
@@ -175,7 +179,11 @@ export default function SettingsScreen() {
                   {convexUser?.country || "Non défini"}
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={colors.mutedForeground}
+              />
             </TouchableOpacity>
 
             <View style={{ height: 12 }} />
