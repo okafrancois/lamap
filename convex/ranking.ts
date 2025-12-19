@@ -278,7 +278,10 @@ export const updatePlayerPRInternal = internalMutation({
     });
 
     // Enregistrer dans l'historique (seulement si l'adversaire est un utilisateur, pas un bot)
-    if (typeof args.opponentId === "string" && args.opponentId.startsWith("ai-")) {
+    if (
+      typeof args.opponentId === "string" &&
+      args.opponentId.startsWith("ai-")
+    ) {
       // Ne pas enregistrer l'historique pour les parties contre l'IA
       return {
         oldPR: playerPR,

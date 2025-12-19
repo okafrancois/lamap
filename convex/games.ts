@@ -23,12 +23,12 @@ import {
   updatePlayerTurn,
   validatePlayCardAction,
 } from "./gameEngine";
+import { INITIAL_PR } from "./ranking";
 import {
   aiDifficultyValidator,
   currencyValidator,
   gameModeValidator,
 } from "./validators";
-import { INITIAL_PR } from "./ranking";
 
 // ========== QUERIES ==========
 
@@ -1585,11 +1585,14 @@ export const getUserGameHistory = query({
         const isWinner = game.winnerId === user._id;
         const isOwner = viewerUserId ? viewerUserId === user._id : true; // Si pas de viewerUserId, on assume que c'est le propriétaire
         const isCashGame = game.mode === "CASH";
-        
+
         // Masquer le montant de la mise pour les parties cash si ce n'est pas le propriétaire
         const shouldMaskBet = isCashGame && !isOwner;
-        
-        const gain = shouldMaskBet ? 0 : (isWinner ? game.bet.amount : -game.bet.amount);
+
+        const gain =
+          shouldMaskBet ? 0
+          : isWinner ? game.bet.amount
+          : -game.bet.amount;
 
         return {
           gameId: game.gameId,

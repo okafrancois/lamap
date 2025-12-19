@@ -62,7 +62,10 @@ export function ChallengeModal({
         competitive: mode === "CASH" ? isCompetitive : undefined,
       });
 
-      Alert.alert("Défi envoyé", `Votre défi a été envoyé à ${challengedUsername}.`);
+      Alert.alert(
+        "Défi envoyé",
+        `Votre défi a été envoyé à ${challengedUsername}.`
+      );
       onClose();
       setMode("RANKED");
       setBetAmount("");
@@ -190,10 +193,11 @@ export function ChallengeModal({
             {mode === "RANKED" && (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Partie Classée</Text>
-                <Text style={{ color: colors.mutedForeground, marginBottom: 12 }}>
-                  • Gratuite (0 mise){"\n"}
-                  • Affecte votre classement PR{"\n"}
-                  • Matchmaking par rang
+                <Text
+                  style={{ color: colors.mutedForeground, marginBottom: 12 }}
+                >
+                  • Gratuite (0 mise){"\n"}• Affecte votre classement PR{"\n"}•
+                  Matchmaking par rang
                 </Text>
               </View>
             )}
@@ -219,13 +223,17 @@ export function ChallengeModal({
                       <Text style={styles.toggleDescription}>
                         {isCompetitive ?
                           "✓ Affecte votre classement PR\n✓ Matchmaking par rang\n✓ Gains d'argent réel"
-                        : "• N'affecte pas votre PR\n• Matchmaking libre\n• Gains d'argent réel uniquement"}
+                        : "• N'affecte pas votre PR\n• Matchmaking libre\n• Gains d'argent réel uniquement"
+                        }
                       </Text>
                     </View>
                     <Switch
                       value={isCompetitive}
                       onValueChange={setIsCompetitive}
-                      trackColor={{ false: colors.muted, true: colors.secondary }}
+                      trackColor={{
+                        false: colors.muted,
+                        true: colors.secondary,
+                      }}
                       thumbColor={colors.card}
                     />
                   </View>
@@ -254,4 +262,3 @@ export function ChallengeModal({
     </Modal>
   );
 }
-

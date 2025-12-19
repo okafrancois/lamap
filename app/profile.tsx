@@ -47,7 +47,9 @@ export default function ProfileScreen() {
 
   const gameHistory = useQuery(
     api.games.getUserGameHistory,
-    userId && user?._id ? { clerkUserId: userId, viewerUserId: user._id, limit: 50 } : "skip"
+    userId && user?._id ?
+      { clerkUserId: userId, viewerUserId: user._id, limit: 50 }
+    : "skip"
   );
 
   // Filtrer les parties IA par défaut
