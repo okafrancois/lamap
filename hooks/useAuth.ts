@@ -12,11 +12,9 @@ export function useAuth() {
   );
 
   // Si l'utilisateur existe et n'a pas complété l'onboarding
-  const needsOnboarding = convexUser ? !convexUser.onboardingCompleted : undefined;
-  
-  // L'utilisateur Convex est chargé si :
-  // - Pas connecté (pas besoin d'attendre)
-  // - Ou connecté ET convexUser existe (ou null si vraiment pas trouvé après plusieurs tentatives)
+  const needsOnboarding =
+    convexUser ? !convexUser.onboardingCompleted : undefined;
+
   const isConvexUserLoaded = !isSignedIn || convexUser !== undefined;
 
   return {

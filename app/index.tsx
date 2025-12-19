@@ -3,7 +3,8 @@ import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  const { isSignedIn, isLoaded, isConvexUserLoaded, needsOnboarding } = useAuth();
+  const { isSignedIn, isLoaded, isConvexUserLoaded, needsOnboarding } =
+    useAuth();
 
   // Attendre que Clerk ET Convex soient chargés
   if (!isLoaded || (isSignedIn && !isConvexUserLoaded)) {
