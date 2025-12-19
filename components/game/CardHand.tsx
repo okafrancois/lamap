@@ -52,7 +52,6 @@ const AnimatedCard = React.memo(function AnimatedCard({
   const screenWidth = Dimensions.get("window").width;
   const cardWidth = 100;
 
-  // Calcul selon le layout
   let spacing, rotation, offset;
 
   switch (layout) {
@@ -140,7 +139,6 @@ export function CardHand({
 }: CardHandProps) {
   const { cardLayout } = useSettings();
 
-  // Store last tap time for double tap detection
   const lastTapRef = React.useRef<{ time: number; cardId: string } | null>(
     null
   );
@@ -161,7 +159,6 @@ export function CardHand({
     if (disabled || !isMyTurn) return;
     if (!card.playable) return;
 
-    // If card is already selected, play it directly
     if (selectedCard && selectedCard.id === card.id) {
       if (onCardDoubleTap) {
         onCardDoubleTap(card);
@@ -172,19 +169,16 @@ export function CardHand({
     const now = Date.now();
     const cardId = card.id;
 
-    // Check for double tap
     if (
       lastTapRef.current &&
       lastTapRef.current.cardId === cardId &&
-      now - lastTapRef.current.time < 300 // 300ms threshold
+      now - lastTapRef.current.time < 300
     ) {
-      // Double tap detected!
       if (onCardDoubleTap) {
         onCardDoubleTap(card);
       }
-      lastTapRef.current = null; // Reset
+      lastTapRef.current = null;
     } else {
-      // Single tap - select the card
       lastTapRef.current = { time: now, cardId };
       onCardSelect(card);
     }

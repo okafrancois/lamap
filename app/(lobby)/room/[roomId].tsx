@@ -9,7 +9,11 @@ import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery } from "convex/react";
-import { type ErrorBoundaryProps, useLocalSearchParams, useRouter } from "expo-router";
+import {
+  type ErrorBoundaryProps,
+  useLocalSearchParams,
+  useRouter,
+} from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -103,7 +107,6 @@ export default function RoomScreen() {
   const hasStartedTimerRef = useRef(false);
   const currentGameIdRef = useRef<string | null>(null);
 
-  // Réinitialiser le timer si on change de partie
   useEffect(() => {
     if (game?.gameId && game.gameId !== currentGameIdRef.current) {
       currentGameIdRef.current = game.gameId;
@@ -112,7 +115,6 @@ export default function RoomScreen() {
     }
   }, [game?.gameId]);
 
-  // Son quand la partie démarre (détection du changement de status)
   useEffect(() => {
     if (
       previousGameStatus.current !== "PLAYING" &&
@@ -124,7 +126,6 @@ export default function RoomScreen() {
     previousGameStatus.current = game?.status;
   }, [game?.status, roomId, router, playSound]);
 
-  // Démarrage automatique 3 secondes après le match
   useEffect(() => {
     if (
       game?.status === "WAITING" &&
@@ -175,7 +176,6 @@ export default function RoomScreen() {
     game?.players,
   ]);
 
-  // Réinitialiser le timer si le statut change
   useEffect(() => {
     if (game?.status !== "WAITING") {
       if (startTimerRef.current) {

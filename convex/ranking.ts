@@ -2,8 +2,6 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 
-// ========== CONSTANTES DE RANKING ==========
-
 export type RankTier =
   | "BRONZE"
   | "SILVER"
@@ -20,7 +18,7 @@ export interface RankInfo {
   maxPR: number;
   color: string;
   icon: string;
-  koraReward: number; // Kora gagnés lors de la première montée à ce rang
+  koraReward: number;
 }
 
 export const RANK_TIERS: Record<RankTier, RankInfo> = {
@@ -89,14 +87,10 @@ export const RANK_TIERS: Record<RankTier, RankInfo> = {
   },
 };
 
-// PR de départ pour les nouveaux joueurs
 export const INITIAL_PR = 500;
 
-// Constantes pour le calcul de PR
-export const K_FACTOR = 32; // Facteur K standard (peut être ajusté)
-export const MIN_PR = 0; // PR minimum (on ne peut pas descendre en dessous)
-
-// ========== FONCTIONS UTILITAIRES ==========
+export const K_FACTOR = 32;
+export const MIN_PR = 0;
 
 /**
  * Détermine le palier de rang en fonction des PR
@@ -128,7 +122,7 @@ function getExpectedScore(playerPR: number, opponentPR: number): number {
 export function calculatePRChange(
   playerPR: number,
   opponentPR: number,
-  actualScore: number // 1 = victoire, 0 = défaite
+  actualScore: number
 ): number {
   const expectedScore = getExpectedScore(playerPR, opponentPR);
   const change = Math.round(K_FACTOR * (actualScore - expectedScore));
@@ -140,7 +134,7 @@ export function calculatePRChange(
  */
 export function applyPRChange(currentPR: number, change: number): number {
   const newPR = currentPR + change;
-  return Math.max(MIN_PR, newPR); // Ne peut pas descendre en dessous de MIN_PR
+  return Math.max(MIN_PR, newPR);
 }
 
 /**
@@ -159,8 +153,6 @@ export function isRankUp(oldPR: number, newPR: number): boolean {
   if (!hasRankChanged(oldPR, newPR)) return false;
   return newPR > oldPR;
 }
-
-// ========== QUERIES ==========
 
 /**
  * Récupère les informations de rang d'un joueur
@@ -199,7 +191,6 @@ export const getGlobalLeaderboard = query({
 
     const users = await ctx.db.query("users").order("desc").collect();
 
-    // Trier par PR décroissant
     const sortedUsers = users
       .filter((u) => u.pr !== undefined)
       .sort((a, b) => (b.pr || 0) - (a.pr || 0))
@@ -215,17 +206,15 @@ export const getGlobalLeaderboard = query({
   },
 });
 
-// ========== MUTATIONS ==========
-
 /**
  * Met à jour le PR d'un joueur après une partie classée (internal pour être appelée depuis games.ts)
  */
 export const updatePlayerPRInternal = internalMutation({
   args: {
     playerId: v.id("users"),
-    opponentId: v.union(v.id("users"), v.string()), // Peut être un bot ID
-    playerPR: v.number(), // PR du joueur au moment de l'appel
-    opponentPR: v.number(), // PR de l'adversaire au moment de l'appel
+    opponentId: v.union(v.id("users"), v.string()),
+    playerPR: v.number(),
+    opponentPR: v.number(),
     playerWon: v.boolean(),
   },
   handler: async (ctx, args) => {
@@ -234,11 +223,9 @@ export const updatePlayerPRInternal = internalMutation({
       throw new Error("Joueur non trouvé");
     }
 
-    // Utiliser les PR passés en paramètres (évite les problèmes de timing)
     const playerPR = args.playerPR;
     const opponentPR = args.opponentPR;
 
-    // Calculer le changement de PR
     const prChange = calculatePRChange(
       playerPR,
       opponentPR,
@@ -246,43 +233,36 @@ export const updatePlayerPRInternal = internalMutation({
     );
     const newPR = applyPRChange(playerPR, prChange);
 
-    // Vérifier si c'est une montée de rang
     const rankUp = isRankUp(playerPR, newPR);
     let koraReward = 0;
 
     if (rankUp) {
       const newRank = getRankFromPR(newPR);
 
-      // Vérifier si c'est la première fois que le joueur atteint ce rang
       const rankHistory = player.rankHistory || [];
       const hasReachedBefore = rankHistory.includes(newRank.tier);
 
       if (!hasReachedBefore) {
         koraReward = newRank.koraReward;
 
-        // Ajouter les Kora au joueur
         await ctx.db.patch(args.playerId, {
           kora: (player.kora || 0) + koraReward,
         });
 
-        // Ajouter le rang à l'historique
         await ctx.db.patch(args.playerId, {
           rankHistory: [...rankHistory, newRank.tier],
         });
       }
     }
 
-    // Mettre à jour le PR
     await ctx.db.patch(args.playerId, {
       pr: newPR,
     });
 
-    // Enregistrer dans l'historique (seulement si l'adversaire est un utilisateur, pas un bot)
     if (
       typeof args.opponentId === "string" &&
       args.opponentId.startsWith("ai-")
     ) {
-      // Ne pas enregistrer l'historique pour les parties contre l'IA
       return {
         oldPR: playerPR,
         newPR,
@@ -298,7 +278,7 @@ export const updatePlayerPRInternal = internalMutation({
       oldPR: playerPR,
       newPR,
       change: prChange,
-      opponentId: args.opponentId as Id<"users">, // Type assertion car on a vérifié que ce n'est pas un bot
+      opponentId: args.opponentId as Id<"users">,
       opponentPR,
       won: args.playerWon,
       timestamp: Date.now(),
@@ -330,7 +310,7 @@ export const initializePlayerPR = mutation({
 
     await ctx.db.patch(args.userId, {
       pr: INITIAL_PR,
-      rankHistory: ["SILVER"], // Commence en Argent (PR 1000)
+      rankHistory: ["SILVER"],
     });
 
     return { pr: INITIAL_PR };
@@ -354,7 +334,6 @@ export const getPRHistory = query({
       .order("desc")
       .take(limit);
 
-    // Enrichir avec les infos de l'adversaire
     return await Promise.all(
       history.map(async (entry) => {
         const opponent = await ctx.db.get(entry.opponentId);
@@ -382,7 +361,6 @@ export const getPRStats = query({
     const currentPR = user.pr || INITIAL_PR;
     const currentRank = getRankFromPR(currentPR);
 
-    // Récupérer l'historique complet
     const history = await ctx.db
       .query("prHistory")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -393,13 +371,11 @@ export const getPRStats = query({
     const losses = totalGames - wins;
     const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
 
-    // PR max et min
     const maxPR =
       history.length > 0 ? Math.max(...history.map((h) => h.newPR)) : currentPR;
     const minPR =
       history.length > 0 ? Math.min(...history.map((h) => h.newPR)) : currentPR;
 
-    // Total PR gagné/perdu
     const totalPRGained = history
       .filter((h) => h.change > 0)
       .reduce((sum, h) => sum + h.change, 0);
@@ -407,7 +383,6 @@ export const getPRStats = query({
       .filter((h) => h.change < 0)
       .reduce((sum, h) => sum + Math.abs(h.change), 0);
 
-    // Série actuelle (win/loss streak)
     let currentStreak = 0;
     for (let i = 0; i < history.length; i++) {
       if (i === 0) {

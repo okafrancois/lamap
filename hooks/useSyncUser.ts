@@ -21,17 +21,14 @@ export function useSyncUser() {
   const createOrUpdateUser = useMutation(api.users.createOrUpdateUser);
 
   useEffect(() => {
-    // Only sync if user is authenticated and loaded
     if (!isLoaded || !isSignedIn || !userId || !clerkUser) {
       return;
     }
 
-    // If user already exists in Convex, no need to sync
     if (currentUser !== undefined) {
       return;
     }
 
-    // Sync user if they don't exist in Convex
     const syncUser = async () => {
       setIsSyncing(true);
       setSyncError(null);

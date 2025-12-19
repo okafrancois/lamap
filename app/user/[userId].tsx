@@ -58,7 +58,6 @@ export default function PublicProfileScreen() {
     : "skip"
   );
 
-  // Filtrer les parties IA par défaut
   const filteredGames = useMemo(() => {
     if (!gameHistory) return [];
     if (showAIGames) return gameHistory;
@@ -349,9 +348,7 @@ export default function PublicProfileScreen() {
               />
               <Button
                 title="Envoyer un message"
-                onPress={() => {
-                  // TODO: Ouvrir conversation
-                }}
+                onPress={() => {}}
                 variant="secondary"
               />
             </View>
@@ -389,7 +386,6 @@ export default function PublicProfileScreen() {
               <TouchableOpacity
                 style={styles.gameCard}
                 onPress={() => {
-                  // Navigation vers le profil de l'adversaire si ce n'est pas une IA
                   if (
                     item.opponent &&
                     !item.opponent.isAI &&

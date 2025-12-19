@@ -52,7 +52,6 @@ export default function ProfileScreen() {
     : "skip"
   );
 
-  // Filtrer les parties IA par défaut
   const filteredGames = useMemo(() => {
     if (!gameHistory) return [];
     if (showAIGames) return gameHistory;

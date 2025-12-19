@@ -129,7 +129,6 @@ export default function WelcomeScreen() {
         easing: Easing.out(Easing.ease),
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOAuth = async (strategy: "google" | "facebook") => {

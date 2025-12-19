@@ -7,19 +7,16 @@ import {
   QueryCtx,
 } from "./_generated/server";
 
-// Mutations internes pour les webhooks Clerk
 export const updateOrCreateUser = internalMutation({
   args: {
-    clerkUser: v.any(), // Utiliser v.any() pour accepter tous les champs de l'objet Clerk
+    clerkUser: v.any(),
   },
   handler: async (ctx, args) => {
     const { clerkUser } = args;
 
-    // Extraire le nom complet
     const firstName = clerkUser.first_name || "";
     const lastName = clerkUser.last_name || "";
 
-    // Trouver l'email principal (gérer le cas où email_addresses est vide)
     const primaryEmail = clerkUser.email_addresses?.find?.(
       (email: any) => email.id === clerkUser.primary_email_address_id
     );
@@ -103,7 +100,7 @@ const getUserQuery = {
       country: v.optional(v.string()),
       onboardingCompleted: v.boolean(),
       tutorialCompleted: v.optional(v.boolean()),
-      // Système de ranking
+
       pr: v.optional(v.number()),
       kora: v.optional(v.number()),
       rankHistory: v.optional(v.array(v.string())),
@@ -118,11 +115,9 @@ const getUserQuery = {
   },
 };
 
-// Query interne pour récupérer un utilisateur par son ID Clerk
 export const getUser = internalQuery(getUserQuery);
 export const getCurrentUser = query(getUserQuery);
 
-// Récupérer un utilisateur par son ID
 export const getUserById = query({
   args: {
     userId: v.id("users"),
@@ -143,7 +138,6 @@ export const getUserById = query({
   },
 });
 
-// Récupérer le profil public d'un utilisateur (sans infos confidentielles)
 export const getPublicUserProfile = query({
   args: {
     userId: v.id("users"),
@@ -180,7 +174,6 @@ export const getPublicUserProfile = query({
   },
 });
 
-// Mutation publique pour créer/mettre à jour un utilisateur (pour compatibilité)
 export const createOrUpdateUser = mutation({
   args: {
     clerkId: v.string(),

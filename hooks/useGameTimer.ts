@@ -27,7 +27,6 @@ export function useGameTimer(
     }
   }, [timers, currentPlayerId]);
 
-  // Décompte local pour une UI fluide
   useEffect(() => {
     if (!timers?.enabled || !currentPlayerId) return;
 

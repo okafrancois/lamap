@@ -5,6 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { type ErrorBoundaryProps, useRouter } from "expo-router";
 import React from "react";
@@ -16,7 +17,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
   const colors = useColors();
@@ -103,7 +103,6 @@ export default function HomeScreen() {
     userId ? { clerkUserId: userId, limit: 10 } : "skip"
   );
 
-  // Filtrer les parties IA et ne garder que les 3 premières parties PvP
   const recentGames = allRecentGames
     ?.filter((game) => game.mode !== "AI")
     .slice(0, 3);

@@ -31,7 +31,7 @@ export function useMatchmaking() {
     if (!myUserId) {
       throw new Error("User not authenticated");
     }
-    // Déterminer le mode automatiquement si non spécifié
+
     const gameMode = mode || (betAmount === 0 ? "RANKED" : "CASH");
     const isCompetitive = competitive !== undefined ? competitive : true;
 

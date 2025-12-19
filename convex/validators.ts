@@ -1,6 +1,5 @@
 import { Infer, v } from "convex/values";
 
-// Validators avec valeurs littérales directes
 export const gameStatusValidator = v.union(
   v.literal("WAITING"),
   v.literal("PLAYING"),
@@ -19,8 +18,8 @@ export const gameModeValidator = v.union(
   v.literal("AI"),
   v.literal("RANKED"),
   v.literal("CASH"),
-  v.literal("ONLINE"), // Rétrocompatibilité
-  v.literal("LOCAL") // Rétrocompatibilité
+  v.literal("ONLINE"),
+  v.literal("LOCAL")
 );
 
 export const currencyValidator = v.union(
@@ -68,7 +67,6 @@ export const gameHistoryActionValidator = v.union(
   v.literal("player_left")
 );
 
-// Card validator
 export const cardValidator = v.object({
   id: v.string(),
   suit: suitValidator,
@@ -76,16 +74,14 @@ export const cardValidator = v.object({
   playable: v.boolean(),
 });
 
-// Bet validator
 export const betValidator = v.object({
   amount: v.number(),
   currency: currencyValidator,
 });
 
-// Player validator
 export const playerValidator = v.object({
   userId: v.union(v.id("users"), v.null()),
-  botId: v.optional(v.string()), // ID du bot (ai-bindi, ai-ndoss, ai-bandi) pour les joueurs IA
+  botId: v.optional(v.string()),
   username: v.string(),
   type: playerTypeValidator,
   isConnected: v.boolean(),
@@ -96,7 +92,6 @@ export const playerValidator = v.object({
   isThinking: v.optional(v.boolean()),
 });
 
-// Played card validator
 export const playedCardValidator = v.object({
   card: cardValidator,
   playerId: v.union(v.id("users"), v.string()),
@@ -104,7 +99,6 @@ export const playedCardValidator = v.object({
   timestamp: v.number(),
 });
 
-// Game history entry validator - historique complet pour reconstituer la partie
 export const gameHistoryValidator = v.object({
   action: gameHistoryActionValidator,
   timestamp: v.number(),

@@ -29,32 +29,24 @@ export function RankUpModal({
   onClose,
 }: RankUpModalProps) {
   const colors = useColors();
-  
-  // Animations
+
   const scale = useSharedValue(0);
   const opacity = useSharedValue(0);
   const badgeScale = useSharedValue(1);
 
   useEffect(() => {
     if (visible) {
-      // Animation d'entrée
       opacity.value = withTiming(1, { duration: 300 });
       scale.value = withSpring(1, {
         damping: 15,
         stiffness: 150,
       });
 
-      // Animation du badge (pulsation)
       badgeScale.value = withDelay(
         500,
-        withRepeat(
-          withTiming(1.1, { duration: 600 }),
-          -1,
-          true
-        )
+        withRepeat(withTiming(1.1, { duration: 600 }), -1, true)
       );
     } else {
-      // Réinitialiser les animations
       opacity.value = 0;
       scale.value = 0;
       badgeScale.value = 1;
@@ -104,13 +96,7 @@ export function RankUpModal({
           </View>
 
           <Animated.View style={[styles.badgeContainer, badgeAnimatedStyle]}>
-            <RankBadge
-              rank={newRank}
-              size="large"
-              showName
-              showPR
-              pr={newPR}
-            />
+            <RankBadge rank={newRank} size="large" showName showPR pr={newPR} />
           </Animated.View>
 
           {koraReward > 0 && (
@@ -206,4 +192,3 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 });
-

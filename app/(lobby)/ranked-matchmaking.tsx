@@ -37,7 +37,6 @@ export default function RankedMatchmakingScreen() {
   const userPR = convexUser?.pr || INITIAL_PR;
   const currency = (convexUser?.currency || "XAF") as Currency;
 
-  // Calculer le range PR selon le temps d'attente
   const getPRRange = () => {
     if (searchTime < 30) return 100;
     if (searchTime < 60) return 200;

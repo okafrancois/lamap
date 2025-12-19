@@ -30,8 +30,6 @@ import {
   gameModeValidator,
 } from "./validators";
 
-// ========== QUERIES ==========
-
 export const getGame = query({
   args: { gameId: v.string() },
   handler: async (ctx, { gameId }) => {
@@ -52,13 +50,11 @@ export const getGameById = query({
 export const getPlayerGames = query({
   args: { userId: v.id("users") },
   handler: async (ctx, { userId }) => {
-    // Games where user is host
     const hostedGames = await ctx.db
       .query("games")
       .withIndex("by_host", (q) => q.eq("hostId", userId))
       .collect();
 
-    // Games where user is a player
     const allGames = await ctx.db.query("games").collect();
     const participantGames = allGames.filter((game) =>
       game.players.some((p) => getPlayerId(p) === userId)
@@ -81,13 +77,11 @@ export const getGameByJoinCode = query({
 export const getAvailableGames = query({
   args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, { userId }) => {
-    // Use the index to only fetch games with status WAITING
     const waitingGames = await ctx.db
       .query("games")
       .withIndex("by_status", (q) => q.eq("status", "WAITING"))
       .collect();
 
-    // Filter further in TypeScript for other conditions
     return waitingGames.filter((game) => {
       if (game.mode !== "ONLINE") return false;
       if (game.isPrivate) return false;
@@ -221,8 +215,6 @@ export const getTurnResults = query({
   },
 });
 
-// ========== MUTATIONS ==========
-
 export const createGame = mutation({
   args: {
     mode: gameModeValidator,
@@ -240,7 +232,6 @@ export const createGame = mutation({
     const seed = crypto.randomUUID();
     const gameId = `game-${seed}`;
 
-    // Get host user info
     const host = await ctx.db.get(args.hostId);
     if (!host) {
       throw new Error("Host user not found");
@@ -257,12 +248,11 @@ export const createGame = mutation({
       },
     ];
 
-    // Add AI player if mode is AI
     if (args.mode === "AI") {
       const difficulty = args.aiDifficulty ?? "medium";
       players.push({
-        userId: null, // AI n'a pas de userId Convex
-        botId: getAIBotId(difficulty), // ID standard du bot (ai-bindi, ai-ndoss, ai-bandi)
+        userId: null,
+        botId: getAIBotId(difficulty),
         username: getAIBotUsername(difficulty),
         type: "ai",
         isConnected: true,
@@ -336,12 +326,10 @@ export const startGame = mutation({
       return;
     }
 
-    // Create and distribute cards
     const deck = createDeck(game.seed);
     const firstPlayerHand = deck.slice(0, 5);
     const secondPlayerHand = deck.slice(5, 10);
 
-    // Determine starting player (use userId or bot ID)
     const startingPlayerId =
       Math.random() < 0.5 ?
         (game.players[0].userId ??
@@ -349,7 +337,6 @@ export const startGame = mutation({
       : (game.players[1].userId ??
         getAIBotId(game.players[1].aiDifficulty ?? "medium"));
 
-    // Check for automatic victory
     const autoVictory = checkAutomaticVictory(
       firstPlayerHand,
       secondPlayerHand
@@ -372,7 +359,6 @@ export const startGame = mutation({
           : p.balance - betAmount,
       }));
 
-      // Determine victory type from reason
       let victoryType: "auto_sevens" | "auto_sum" | "auto_lowest" | null = null;
       if (autoVictory.reason) {
         if (
@@ -387,7 +373,6 @@ export const startGame = mutation({
         }
       }
 
-      // Credit winnings to winner (only if human player)
       if (winnerPlayer?.userId && game.bet.amount > 0) {
         const winner = await ctx.db.get(winnerPlayer.userId);
         if (winner) {
@@ -406,7 +391,6 @@ export const startGame = mutation({
         }
       }
 
-      // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
       const shouldUpdatePR =
         game.mode !== "AI" &&
         (game.mode === "RANKED" || game.competitive === true);
@@ -416,15 +400,12 @@ export const startGame = mutation({
         );
 
         if (loserPlayer?.userId) {
-          // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
           const winnerUser = await ctx.db.get(winnerPlayer.userId);
           const loserUser = await ctx.db.get(loserPlayer.userId);
           const winnerPR = winnerUser?.pr || INITIAL_PR;
           const loserPR = loserUser?.pr || INITIAL_PR;
 
-          // Mettre à jour le PR des deux joueurs
           try {
-            // PR du gagnant
             await ctx.scheduler.runAfter(
               0,
               internal.ranking.updatePlayerPRInternal,
@@ -436,7 +417,7 @@ export const startGame = mutation({
                 playerWon: true,
               }
             );
-            // PR du perdant
+
             await ctx.scheduler.runAfter(
               0,
               internal.ranking.updatePlayerPRInternal,
@@ -493,7 +474,6 @@ export const startGame = mutation({
       return { gameId, winnerId, autoVictory: true };
     }
 
-    // Normal game start
     const updatedPlayers = game.players.map((p) => {
       const playerId = p.userId ?? getAIBotId(p.aiDifficulty ?? "medium");
       return {
@@ -528,7 +508,6 @@ export const startGame = mutation({
 
     await ctx.db.patch(game._id, gameState as any);
 
-    // Trigger AI if needed
     if (game.mode === "AI") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (aiPlayer && gameState.currentTurnPlayerId === getPlayerId(aiPlayer)) {
@@ -546,7 +525,7 @@ export const playCard = mutation({
   args: {
     gameId: v.string(),
     cardId: v.string(),
-    playerId: v.union(v.id("users"), v.string()), // Peut être userId ou bot ID
+    playerId: v.union(v.id("users"), v.string()),
   },
   handler: async (ctx, { gameId, cardId, playerId }) => {
     const game = await ctx.db
@@ -558,7 +537,6 @@ export const playCard = mutation({
       throw new Error("Game not found");
     }
 
-    // Vérifier si le timer est activé et si le temps du joueur est écoulé
     if (game.timerEnabled && game.playerTimers) {
       const now = Date.now();
       const playerTimer = game.playerTimers.find(
@@ -578,7 +556,6 @@ export const playCard = mutation({
           throw new Error("Time expired - you have run out of time");
         }
 
-        // Mettre à jour le timer du joueur
         const updatedTimers = game.playerTimers.map((t) =>
           t.playerId === playerId ?
             {
@@ -595,7 +572,6 @@ export const playCard = mutation({
       }
     }
 
-    // Validate the play
     const validation = validatePlayCardAction(cardId, playerId, game);
     if (!validation.valid) {
       throw new Error(validation.error);
@@ -607,7 +583,6 @@ export const playCard = mutation({
       throw new Error("Card not found");
     }
 
-    // Play the card
     const newPlayedCards = [
       ...game.playedCards,
       {
@@ -618,7 +593,6 @@ export const playCard = mutation({
       },
     ];
 
-    // Remove card from player's hand
     const updatedPlayers = game.players.map((p) =>
       getPlayerId(p) === playerId ?
         { ...p, hand: p.hand?.filter((c) => c.id !== cardId) }
@@ -631,7 +605,6 @@ export const playCard = mutation({
       playedCards: newPlayedCards,
     } as Game;
 
-    // Add card played to history
     gameState = addHistoryEntry(gameState, "card_played", playerId, {
       message: `${player.username} a joué ${card.rank} de ${card.suit}`,
       cardId: card.id,
@@ -640,13 +613,11 @@ export const playCard = mutation({
       round: game.currentRound,
     });
 
-    // Check if round is complete
     const currentRoundCards = newPlayedCards.filter(
       (p) => p.round === game.currentRound
     );
 
     if (currentRoundCards.length === 2) {
-      // Resolve round
       const firstCard = currentRoundCards[0];
       const secondCard = currentRoundCards[1];
 
@@ -662,7 +633,6 @@ export const playCard = mutation({
 
       gameState.hasHandPlayerId = winnerId;
 
-      // Add round won to history
       const winnerName = gameState.players.find(
         (p) => getPlayerId(p) === winnerId
       )?.username;
@@ -674,7 +644,6 @@ export const playCard = mutation({
       gameState.version = gameState.version + 1;
       gameState.lastUpdatedAt = Date.now();
 
-      // Check for Kora on round 5
       if (game.currentRound === 5) {
         const winnerCard = currentRoundCards.find(
           (rc) => rc.playerId === winnerId
@@ -718,7 +687,6 @@ export const playCard = mutation({
               : p.balance - betAmount,
           }));
 
-          // Credit winnings to winner (only if human player)
           const winnerPlayer = gameState.players.find(
             (p) => getPlayerId(p) === winnerId
           );
@@ -756,12 +724,10 @@ export const playCard = mutation({
         }
       }
 
-      // Check if game should end
       const anyPlayerOutOfCards = gameState.players.some(
         (p) => p.hand?.length === 0
       );
       if (game.currentRound >= 5 || anyPlayerOutOfCards) {
-        // End game
         const betAmount = game.bet.amount;
         const totalBet = betAmount * 2;
         const platformFee = totalBet * 0.02;
@@ -774,7 +740,6 @@ export const playCard = mutation({
           gameState.victoryType = "normal";
         }
 
-        // Nettoyer les entrées de queue pour cette partie terminée
         await ctx.scheduler.runAfter(
           0,
           internal.matchmaking.cleanupQueueForGame,
@@ -787,7 +752,6 @@ export const playCard = mutation({
           (p) => getPlayerId(p) === winnerId
         );
 
-        // Update balances and create transactions
         gameState.players = gameState.players.map((p) => ({
           ...p,
           balance:
@@ -796,7 +760,6 @@ export const playCard = mutation({
             : p.balance - betAmount,
         }));
 
-        // Credit winnings to winner (only if human player)
         if (winnerPlayer?.userId && game.bet.amount > 0) {
           const winner = await ctx.db.get(winnerPlayer.userId);
           if (winner) {
@@ -825,7 +788,6 @@ export const playCard = mutation({
         gameState.version = gameState.version + 1;
         gameState.lastUpdatedAt = Date.now();
 
-        // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
         const shouldUpdatePR =
           game.mode !== "AI" &&
           (game.mode === "RANKED" || game.competitive === true);
@@ -835,15 +797,12 @@ export const playCard = mutation({
           );
 
           if (loserPlayer?.userId) {
-            // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
             const winnerUser = await ctx.db.get(winnerPlayer.userId);
             const loserUser = await ctx.db.get(loserPlayer.userId);
             const winnerPR = winnerUser?.pr || INITIAL_PR;
             const loserPR = loserUser?.pr || INITIAL_PR;
 
-            // Mettre à jour le PR des deux joueurs
             try {
-              // PR du gagnant
               await ctx.scheduler.runAfter(
                 0,
                 internal.ranking.updatePlayerPRInternal,
@@ -855,7 +814,7 @@ export const playCard = mutation({
                   playerWon: true,
                 }
               );
-              // PR du perdant
+
               await ctx.scheduler.runAfter(
                 0,
                 internal.ranking.updatePlayerPRInternal,
@@ -873,18 +832,15 @@ export const playCard = mutation({
           }
         }
       } else {
-        // Next round
         gameState.currentRound++;
       }
     }
 
-    // Update player turn
     gameState.currentTurnPlayerId = updatePlayerTurn(gameState);
     gameState = updatePlayableCards(gameState);
 
     await ctx.db.patch(game._id, gameState as any);
 
-    // Trigger AI if needed
     if (game.mode === "AI" && gameState.status === "PLAYING") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (aiPlayer && gameState.currentTurnPlayerId === getPlayerId(aiPlayer)) {
@@ -897,8 +853,6 @@ export const playCard = mutation({
     return { success: true, gameState };
   },
 });
-
-// ========== AI LOGIC ==========
 
 export const triggerAITurn = internalMutation({
   args: { gameId: v.string() },
@@ -915,13 +869,11 @@ export const triggerAITurn = internalMutation({
     if (!aiPlayer) return;
     if (game.currentTurnPlayerId !== getPlayerId(aiPlayer)) return;
 
-    // Mark AI as thinking
     const updatedPlayers = game.players.map((p) =>
       p.type === "ai" ? { ...p, isThinking: true } : p
     );
     await ctx.db.patch(game._id, { players: updatedPlayers } as any);
 
-    // Schedule AI card selection
     await ctx.scheduler.runAfter(0, internal.games.selectAICard, { gameId });
   },
 });
@@ -938,13 +890,11 @@ export const selectAICard = internalAction({
     const playableCards = aiPlayer.hand.filter((card) => card.playable);
     if (playableCards.length === 0) return;
 
-    // Use AI logic
     const { chooseAICard } = await import("./aiPlayer");
     const difficulty = aiPlayer.aiDifficulty ?? "medium";
     const chosenCard = chooseAICard(game, difficulty);
 
     if (!chosenCard) {
-      // Fallback to random
       const randomIndex = Math.floor(Math.random() * playableCards.length);
       const fallbackCard = playableCards[randomIndex];
       await ctx.runMutation(internal.games.playCardInternal, {
@@ -955,7 +905,6 @@ export const selectAICard = internalAction({
       return;
     }
 
-    // Play the card
     await ctx.runMutation(internal.games.playCardInternal, {
       gameId,
       cardId: chosenCard.id,
@@ -988,7 +937,6 @@ export const playCardInternal = internalMutation({
 
     if (!game) return;
 
-    // Use the same playCard logic
     const validation = validatePlayCardAction(cardId, playerId, game);
     if (!validation.valid) return;
 
@@ -1022,7 +970,6 @@ export const playCardInternal = internalMutation({
       playedCards: newPlayedCards,
     } as Game;
 
-    // Add card played to history
     gameState = addHistoryEntry(gameState, "card_played", playerId, {
       message: `${player.username} a joué ${card.rank} de ${card.suit}`,
       cardId: card.id,
@@ -1049,7 +996,6 @@ export const playCardInternal = internalMutation({
 
       gameState.hasHandPlayerId = winnerId;
 
-      // Add round won to history
       const winnerName = gameState.players.find(
         (p) => getPlayerId(p) === winnerId
       )?.username;
@@ -1104,7 +1050,6 @@ export const playCardInternal = internalMutation({
               : p.balance - betAmount,
           }));
 
-          // Credit winnings to winner (only if human player)
           const winnerPlayer = gameState.players.find(
             (p) => getPlayerId(p) === winnerId
           );
@@ -1170,7 +1115,6 @@ export const playCardInternal = internalMutation({
             : p.balance - betAmount,
         }));
 
-        // Credit winnings to winner (only if human player)
         if (winnerPlayer?.userId && game.bet.amount > 0) {
           const winner = await ctx.db.get(winnerPlayer.userId);
           if (winner) {
@@ -1199,7 +1143,6 @@ export const playCardInternal = internalMutation({
         gameState.version = gameState.version + 1;
         gameState.lastUpdatedAt = Date.now();
 
-        // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
         const shouldUpdatePR =
           game.mode !== "AI" &&
           (game.mode === "RANKED" || game.competitive === true);
@@ -1209,15 +1152,12 @@ export const playCardInternal = internalMutation({
           );
 
           if (loserPlayer?.userId) {
-            // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
             const winnerUser = await ctx.db.get(winnerPlayer.userId);
             const loserUser = await ctx.db.get(loserPlayer.userId);
             const winnerPR = winnerUser?.pr || INITIAL_PR;
             const loserPR = loserUser?.pr || INITIAL_PR;
 
-            // Mettre à jour le PR des deux joueurs
             try {
-              // PR du gagnant
               await ctx.scheduler.runAfter(
                 0,
                 internal.ranking.updatePlayerPRInternal,
@@ -1229,7 +1169,7 @@ export const playCardInternal = internalMutation({
                   playerWon: true,
                 }
               );
-              // PR du perdant
+
               await ctx.scheduler.runAfter(
                 0,
                 internal.ranking.updatePlayerPRInternal,
@@ -1256,7 +1196,6 @@ export const playCardInternal = internalMutation({
 
     await ctx.db.patch(game._id, gameState as any);
 
-    // Trigger AI if needed
     if (game.mode === "AI" && gameState.status === "PLAYING") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (aiPlayer && gameState.currentTurnPlayerId === getPlayerId(aiPlayer)) {
@@ -1267,8 +1206,6 @@ export const playCardInternal = internalMutation({
     }
   },
 });
-
-// ========== UTILITY MUTATIONS ==========
 
 export const joinGame = mutation({
   args: {
@@ -1293,7 +1230,6 @@ export const joinGame = mutation({
       throw new Error("Partie pleine");
     }
 
-    // Check if player is already in the game
     const isAlreadyInGame = game.players.some((p) => p.userId === userId);
     if (isAlreadyInGame) {
       throw new Error("Vous êtes déjà dans cette partie");
@@ -1317,7 +1253,6 @@ export const joinGame = mutation({
       players: [...game.players, newPlayer],
     } as any);
 
-    // Auto-start game after delay if all players joined (ONLINE mode)
     if (game.mode === "ONLINE" && game.players.length + 1 >= game.maxPlayers) {
       await ctx.scheduler.runAfter(3000, internal.games.autoStartGame, {
         gameId,
@@ -1328,7 +1263,6 @@ export const joinGame = mutation({
   },
 });
 
-// Rematch mutation
 export const createRematch = mutation({
   args: {
     originalGameId: v.string(),
@@ -1348,16 +1282,13 @@ export const createRematch = mutation({
       throw new Error("Game must be ended to create rematch");
     }
 
-    // Check if rematch already exists
     if (originalGame.rematchGameId) {
       return { gameId: originalGame.rematchGameId, isNewGame: false };
     }
 
-    // Create new game with same settings
     const seed = crypto.randomUUID();
     const newGameId = `game-${seed}`;
 
-    // Get host user info
     const host = await ctx.db.get(userId);
     if (!host) {
       throw new Error("Host user not found");
@@ -1374,7 +1305,6 @@ export const createRematch = mutation({
       },
     ];
 
-    // Add AI player if mode is AI
     if (originalGame.mode === "AI") {
       const difficulty = originalGame.aiDifficulty ?? "medium";
       players.push({
@@ -1424,7 +1354,7 @@ export const createRematch = mutation({
           (originalGame.aiDifficulty ?? "medium")
         : null,
       roomName: originalGame.roomName,
-      isPrivate: originalGame.mode === "ONLINE" ? true : false, // Rematch is always private for multiplayer
+      isPrivate: originalGame.mode === "ONLINE" ? true : false,
       hostId: userId,
       joinCode:
         originalGame.mode === "ONLINE" ?
@@ -1439,12 +1369,10 @@ export const createRematch = mutation({
 
     await ctx.db.insert("games", gameData as any);
 
-    // Mark original game with rematch
     await ctx.db.patch(originalGame._id, {
       rematchGameId: newGameId,
     });
 
-    // Auto-start AI game immediately
     if (originalGame.mode === "AI") {
       await ctx.scheduler.runAfter(0, internal.games.autoStartGame, {
         gameId: newGameId,
@@ -1455,7 +1383,6 @@ export const createRematch = mutation({
   },
 });
 
-// Internal mutation for auto-starting games
 export const autoStartGame = internalMutation({
   args: { gameId: v.string() },
   handler: async (ctx, { gameId }) => {
@@ -1468,10 +1395,8 @@ export const autoStartGame = internalMutation({
     if (game.status !== "WAITING") return;
     if (game.players.length < game.maxPlayers) return;
 
-    // Start the game using the same logic as startGame
     const deck = createDeck(game.seed);
 
-    // Distribute 5 cards to each player
     const updatedPlayers = game.players.map((player, index) => {
       const playerHand = deck.slice(index * 5, (index + 1) * 5);
       return {
@@ -1482,7 +1407,6 @@ export const autoStartGame = internalMutation({
       };
     });
 
-    // Randomly choose starting player
     const startingPlayerIndex = Math.floor(Math.random() * game.players.length);
     const startingPlayerId = getPlayerId(updatedPlayers[startingPlayerIndex]);
 
@@ -1494,7 +1418,6 @@ export const autoStartGame = internalMutation({
       currentTurnPlayerId: startingPlayerId,
     };
 
-    // Add history entry
     gameState = addHistoryEntry(
       gameState,
       "game_started" as any,
@@ -1502,7 +1425,6 @@ export const autoStartGame = internalMutation({
       { message: "La partie commence !" }
     );
 
-    // Update game in database
     await ctx.db.patch(game._id, {
       status: gameState.status,
       players: gameState.players,
@@ -1513,7 +1435,6 @@ export const autoStartGame = internalMutation({
       lastUpdatedAt: gameState.lastUpdatedAt,
     } as any);
 
-    // Trigger AI turn if needed
     if (game.mode === "AI") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (aiPlayer && gameState.currentTurnPlayerId === getPlayerId(aiPlayer)) {
@@ -1527,9 +1448,9 @@ export const autoStartGame = internalMutation({
 
 export const getUserGameHistory = query({
   args: {
-    clerkUserId: v.optional(v.string()), // Optionnel pour permettre la recherche par userId
-    userId: v.optional(v.id("users")), // Optionnel pour permettre la recherche par userId directement
-    viewerUserId: v.optional(v.id("users")), // ID de l'utilisateur qui consulte (pour masquer les mises)
+    clerkUserId: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
+    viewerUserId: v.optional(v.id("users")),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, { clerkUserId, userId, viewerUserId, limit = 20 }) => {
@@ -1583,10 +1504,9 @@ export const getUserGameHistory = query({
         }
 
         const isWinner = game.winnerId === user._id;
-        const isOwner = viewerUserId ? viewerUserId === user._id : true; // Si pas de viewerUserId, on assume que c'est le propriétaire
+        const isOwner = viewerUserId ? viewerUserId === user._id : true;
         const isCashGame = game.mode === "CASH";
 
-        // Masquer le montant de la mise pour les parties cash si ce n'est pas le propriétaire
         const shouldMaskBet = isCashGame && !isOwner;
 
         const gain =
@@ -1600,9 +1520,9 @@ export const getUserGameHistory = query({
           opponent: opponentInfo,
           result: isWinner ? ("win" as const) : ("loss" as const),
           bet: {
-            amount: shouldMaskBet ? 0 : game.bet.amount, // Masquer le montant
+            amount: shouldMaskBet ? 0 : game.bet.amount,
             currency: game.bet.currency,
-            masked: shouldMaskBet, // Indicateur que la mise est masquée
+            masked: shouldMaskBet,
           },
           gain,
           endedAt: game.endedAt,
@@ -1671,8 +1591,6 @@ export const getRecentGames = query({
   },
 });
 
-// ========== CONCEDE GAME ==========
-
 export const concedeGame = mutation({
   args: {
     gameId: v.string(),
@@ -1727,7 +1645,6 @@ export const concedeGame = mutation({
       game.mode !== "AI" &&
       (game.mode === "RANKED" || game.competitive === true);
     if (shouldUpdatePR && forfeitPlayer.userId && opponentPlayer.userId) {
-      // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
       const forfeitUser = await ctx.db.get(forfeitPlayer.userId);
       const opponentUser = await ctx.db.get(opponentPlayer.userId);
       const forfeitPR = forfeitUser?.pr || INITIAL_PR;

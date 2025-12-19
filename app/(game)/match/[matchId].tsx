@@ -137,14 +137,12 @@ export default function MatchScreen() {
   const hasStartedGameRef = useRef(false);
   const currentGameIdRef = useRef<string | null>(null);
 
-  // Timer de jeu
   const {
     enabled: isTimerActive,
     timeRemaining,
     totalTime,
   } = useGameTimer(game?.gameId, game?.currentTurnPlayerId);
 
-  // Réinitialiser le flag de démarrage si on change de partie
   useEffect(() => {
     if (game?.gameId && game.gameId !== currentGameIdRef.current) {
       currentGameIdRef.current = game.gameId;
@@ -172,7 +170,6 @@ export default function MatchScreen() {
     }
   }, [game?.victoryType, game?.winnerId, myUserId, playSound]);
 
-  // Son quand la partie démarre
   useEffect(() => {
     if (previousGameStatus !== "PLAYING" && game?.status === "PLAYING") {
       playSound("gameStart");
@@ -180,7 +177,6 @@ export default function MatchScreen() {
     setPreviousGameStatus(game?.status);
   }, [game?.status, previousGameStatus, playSound]);
 
-  // Son quand le tour change
   useEffect(() => {
     if (
       previousIsMyTurn !== undefined &&
@@ -198,7 +194,6 @@ export default function MatchScreen() {
     }
   }, [game?.status]);
 
-  // Démarrage automatique pour les parties en WAITING (AI ou ONLINE)
   useEffect(() => {
     if (
       game?.status === "WAITING" &&
@@ -218,7 +213,6 @@ export default function MatchScreen() {
         }
       };
 
-      // Petit délai pour les parties ONLINE (pour une transition plus smooth)
       const delay = game.mode === "ONLINE" ? 1000 : 0;
       setTimeout(startGameAsync, delay);
     }
@@ -267,7 +261,6 @@ export default function MatchScreen() {
         clerkUserId: userId,
       });
 
-      // Show success message and navigate
       Alert.alert(
         "Partie abandonnée",
         "Vous avez abandonné la partie. Votre adversaire a gagné.",
@@ -397,7 +390,6 @@ export default function MatchScreen() {
     },
   });
 
-  // Conditional rendering after all hooks are called
   if (!matchId) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
@@ -538,7 +530,6 @@ export default function MatchScreen() {
     : opponentHasHand && playerPlayedCard ? playerPlayedCard.suit
     : undefined;
 
-  // Ne pas inclure les cartes du currentPlays si le jeu est terminé (évite les doublons)
   const includeCurrentPlays = game.status !== "ENDED";
 
   const allOpponentCards = [

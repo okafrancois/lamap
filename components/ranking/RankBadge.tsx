@@ -1,4 +1,4 @@
-import { RANK_TIERS, RankInfo } from "@/convex/ranking";
+import { RankInfo } from "@/convex/ranking";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -51,25 +51,17 @@ export function RankBadge({
           },
         ]}
       >
-        <Text style={[styles.icon, currentSizeStyles.icon]}>
-          {rank.icon}
-        </Text>
+        <Text style={[styles.icon, currentSizeStyles.icon]}>{rank.icon}</Text>
       </View>
       {showName && (
         <Text
-          style={[
-            styles.name,
-            currentSizeStyles.name,
-            { color: rank.color },
-          ]}
+          style={[styles.name, currentSizeStyles.name, { color: rank.color }]}
         >
           {rank.name}
         </Text>
       )}
       {showPR && pr !== undefined && (
-        <Text style={[styles.pr, currentSizeStyles.pr]}>
-          {pr} PR
-        </Text>
+        <Text style={[styles.pr, currentSizeStyles.pr]}>{pr} PR</Text>
       )}
     </View>
   );
@@ -99,7 +91,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // Small size
   containerSmall: {
     gap: 2,
   },
@@ -114,7 +105,6 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
 
-  // Medium size
   containerMedium: {
     gap: 4,
   },
@@ -129,7 +119,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Large size
   containerLarge: {
     gap: 8,
   },
@@ -144,4 +133,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-

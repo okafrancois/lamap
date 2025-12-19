@@ -38,7 +38,6 @@ export default function FriendsScreen() {
   const [searchTerm, setSearchTerm] = useState("");
   const layout = Dimensions.get("window");
 
-  // Queries
   const friends = useQuery(
     api.friends.getFriends,
     myUserId ? { userId: myUserId } : "skip"
@@ -58,7 +57,6 @@ export default function FriendsScreen() {
     : "skip"
   );
 
-  // Mutations
   const sendRequest = useMutation(api.friends.sendFriendRequest);
   const acceptRequest = useMutation(api.friends.acceptFriendRequest);
   const rejectRequest = useMutation(api.friends.rejectFriendRequest);

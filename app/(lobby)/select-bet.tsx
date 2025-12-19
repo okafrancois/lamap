@@ -31,7 +31,7 @@ export default function SelectBetScreen() {
     userId ? { clerkUserId: userId } : "skip"
   );
   const [selectedBet, setSelectedBet] = useState<number | null>(null);
-  const [isCompetitive, setIsCompetitive] = useState(true); // Pour mode cash: compétitif par défaut
+  const [isCompetitive, setIsCompetitive] = useState(true);
   const [loading, setLoading] = useState(false);
   const [customAmount, setCustomAmount] = useState("");
 
@@ -45,7 +45,6 @@ export default function SelectBetScreen() {
     const userBalance = user?.balance || 0;
     const minimumRequired = getMinimumBalance(selectedBet);
 
-    // Validation du solde minimum (3× la mise pour couvrir 333 Export)
     if (isCashMode && userBalance < minimumRequired) {
       Alert.alert(
         "Solde insuffisant",
@@ -67,7 +66,6 @@ export default function SelectBetScreen() {
       if (vsAI === "true") {
         router.push(`/(lobby)/select-difficulty?betAmount=${selectedBet}`);
       } else if (isCashMode) {
-        // Mode Cash : passer le paramètre competitive
         router.push(
           `/(lobby)/matchmaking?betAmount=${selectedBet}&competitive=${isCompetitive}`
         );

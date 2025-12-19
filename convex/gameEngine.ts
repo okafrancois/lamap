@@ -1,17 +1,11 @@
-// Pure game logic functions for Kora card game
-// Uses Doc types from Convex
-
 import { Doc, Id } from "./_generated/dataModel";
 
-// Type aliases using Doc - plus besoin de réécrire les types!
 export type Game = Doc<"games">;
 export type User = Doc<"users">;
 export type Player = Game["players"][number];
 export type PlayedCard = Game["playedCards"][number];
 export type Card = NonNullable<Player["hand"]>[number];
 export type GameHistory = Game["history"][number];
-
-// ========== DECK FUNCTIONS ==========
 
 export function createDeck(seed: string): Card[] {
   const suits: Card["suit"][] = ["hearts", "diamonds", "clubs", "spades"];
@@ -20,7 +14,6 @@ export function createDeck(seed: string): Card[] {
 
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
-      // Exclude 10 of spades
       if (suit === "spades" && rank === "9") {
         return;
       }
@@ -48,8 +41,6 @@ export function shuffleDeck(deck: Card[]): Card[] {
   return shuffled;
 }
 
-// ========== CARD VALUE FUNCTIONS ==========
-
 export function getCardValue(rank: Card["rank"]): number {
   switch (rank) {
     case "9":
@@ -75,8 +66,6 @@ export function calculateHandSum(cards: Card[]): number {
   return cards.reduce((sum, card) => sum + getCardValue(card.rank), 0);
 }
 
-// ========== GAME LOGIC FUNCTIONS ==========
-
 export function canPlayCard(
   cardId: string,
   player: Player,
@@ -88,12 +77,10 @@ export function canPlayCard(
   const card = player.hand?.find((c) => c.id === cardId);
   if (!card) return false;
 
-  // If player has the hand, all cards are playable
   if (game.hasHandPlayerId === getPlayerId(player)) {
     return true;
   }
 
-  // Get current round cards
   const currentRoundCards = game.playedCards.filter(
     (p) => p.round === game.currentRound
   );
@@ -137,17 +124,13 @@ export function determineRoundWinner(
   hasHandPlayerId: Id<"users"> | string
 ): Id<"users"> | string {
   if (firstCard.card.suit === secondCard.card.suit) {
-    // Same suit: compare values
     const firstValue = getCardValue(firstCard.card.rank);
     const secondValue = getCardValue(secondCard.card.rank);
     return secondValue > firstValue ? secondCard.playerId : firstCard.playerId;
   } else {
-    // Different suits: player with hand keeps it
     return hasHandPlayerId;
   }
 }
-
-// ========== AUTOMATIC VICTORY CHECKS ==========
 
 export function checkAutomaticVictory(
   firstPlayerHand: Card[],
@@ -165,7 +148,6 @@ export function checkAutomaticVictory(
     (card) => card.rank === "7"
   ).length;
 
-  // Check for 3+ sevens
   if (firstPlayerSevens >= 3 || secondPlayerSevens >= 3) {
     if (firstPlayerSevens >= 3 && secondPlayerSevens >= 3) {
       const playerIndex =
@@ -195,7 +177,6 @@ export function checkAutomaticVictory(
     }
   }
 
-  // Check for sum < 21
   const firstPlayerSum = calculateHandSum(firstPlayerHand);
   const secondPlayerSum = calculateHandSum(secondPlayerHand);
 
@@ -233,8 +214,6 @@ export function checkAutomaticVictory(
   };
 }
 
-// ========== KORA LOGIC ==========
-
 export function countConsecutiveThrees(cardRanks: string[]): number {
   let maxConsecutive = 0;
   let currentConsecutive = 0;
@@ -252,9 +231,9 @@ export function countConsecutiveThrees(cardRanks: string[]): number {
 }
 
 export function calculateKoraMultiplier(consecutiveThrees: number): number {
-  if (consecutiveThrees >= 3) return 8; // Triple Kora
-  if (consecutiveThrees >= 2) return 4; // Double Kora
-  if (consecutiveThrees >= 1) return 2; // Simple Kora
+  if (consecutiveThrees >= 3) return 8;
+  if (consecutiveThrees >= 2) return 4;
+  if (consecutiveThrees >= 1) return 2;
   return 1;
 }
 
@@ -266,8 +245,6 @@ export function getKoraType(
   if (consecutiveThrees >= 1) return "simple_kora";
   return "normal";
 }
-
-// ========== PLAYER TURN LOGIC ==========
 
 export function updatePlayerTurn(game: Game): Id<"users"> | string | null {
   const currentRoundCards = game.playedCards.filter(
@@ -286,8 +263,6 @@ export function updatePlayerTurn(game: Game): Id<"users"> | string | null {
     return null;
   }
 }
-
-// ========== VALIDATION FUNCTIONS ==========
 
 export function validatePlayCardAction(
   cardId: string,
@@ -316,7 +291,6 @@ export function validatePlayCardAction(
     return { valid: false, error: "Cette carte n'est pas playable" };
   }
 
-  // Check if card already played this round
   const roundCards = game.playedCards.filter(
     (p) => p.round === game.currentRound
   );
@@ -332,23 +306,18 @@ export function validatePlayCardAction(
   return { valid: true };
 }
 
-// ========== AI BOT FUNCTIONS ==========
-
-// AI bot IDs by difficulty
 const AI_BOT_IDS = {
   easy: "ai-bindi",
   medium: "ai-ndoss",
   hard: "ai-bandi",
 } as const;
 
-// AI bot names by difficulty
 const AI_BOT_NAMES = {
   easy: "Bindi du Tierqua",
   medium: "Le Ndoss",
   hard: "Le Grand Bandi",
 } as const;
 
-// Retourne l'ID standard de l'IA (ai-bindi, ai-ndoss, ai-bandi)
 export function getAIBotId(difficulty: "easy" | "medium" | "hard"): string {
   return AI_BOT_IDS[difficulty];
 }
@@ -359,15 +328,10 @@ export function getAIBotUsername(
   return AI_BOT_NAMES[difficulty];
 }
 
-// Get player ID (userId for human, botId for AI)
 export function getPlayerId(player: Player): Id<"users"> | string {
-  // Utilise d'abord botId si présent (pour l'IA), sinon userId, sinon génère l'ID du bot
   return player.userId ?? player.botId ?? getAIBotId(player.aiDifficulty!);
 }
 
-// ========== GAME HISTORY FUNCTIONS ==========
-
-// Ajoute une entrée à l'historique de la partie
 export function addHistoryEntry(
   game: Game,
   action:

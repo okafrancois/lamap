@@ -20,7 +20,7 @@ const defaultSettings: Settings = {
   cardLayout: "fan",
   playAreaMode: "battle",
   battleLayout: "vertical",
-  timerEnabled: true, // Activé par défaut pour parties classées et cash
+  timerEnabled: true,
   timerDuration: 60,
 };
 

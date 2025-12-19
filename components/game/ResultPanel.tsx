@@ -103,7 +103,6 @@ export function ResultPanel({
         easing: Easing.out(Easing.ease),
       });
 
-      // Animation des étoiles
       if (isKoraWin) {
         starScale1.value = withRepeat(
           withSequence(
@@ -133,7 +132,6 @@ export function ResultPanel({
         );
       }
 
-      // Animation compteur de gains
       if (isWinner) {
         const duration = 1200;
         const steps = 30;
@@ -347,7 +345,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 20,
   },
-  // Coins décoratifs vintage
+
   cornerTL: {
     position: "absolute",
     top: 8,
@@ -406,7 +404,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   star: {
-    color: "#FFD700", // Or pour les étoiles
+    color: "#FFD700",
     fontSize: 28,
     textShadowColor: "rgba(255, 215, 0, 0.6)",
     textShadowOffset: { width: 0, height: 0 },
@@ -424,7 +422,7 @@ const styles = StyleSheet.create({
   multiplier: {
     fontSize: 24,
     fontWeight: "700",
-    color: "#FFD700", // Or pour le multiplicateur
+    color: "#FFD700",
     textAlign: "center",
     marginBottom: 16,
     textShadowColor: "rgba(255, 215, 0, 0.4)",
@@ -441,11 +439,11 @@ const styles = StyleSheet.create({
   separatorLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#A68258", // Couleur gold vintage (fixe pour le design)
+    backgroundColor: "#A68258",
     opacity: 0.5,
   },
   separatorDiamond: {
-    color: "#A68258", // Couleur gold vintage (fixe pour le design)
+    color: "#A68258",
     fontSize: 12,
   },
   gainsContainer: {

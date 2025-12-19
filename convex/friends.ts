@@ -2,25 +2,18 @@ import { v } from "convex/values";
 import { Id } from "./_generated/dataModel";
 import { mutation, query } from "./_generated/server";
 
-// ========== HELPER FUNCTIONS ==========
-
-// Fonction pour créer une paire d'IDs ordonnée (pour éviter les doublons)
 function getOrderedUserIds(userId1: Id<"users">, userId2: Id<"users">) {
   return userId1 < userId2 ?
       { user1Id: userId1, user2Id: userId2 }
     : { user1Id: userId2, user2Id: userId1 };
 }
 
-// ========== FRIEND REQUESTS ==========
-
-// Envoyer une demande d'amitié
 export const sendFriendRequest = mutation({
   args: {
     senderId: v.id("users"),
     receiverUsername: v.string(),
   },
   handler: async (ctx, args) => {
-    // Trouver le destinataire par son username
     const receiver = await ctx.db
       .query("users")
       .withIndex("by_username", (q) => q.eq("username", args.receiverUsername))
@@ -34,7 +27,6 @@ export const sendFriendRequest = mutation({
       throw new Error("Cannot send friend request to yourself");
     }
 
-    // Vérifier si une demande existe déjà (dans les deux sens)
     const existingRequest = await ctx.db
       .query("friendRequests")
       .withIndex("by_sender_receiver", (q) =>
@@ -57,7 +49,6 @@ export const sendFriendRequest = mutation({
       throw new Error("This user has already sent you a friend request");
     }
 
-    // Vérifier s'ils sont déjà amis
     const { user1Id, user2Id } = getOrderedUserIds(args.senderId, receiver._id);
     const existingFriendship = await ctx.db
       .query("friendships")
@@ -70,7 +61,6 @@ export const sendFriendRequest = mutation({
       throw new Error("Already friends");
     }
 
-    // Créer la demande
     const requestId = await ctx.db.insert("friendRequests", {
       senderId: args.senderId,
       receiverId: receiver._id,
@@ -82,7 +72,6 @@ export const sendFriendRequest = mutation({
   },
 });
 
-// Accepter une demande d'amitié
 export const acceptFriendRequest = mutation({
   args: {
     requestId: v.id("friendRequests"),
@@ -103,13 +92,11 @@ export const acceptFriendRequest = mutation({
       throw new Error("Request already processed");
     }
 
-    // Mettre à jour la demande
     await ctx.db.patch(args.requestId, {
       status: "accepted",
       respondedAt: Date.now(),
     });
 
-    // Créer l'amitié
     const { user1Id, user2Id } = getOrderedUserIds(
       request.senderId,
       request.receiverId
@@ -124,7 +111,6 @@ export const acceptFriendRequest = mutation({
   },
 });
 
-// Rejeter une demande d'amitié
 export const rejectFriendRequest = mutation({
   args: {
     requestId: v.id("friendRequests"),
@@ -145,7 +131,6 @@ export const rejectFriendRequest = mutation({
       throw new Error("Request already processed");
     }
 
-    // Mettre à jour la demande
     await ctx.db.patch(args.requestId, {
       status: "rejected",
       respondedAt: Date.now(),
@@ -155,7 +140,6 @@ export const rejectFriendRequest = mutation({
   },
 });
 
-// Annuler une demande d'amitié envoyée
 export const cancelFriendRequest = mutation({
   args: {
     requestId: v.id("friendRequests"),
@@ -176,16 +160,12 @@ export const cancelFriendRequest = mutation({
       throw new Error("Request already processed");
     }
 
-    // Supprimer la demande
     await ctx.db.delete(args.requestId);
 
     return { success: true };
   },
 });
 
-// ========== FRIENDSHIPS ==========
-
-// Supprimer un ami
 export const removeFriend = mutation({
   args: {
     userId: v.id("users"),
@@ -211,33 +191,26 @@ export const removeFriend = mutation({
   },
 });
 
-// ========== QUERIES ==========
-
-// Obtenir la liste des amis
 export const getFriends = query({
   args: {
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    // Récupérer les amitiés où l'utilisateur est user1
     const friendshipsAsUser1 = await ctx.db
       .query("friendships")
       .withIndex("by_user1", (q) => q.eq("user1Id", args.userId))
       .collect();
 
-    // Récupérer les amitiés où l'utilisateur est user2
     const friendshipsAsUser2 = await ctx.db
       .query("friendships")
       .withIndex("by_user2", (q) => q.eq("user2Id", args.userId))
       .collect();
 
-    // Extraire les IDs des amis
     const friendIds = [
       ...friendshipsAsUser1.map((f) => f.user2Id),
       ...friendshipsAsUser2.map((f) => f.user1Id),
     ];
 
-    // Récupérer les informations des amis
     const friends = await Promise.all(
       friendIds.map(async (friendId) => {
         const friend = await ctx.db.get(friendId);
@@ -257,7 +230,6 @@ export const getFriends = query({
   },
 });
 
-// Obtenir les demandes d'amitié reçues
 export const getReceivedFriendRequests = query({
   args: {
     userId: v.id("users"),
@@ -269,7 +241,6 @@ export const getReceivedFriendRequests = query({
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
 
-    // Récupérer les informations des expéditeurs
     const requestsWithSender = await Promise.all(
       requests.map(async (request) => {
         const sender = await ctx.db.get(request.senderId);
@@ -292,7 +263,6 @@ export const getReceivedFriendRequests = query({
   },
 });
 
-// Obtenir les demandes d'amitié envoyées
 export const getSentFriendRequests = query({
   args: {
     userId: v.id("users"),
@@ -304,7 +274,6 @@ export const getSentFriendRequests = query({
       .filter((q) => q.eq(q.field("status"), "pending"))
       .collect();
 
-    // Récupérer les informations des destinataires
     const requestsWithReceiver = await Promise.all(
       requests.map(async (request) => {
         const receiver = await ctx.db.get(request.receiverId);
@@ -327,7 +296,6 @@ export const getSentFriendRequests = query({
   },
 });
 
-// Vérifier si deux utilisateurs sont amis
 export const areFriends = query({
   args: {
     userId: v.id("users"),
@@ -350,7 +318,6 @@ export const areFriends = query({
   },
 });
 
-// Rechercher des utilisateurs par username
 export const searchUsers = query({
   args: {
     searchTerm: v.string(),
@@ -360,8 +327,6 @@ export const searchUsers = query({
   handler: async (ctx, args) => {
     const limit = args.limit || 20;
 
-    // Récupérer tous les utilisateurs et filtrer localement
-    // (Convex ne supporte pas les recherches "LIKE" ou regex sur les index)
     const allUsers = await ctx.db.query("users").collect();
 
     const searchLower = args.searchTerm.toLowerCase();
@@ -373,7 +338,6 @@ export const searchUsers = query({
       )
       .slice(0, limit);
 
-    // Pour chaque utilisateur, vérifier s'il est ami ou si une demande existe
     const usersWithStatus = await Promise.all(
       matchingUsers.map(async (user) => {
         const { user1Id, user2Id } = getOrderedUserIds(
@@ -381,7 +345,6 @@ export const searchUsers = query({
           user._id
         );
 
-        // Vérifier l'amitié
         const friendship = await ctx.db
           .query("friendships")
           .withIndex("by_users", (q) =>
@@ -399,7 +362,6 @@ export const searchUsers = query({
           };
         }
 
-        // Vérifier les demandes envoyées
         const sentRequest = await ctx.db
           .query("friendRequests")
           .withIndex("by_sender_receiver", (q) =>
@@ -418,7 +380,6 @@ export const searchUsers = query({
           };
         }
 
-        // Vérifier les demandes reçues
         const receivedRequest = await ctx.db
           .query("friendRequests")
           .withIndex("by_sender_receiver", (q) =>

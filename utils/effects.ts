@@ -1,6 +1,6 @@
-import { ViewStyle } from "react-native";
-import { Colors } from "@/constants/theme";
 import { AnimationValues } from "@/constants/animations";
+import { Colors } from "@/constants/theme";
+import { ViewStyle } from "react-native";
 
 /**
  * Style pour l'état disabled
@@ -15,7 +15,6 @@ export const disabledState: ViewStyle = {
  */
 export const skeletonPulse: ViewStyle = {
   backgroundColor: Colors.muted,
-  // L'animation pulse sera gérée par react-native-reanimated
 };
 
 /**
@@ -25,10 +24,9 @@ export const goldShineConfig = {
   duration: AnimationValues.shine.duration,
   colors: {
     transparent: "transparent",
-    gold: Colors.secondary, // Marron/Or #B9966E
-    goldWithOpacity: `${Colors.secondary}4D`, // ~30% opacity
+    gold: Colors.secondary,
+    goldWithOpacity: `${Colors.secondary}4D`,
   },
-  // Le dégradé sera appliqué via LinearGradient ou style
 };
 
 /**

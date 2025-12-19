@@ -53,7 +53,6 @@ const prHistoryTable = defineTable({
   .index("by_user", ["userId"])
   .index("by_user_timestamp", ["userId", "timestamp"]);
 
-// Games table - utilise les validators pour les enums
 const gamesTable = defineTable({
   gameId: v.string(),
   seed: v.string(),
@@ -165,7 +164,6 @@ const rechargeCodeUsagesTable = defineTable({
   .index("by_user_code", ["userId", "rechargeCodeId"])
   .index("by_user", ["userId"]);
 
-// Table pour les amitiés
 const friendshipsTable = defineTable({
   user1Id: v.id("users"),
   user2Id: v.id("users"),

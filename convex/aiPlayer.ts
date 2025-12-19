@@ -1,5 +1,4 @@
-// AI Player logic for Convex
-import { Game, Card, getCardValue, getPlayerId } from "./gameEngine";
+import { Card, Game, getCardValue, getPlayerId } from "./gameEngine";
 
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";
 type Rank = "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
@@ -140,7 +139,7 @@ export class AIPlayer {
     const defensiveCard = this.chooseDefensiveCard(
       gameState,
       playableCards,
-      predictedCard,
+      predictedCard
     );
     if (defensiveCard) return defensiveCard;
 
@@ -152,7 +151,7 @@ export class AIPlayer {
 
   private chooseKoraStrategy(
     gameState: Game,
-    playableCards: Card[],
+    playableCards: Card[]
   ): Card | null {
     const threes = playableCards.filter((card) => card.rank === "3");
 
@@ -167,7 +166,7 @@ export class AIPlayer {
         return safestThree;
       } else {
         const currentRoundCards = gameState.playedCards.filter(
-          (p) => p.round === gameState.currentRound,
+          (p) => p.round === gameState.currentRound
         );
 
         if (currentRoundCards.length === 1) {
@@ -175,7 +174,7 @@ export class AIPlayer {
           const winningThree = threes.find(
             (three) =>
               three.suit === playerCard.suit &&
-              getCardValue("3") > getCardValue(playerCard.rank),
+              getCardValue("3") > getCardValue(playerCard.rank)
           );
 
           if (winningThree) {
@@ -202,11 +201,11 @@ export class AIPlayer {
 
     return threes.reduce((safest, three) => {
       const threatsToThis = playerRemainingCards.filter(
-        (pc) => pc.card.suit === three.suit && pc.value > 3,
+        (pc) => pc.card.suit === three.suit && pc.value > 3
       ).length;
 
       const threatsToSafest = playerRemainingCards.filter(
-        (pc) => pc.card.suit === safest.suit && pc.value > 3,
+        (pc) => pc.card.suit === safest.suit && pc.value > 3
       ).length;
 
       return threatsToThis < threatsToSafest ? three : safest;
@@ -219,7 +218,7 @@ export class AIPlayer {
     return (
       threes.find((three) => {
         const threats = playerRemainingCards.filter(
-          (pc) => pc.card.suit === three.suit && pc.value > 3,
+          (pc) => pc.card.suit === three.suit && pc.value > 3
         );
         return threats.length === 0;
       }) ?? null
@@ -265,7 +264,7 @@ export class AIPlayer {
   private chooseDefensiveCard(
     gameState: Game,
     playableCards: Card[],
-    predictedCard: Card | null,
+    predictedCard: Card | null
   ): Card | null {
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
     if (
@@ -277,19 +276,19 @@ export class AIPlayer {
     }
 
     const sameSuitCards = playableCards.filter(
-      (card) => card.suit === predictedCard.suit,
+      (card) => card.suit === predictedCard.suit
     );
 
     if (sameSuitCards.length > 0) {
       const justBetterCards = sameSuitCards.filter(
         (card) =>
           getCardValue(card.rank) > getCardValue(predictedCard.rank) &&
-          getCardValue(card.rank) <= getCardValue(predictedCard.rank) + 3,
+          getCardValue(card.rank) <= getCardValue(predictedCard.rank) + 3
       );
 
       if (justBetterCards.length > 0) {
         return justBetterCards.reduce((min, card) =>
-          getCardValue(card.rank) < getCardValue(min.rank) ? card : min,
+          getCardValue(card.rank) < getCardValue(min.rank) ? card : min
         );
       }
     }
@@ -299,7 +298,7 @@ export class AIPlayer {
 
   private chooseControlCard(
     gameState: Game,
-    playableCards: Card[],
+    playableCards: Card[]
   ): Card | null {
     const aiPlayer = gameState.players.find((p) => p.type === "ai");
     if (!aiPlayer || gameState.hasHandPlayerId !== getPlayerId(aiPlayer))
@@ -310,12 +309,12 @@ export class AIPlayer {
 
     if (weakSuits.length > 0) {
       const controlCards = playableCards.filter((card) =>
-        weakSuits.includes(card.suit),
+        weakSuits.includes(card.suit)
       );
 
       if (controlCards.length > 0) {
         return controlCards.reduce((best, card) =>
-          getCardValue(card.rank) > getCardValue(best.rank) ? card : best,
+          getCardValue(card.rank) > getCardValue(best.rank) ? card : best
         );
       }
     }
@@ -337,13 +336,13 @@ export class AIPlayer {
       suitStrength[suit as Suit].count++;
       suitStrength[suit as Suit].maxValue = Math.max(
         suitStrength[suit as Suit].maxValue,
-        value,
+        value
       );
     });
 
     return (Object.keys(suitStrength) as Suit[]).filter(
       (suit) =>
-        suitStrength[suit].count <= 1 || suitStrength[suit].maxValue <= 8,
+        suitStrength[suit].count <= 1 || suitStrength[suit].maxValue <= 8
     );
   }
 
@@ -355,14 +354,14 @@ export class AIPlayer {
     const aiCardIds = aiPlayer?.hand?.map((c) => c.id) ?? [];
 
     const availableCards = allCards.filter(
-      (card) =>
-        !playedCardIds.includes(card.id) && !aiCardIds.includes(card.id),
+      (card) => !playedCardIds.includes(card.id) && !aiCardIds.includes(card.id)
     );
 
     const humanPlayer = gameState.players.find((p) => p.type === "user");
-    const humanPlayedCount = humanPlayer
-      ? gameState.playedCards.filter(
-          (pc) => pc.playerId === getPlayerId(humanPlayer),
+    const humanPlayedCount =
+      humanPlayer ?
+        gameState.playedCards.filter(
+          (pc) => pc.playerId === getPlayerId(humanPlayer)
         ).length
       : 0;
     const estimatedPlayerCardCount = 5 - humanPlayedCount;
@@ -403,11 +402,11 @@ export class AIPlayer {
 
     if (weakSuits.length > 0) {
       const attackCards = playableCards.filter((card) =>
-        weakSuits.includes(card.suit),
+        weakSuits.includes(card.suit)
       );
       if (attackCards.length > 0) {
         return attackCards.reduce((best, card) =>
-          getCardValue(card.rank) > getCardValue(best.rank) ? card : best,
+          getCardValue(card.rank) > getCardValue(best.rank) ? card : best
         );
       }
     }
@@ -426,28 +425,28 @@ export class AIPlayer {
 
   private chooseWhenResponding(gameState: Game, playableCards: Card[]): Card {
     const currentRoundCards = gameState.playedCards.filter(
-      (p) => p.round === gameState.currentRound,
+      (p) => p.round === gameState.currentRound
     );
 
     if (currentRoundCards.length === 1) {
       const opponentCard = currentRoundCards[0].card;
       const sameSuitCards = playableCards.filter(
-        (card) => card.suit === opponentCard.suit,
+        (card) => card.suit === opponentCard.suit
       );
 
       if (sameSuitCards.length > 0) {
         const winningCards = sameSuitCards.filter(
-          (card) => getCardValue(card.rank) > getCardValue(opponentCard.rank),
+          (card) => getCardValue(card.rank) > getCardValue(opponentCard.rank)
         );
 
         if (winningCards.length > 0) {
           return winningCards.reduce((min, card) =>
-            getCardValue(card.rank) < getCardValue(min.rank) ? card : min,
+            getCardValue(card.rank) < getCardValue(min.rank) ? card : min
           );
         }
 
         return sameSuitCards.reduce((min, card) =>
-          getCardValue(card.rank) < getCardValue(min.rank) ? card : min,
+          getCardValue(card.rank) < getCardValue(min.rank) ? card : min
         );
       }
     }
@@ -457,28 +456,28 @@ export class AIPlayer {
 
   private chooseOptimalCard(gameState: Game, playableCards: Card[]): Card {
     const currentRoundCards = gameState.playedCards.filter(
-      (p) => p.round === gameState.currentRound,
+      (p) => p.round === gameState.currentRound
     );
 
     if (currentRoundCards.length === 1) {
       const opponentCard = currentRoundCards[0].card;
       const sameSuitCards = playableCards.filter(
-        (card) => card.suit === opponentCard.suit,
+        (card) => card.suit === opponentCard.suit
       );
 
       if (sameSuitCards.length > 0) {
         const winningCards = sameSuitCards.filter(
-          (card) => getCardValue(card.rank) > getCardValue(opponentCard.rank),
+          (card) => getCardValue(card.rank) > getCardValue(opponentCard.rank)
         );
 
         if (winningCards.length > 0) {
           return winningCards.reduce((min, card) =>
-            getCardValue(card.rank) < getCardValue(min.rank) ? card : min,
+            getCardValue(card.rank) < getCardValue(min.rank) ? card : min
           );
         }
 
         return sameSuitCards.reduce((min, card) =>
-          getCardValue(card.rank) < getCardValue(min.rank) ? card : min,
+          getCardValue(card.rank) < getCardValue(min.rank) ? card : min
         );
       }
     }
@@ -489,7 +488,7 @@ export class AIPlayer {
   private chooseBestCard(gameState: Game, playableCards: Card[]): Card {
     if (gameState.currentRound === 5) {
       return playableCards.reduce((best, card) =>
-        getCardValue(card.rank) > getCardValue(best.rank) ? card : best,
+        getCardValue(card.rank) > getCardValue(best.rank) ? card : best
       );
     }
 
@@ -508,7 +507,7 @@ export class AIPlayer {
 
 export function chooseAICard(
   gameState: Game,
-  difficulty: "easy" | "medium" | "hard",
+  difficulty: "easy" | "medium" | "hard"
 ): Card | null {
   const ai = new AIPlayer(difficulty);
   return ai.chooseCard(gameState);

@@ -30,7 +30,6 @@ export const sendChallenge = mutation({
       throw new Error("L'utilisateur n'a pas terminé son onboarding.");
     }
 
-    // Vérifier qu'il n'y a pas déjà un défi en attente
     const existingChallenge = await ctx.db
       .query("challenges")
       .withIndex("by_challenger", (q) =>
@@ -48,7 +47,6 @@ export const sendChallenge = mutation({
       throw new Error("Vous avez déjà envoyé un défi à cet utilisateur.");
     }
 
-    // Vérifier le solde pour les parties cash
     if (args.mode === "CASH" && args.betAmount) {
       const challengerBalance = challenger.balance || 0;
       const minimumRequired = getMinimumBalance(args.betAmount);
@@ -75,8 +73,6 @@ export const sendChallenge = mutation({
       expiresAt,
     });
 
-    // TODO: Envoyer une notification push au destinataire
-
     return { challengeId, success: true };
   },
 });
@@ -84,7 +80,7 @@ export const sendChallenge = mutation({
 export const acceptChallenge = mutation({
   args: {
     challengeId: v.id("challenges"),
-    userId: v.id("users"), // L'utilisateur qui accepte
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
     const challenge = await ctx.db.get(args.challengeId);
@@ -114,7 +110,6 @@ export const acceptChallenge = mutation({
       throw new Error("Utilisateur non trouvé.");
     }
 
-    // Vérifier le solde pour les parties cash
     if (challenge.mode === "CASH" && challenge.betAmount) {
       const challengerBalance = challenger.balance || 0;
       const challengedBalance = challenged.balance || 0;
@@ -130,12 +125,9 @@ export const acceptChallenge = mutation({
       }
     }
 
-    // Créer la partie via matchmaking
     const betAmount = challenge.betAmount || 0;
     const currency = challenge.currency || challenged.currency || "XAF";
 
-    // Utiliser l'API matchmaking pour créer la partie directement
-    // Pour l'instant, on va créer la partie manuellement
     const seed = crypto.randomUUID();
     const gameId = `game-${seed}`;
 
@@ -158,7 +150,6 @@ export const acceptChallenge = mutation({
       },
     ];
 
-    // Déduire les mises si c'est une partie cash
     if (betAmount > 0) {
       await ctx.db.patch(challenge.challengerId, {
         balance: (challenger.balance || 0) - betAmount,
@@ -230,7 +221,7 @@ export const acceptChallenge = mutation({
       lastUpdatedAt: now,
       victoryType: null as string | null,
       rematchGameId: undefined,
-      timerEnabled: true, // Timer activé par défaut pour les défis
+      timerEnabled: true,
       timerDuration: 60,
       playerTimers: [
         {
@@ -248,14 +239,11 @@ export const acceptChallenge = mutation({
 
     await ctx.db.insert("games", gameData as any);
 
-    // Marquer le défi comme accepté
     await ctx.db.patch(challenge._id, {
       status: "accepted",
       respondedAt: now,
       gameId,
     });
-
-    // TODO: Envoyer une notification push au challenger
 
     return { gameId, success: true };
   },
@@ -264,7 +252,7 @@ export const acceptChallenge = mutation({
 export const rejectChallenge = mutation({
   args: {
     challengeId: v.id("challenges"),
-    userId: v.id("users"), // L'utilisateur qui rejette
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
     const challenge = await ctx.db.get(args.challengeId);
@@ -302,7 +290,7 @@ export const getPendingChallenges = query({
       .collect();
 
     const now = Date.now();
-    // Filtrer les défis expirés (on ne peut pas modifier dans une query)
+
     const validChallenges = challenges.filter((c) => c.expiresAt > now);
 
     const challengesWithChallenger = await Promise.all(

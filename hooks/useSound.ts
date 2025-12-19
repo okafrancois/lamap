@@ -3,12 +3,12 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useState } from "react";
 
 type SoundType =
-  // Sons existants
+ 
   | "cardPlay"
   | "victory"
   | "kora"
   | "defeat"
-  // Nouveaux sons
+ 
   | "cardSelect"
   | "gameStart"
   | "gameEnd"
@@ -20,7 +20,6 @@ type SoundType =
   | "confirmation"
   | "winMoney";
 
-// Import des fichiers audio (doivent être statiques pour React Native)
 const cardPlaySound = require("../assets/sounds/game/card-play.mp3");
 const cardSelectSound = require("../assets/sounds/game/card-select.mp3");
 const victorySound = require("../assets/sounds/special/victory.mp3");
@@ -142,7 +141,7 @@ export function useSound() {
         }
       }
 
-      // Toujours jouer les haptiques en complément
+     
       switch (type) {
         case "cardPlay":
         case "cardSelect":

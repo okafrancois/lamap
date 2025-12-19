@@ -3,11 +3,10 @@ import { internalMutation, mutation, query } from "./_generated/server";
 import { INITIAL_PR } from "./ranking";
 import { aiDifficultyValidator, currencyValidator } from "./validators";
 
-// Fonction helper pour calculer le range PR en fonction du temps d'attente
 function getPRRange(waitTimeMs: number): number {
-  if (waitTimeMs < 30000) return 100; // 0-30s : ±100 PR
-  if (waitTimeMs < 60000) return 200; // 30-60s : ±200 PR
-  return 300; // 60s+ : ±300 PR
+  if (waitTimeMs < 30000) return 100;
+  if (waitTimeMs < 60000) return 200;
+  return 300;
 }
 
 export const joinQueue = mutation({
@@ -15,10 +14,10 @@ export const joinQueue = mutation({
     userId: v.id("users"),
     betAmount: v.number(),
     currency: currencyValidator,
-    mode: v.optional(v.union(v.literal("RANKED"), v.literal("CASH"))), // Mode de jeu (par défaut RANKED si betAmount=0, sinon CASH)
-    competitive: v.optional(v.boolean()), // Pour CASH: true = affecte le PR, false = ne l'affecte pas
-    timerEnabled: v.optional(v.boolean()), // Si le timer est activé
-    timerDuration: v.optional(v.number()), // Durée du timer en secondes
+    mode: v.optional(v.union(v.literal("RANKED"), v.literal("CASH"))),
+    competitive: v.optional(v.boolean()),
+    timerEnabled: v.optional(v.boolean()),
+    timerDuration: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const gameMode = args.mode || (args.betAmount === 0 ? "RANKED" : "CASH");
@@ -57,11 +56,9 @@ export const joinQueue = mutation({
       joinedAt: Date.now(),
     });
 
-    // Chercher un match avec PR similaire
     const currentPlayerPR = user.pr || INITIAL_PR;
     const now = Date.now();
 
-    // Récupérer tous les joueurs en attente avec le même bet et devise
     const waitingPlayers = await ctx.db
       .query("matchmakingQueue")
       .withIndex("by_status_bet_currency", (q) =>
@@ -73,7 +70,6 @@ export const joinQueue = mutation({
       .filter((q) => q.neq(q.field("userId"), args.userId))
       .collect();
 
-    // Trouver le meilleur match en fonction du PR et du temps d'attente
     let potentialMatch = null;
     let bestPRDifference = Infinity;
 
@@ -87,7 +83,6 @@ export const joinQueue = mutation({
 
       const prDifference = Math.abs(currentPlayerPR - candidatePR);
 
-      // Vérifier si le match est possible selon le temps d'attente du candidat
       if (prDifference <= candidatePRRange && prDifference < bestPRDifference) {
         potentialMatch = candidate;
         bestPRDifference = prDifference;
@@ -152,7 +147,6 @@ export const joinQueue = mutation({
         gameId,
       });
 
-      // Créer la partie dans la table games
       const now = Date.now();
       const players: any[] = [
         {
@@ -406,7 +400,7 @@ export const createMatchVsAI = mutation({
         },
       ],
       mode: "AI" as const,
-      competitive: false, // Les parties contre l'IA n'affectent jamais le PR
+      competitive: false,
       maxPlayers: 2,
       aiDifficulty: args.difficulty,
       roomName: undefined,

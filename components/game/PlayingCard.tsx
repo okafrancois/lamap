@@ -134,7 +134,6 @@ export const PlayingCard = React.memo(function PlayingCard({
       });
       pulseOpacity.value = 1;
     } else if (state === "playable") {
-      // Pulsation subtile pour les cartes jouables
       scale.value = withRepeat(
         withSpring(1.02, {
           damping: 15,
@@ -196,7 +195,7 @@ export const PlayingCard = React.memo(function PlayingCard({
         : state === "disabled" ? colors.border
         : colors.border,
       borderWidth: isSelected ? 3 : 2,
-      borderRadius: Spacing.radius.lg, // rounded-lg (8px)
+      borderRadius: Spacing.radius.lg,
       ...(state === "playable" && !isSelected ?
         getPlayableCardShadow(colors.primary)
       : isSelected ? getCardShadow(colors.primary)

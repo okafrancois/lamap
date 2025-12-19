@@ -10,8 +10,8 @@ import Animated, {
 } from "react-native-reanimated";
 
 interface GameTimerProps {
-  timeRemaining: number; // En secondes
-  totalTime: number; // Temps total du tour (pour le pourcentage)
+  timeRemaining: number;
+  totalTime: number;
   isMyTurn: boolean;
   isActive: boolean;
 }
@@ -48,14 +48,12 @@ export function GameTimer({
 
   useEffect(() => {
     if (isCriticalTime && isMyTurn && isActive) {
-      // Pulsation rapide en temps critique
       scale.value = withRepeat(
         withSpring(1.15, { damping: 10, stiffness: 200 }),
         -1,
         true
       );
     } else if (isLowTime && isMyTurn && isActive) {
-      // Pulsation lente en temps bas
       scale.value = withRepeat(
         withSpring(1.08, { damping: 12, stiffness: 150 }),
         -1,
@@ -78,8 +76,8 @@ export function GameTimer({
   };
 
   const getTimerColor = () => {
-    if (isCriticalTime) return "#EF4444"; // Rouge
-    if (isLowTime) return "#F59E0B"; // Orange
+    if (isCriticalTime) return "#EF4444";
+    if (isLowTime) return "#F59E0B";
     return isMyTurn ? colors.primary : colors.mutedForeground;
   };
 

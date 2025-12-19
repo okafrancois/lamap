@@ -5,7 +5,7 @@ export interface ShadowStyle {
   shadowOffset?: { width: number; height: number };
   shadowOpacity?: number;
   shadowRadius?: number;
-  elevation?: number; // Android
+  elevation?: number;
 }
 
 /**
