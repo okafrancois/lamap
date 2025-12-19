@@ -71,10 +71,10 @@ export default function RankedMatchmakingScreen() {
       setSearching(true);
       await joinQueue({
         userId: convexUser._id,
-        betAmount: 0, // Gratuit pour le mode classé
+        betAmount: 0,
         currency,
         mode: "RANKED",
-        competitive: true, // Toujours compétitif pour le mode classé
+        competitive: true,
       });
     } catch (error) {
       console.error("Erreur lors de la recherche:", error);
