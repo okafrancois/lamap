@@ -3,14 +3,12 @@ import { useEffect, useState } from "react";
 
 const SETTINGS_KEY = "@lamap:settings";
 
-export type ThemeMode = "light" | "dark" | "system";
 export type CardLayout = "fan" | "linear" | "compact";
 export type PlayAreaMode = "battle" | "history";
 export type BattleLayout = "vertical" | "horizontal";
 export type TimerDuration = 30 | 60 | 120 | 300;
 
 interface Settings {
-  themeMode: ThemeMode;
   cardLayout: CardLayout;
   playAreaMode: PlayAreaMode;
   battleLayout: BattleLayout;
@@ -19,7 +17,6 @@ interface Settings {
 }
 
 const defaultSettings: Settings = {
-  themeMode: "system",
   cardLayout: "fan",
   playAreaMode: "battle",
   battleLayout: "vertical",
@@ -59,10 +56,6 @@ export function useSettings() {
     }
   };
 
-  const setThemeMode = (mode: ThemeMode) => {
-    updateSettings({ themeMode: mode });
-  };
-
   const setCardLayout = (layout: CardLayout) => {
     updateSettings({ cardLayout: layout });
   };
@@ -84,13 +77,11 @@ export function useSettings() {
   };
 
   return {
-    themeMode: settings.themeMode,
     cardLayout: settings.cardLayout,
     playAreaMode: settings.playAreaMode,
     battleLayout: settings.battleLayout,
     timerEnabled: settings.timerEnabled,
     timerDuration: settings.timerDuration,
-    setThemeMode,
     setCardLayout,
     setPlayAreaMode,
     setBattleLayout,

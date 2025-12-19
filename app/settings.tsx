@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -21,10 +20,8 @@ export default function SettingsScreen() {
   const colors = useColors();
   const { convexUser } = useAuth();
   const {
-    themeMode,
     cardLayout,
     battleLayout,
-    setThemeMode,
     setCardLayout,
     setBattleLayout,
     isLoading,
@@ -195,29 +192,6 @@ export default function SettingsScreen() {
                   {getCurrencyDisplay(convexUser?.currency)}
                 </Text>
               </View>
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Apparence</Text>
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingTitle}>Mode sombre</Text>
-                <Text style={styles.settingDescription}>
-                  Activer le thème sombre
-                </Text>
-              </View>
-              <Switch
-                value={themeMode === "dark"}
-                onValueChange={(value) =>
-                  setThemeMode(value ? "dark" : "light")
-                }
-                trackColor={{
-                  false: colors.muted,
-                  true: colors.secondary,
-                }}
-                thumbColor={colors.card}
-              />
             </View>
           </View>
 

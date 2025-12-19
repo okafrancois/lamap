@@ -16,7 +16,6 @@ export function OpponentZone({
   cardsRemaining,
 }: OpponentZoneProps) {
   const colors = useColors();
-  const isDark = colors.background === Colors.dark.background;
 
   const initials = name
     .split(" ")
@@ -37,10 +36,9 @@ export function OpponentZone({
       width: 48,
       height: 48,
       borderRadius: 24,
-      backgroundColor:
-        isDark ? Colors.gameUI.rougeTerre : Colors.gameUI.rougeSombre,
+      backgroundColor: Colors.gameUI.rougeTerre,
       borderWidth: 2,
-      borderColor: isDark ? Colors.gameUI.orClair : Colors.gameUI.orSable,
+      borderColor: Colors.gameUI.orClair,
       justifyContent: "center",
       alignItems: "center",
       shadowColor: "#000",
@@ -73,14 +71,12 @@ export function OpponentZone({
       flexDirection: "row",
       alignItems: "center",
       gap: 4,
-      backgroundColor:
-        isDark ? `rgba(166, 130, 88, 0.25)` : `rgba(166, 130, 88, 0.2)`,
+      backgroundColor: `rgba(166, 130, 88, 0.25)`,
       paddingHorizontal: 8,
       paddingVertical: 3,
       borderRadius: 10,
       borderWidth: 1,
-      borderColor:
-        isDark ? `rgba(212, 184, 150, 0.35)` : `rgba(166, 130, 88, 0.3)`,
+      borderColor: `rgba(212, 184, 150, 0.35)`,
     },
     hasHandIcon: {
       fontSize: 10,
@@ -88,7 +84,7 @@ export function OpponentZone({
     hasHandText: {
       fontSize: 10,
       fontWeight: "600",
-      color: isDark ? Colors.gameUI.orClair : Colors.gameUI.orSable,
+      color: Colors.gameUI.orClair,
     },
     cardsContainer: {
       flexDirection: "row",

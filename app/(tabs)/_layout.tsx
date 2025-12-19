@@ -5,12 +5,10 @@ import React from "react";
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { TopBar } from "@/components/ui/TopBar";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
   const colors = useColors();
-  const colorScheme = useColorScheme();
 
   return (
     <Tabs
@@ -26,7 +24,7 @@ export default function TabLayout() {
         tabBarBackground: () => (
           <BlurView
             intensity={80}
-            tint={colorScheme === "dark" ? "dark" : "light"}
+            tint="dark"
             style={{
               position: "absolute",
               top: 0,

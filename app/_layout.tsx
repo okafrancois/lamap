@@ -4,19 +4,13 @@ import {
   useAuth as useClerkAuth,
 } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from "@react-navigation/native";
+import { DarkTheme, ThemeProvider } from "@react-navigation/native";
 import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-
-import { useColorScheme } from "@/hooks/use-color-scheme";
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL || "";
 const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
@@ -28,7 +22,6 @@ export const unstable_settings = {
 };
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
   const { isSignedIn, isLoaded } = useClerkAuth();
 
   if (!isLoaded) {
@@ -36,7 +29,7 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DarkTheme}>
       <Stack>
         <Stack.Protected guard={!isSignedIn}>
           <Stack.Screen name="welcome" options={{ headerShown: false }} />
@@ -65,7 +58,7 @@ function RootLayoutNav() {
           />
         </Stack.Protected>
       </Stack>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
     </ThemeProvider>
   );
 }

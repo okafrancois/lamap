@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/Button";
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
 import { LinearGradient } from "expo-linear-gradient";
@@ -38,7 +37,6 @@ export function ResultPanel({
   onGoHome,
 }: ResultPanelProps) {
   const colors = useColors();
-  const colorScheme = useColorScheme();
   const { playSound } = useSound();
   const soundPlayedRef = useRef(false);
   const [countedGains, setCountedGains] = useState(0);
@@ -215,18 +213,11 @@ export function ResultPanel({
     transform: [{ scale: starScale3.value }],
   }));
 
-  // Gradient adapté au mode clair/sombre
-  const darkColors: readonly [string, string, string] = [
+  const gradientColors: readonly [string, string, string] = [
     "#2E3D4D",
     "#3A4D5F",
     "#2E3D4D",
   ];
-  const lightColors: readonly [string, string, string] = [
-    "#F5F2ED",
-    "#E8E0D4",
-    "#F5F2ED",
-  ];
-  const gradientColors = colorScheme === "dark" ? darkColors : lightColors;
 
   return (
     <Animated.View style={[styles.container, panelStyle]}>

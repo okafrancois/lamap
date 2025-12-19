@@ -1,5 +1,4 @@
 import { Colors } from "@/constants/theme";
-import { useColors } from "@/hooks/useColors";
 import React from "react";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
 
@@ -19,11 +18,8 @@ const CARD_WIDTHS = {
 };
 
 export function CardBack({ size = "medium", style }: CardBackProps) {
-  const colors = useColors();
   const cardWidth = CARD_WIDTHS[size];
   const cardHeight = cardWidth / CARD_ASPECT_RATIO;
-
-  const isDark = colors.background === Colors.dark.background;
 
   const styles = StyleSheet.create({
     card: {
@@ -34,11 +30,11 @@ export function CardBack({ size = "medium", style }: CardBackProps) {
       justifyContent: "center",
       alignItems: "center",
       borderWidth: size === "small" ? 1.5 : 2,
-      borderColor: isDark ? Colors.gameUI.orClair : Colors.gameUI.orSable,
+      borderColor: Colors.gameUI.orClair,
       backgroundColor: Colors.gameUI.rougeSombre,
       shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: isDark ? 0.3 : 0.4,
+      shadowOpacity: 0.3,
       shadowRadius: 4,
       elevation: 4,
     },
@@ -49,8 +45,7 @@ export function CardBack({ size = "medium", style }: CardBackProps) {
       right: size === "small" ? 3 : 5,
       bottom: size === "small" ? 3 : 5,
       borderWidth: 1,
-      borderColor:
-        isDark ? `rgba(212, 184, 150, 0.35)` : `rgba(166, 130, 88, 0.4)`,
+      borderColor: `rgba(212, 184, 150, 0.35)`,
       borderRadius: size === "small" ? 2 : 3,
     },
     symbol: {
@@ -58,7 +53,7 @@ export function CardBack({ size = "medium", style }: CardBackProps) {
         size === "small" ? 10
         : size === "medium" ? 16
         : 24,
-      color: isDark ? Colors.gameUI.orClair : Colors.gameUI.orSable,
+      color: Colors.gameUI.orClair,
       opacity: 0.7,
     },
     gradient: {

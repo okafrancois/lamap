@@ -1,5 +1,4 @@
 import { Colors } from "@/constants/theme";
-import { useColors } from "@/hooks/useColors";
 import React, { useEffect } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
@@ -23,9 +22,6 @@ export function TurnPips({
   roundsWonByPlayer,
   roundsWonByOpponent,
 }: TurnPipsProps) {
-  const colors = useColors();
-  const isDark = colors.background === Colors.dark.background;
-
   const pips = Array.from({ length: totalRounds }, (_, i) => {
     const roundNumber = i + 1;
     let state: "empty" | "player" | "opponent" | "current" = "empty";
@@ -54,7 +50,7 @@ export function TurnPips({
       fontWeight: "600",
       letterSpacing: 1.5,
       textTransform: "uppercase",
-      color: isDark ? Colors.gameUI.orClair : Colors.gameUI.orSable,
+      color: Colors.gameUI.orClair,
       opacity: 0.9,
     },
     pipsRow: {
@@ -69,7 +65,7 @@ export function TurnPips({
       <Text style={styles.label}>Manche</Text>
       <View style={styles.pipsRow}>
         {pips.map((pip) => (
-          <TurnPip key={pip.roundNumber} state={pip.state} isDark={isDark} />
+          <TurnPip key={pip.roundNumber} state={pip.state} />
         ))}
       </View>
     </View>
@@ -78,10 +74,8 @@ export function TurnPips({
 
 function TurnPip({
   state,
-  isDark,
 }: {
   state: "empty" | "player" | "opponent" | "current";
-  isDark: boolean;
 }) {
   const pulseOpacity = useSharedValue(1);
 
@@ -114,12 +108,9 @@ function TurnPip({
         : Colors.gameUI.bleuProfond,
       borderWidth: 1,
       borderColor:
-        state === "current" ?
-          isDark ? Colors.gameUI.orClair
-          : Colors.gameUI.orSable
+        state === "current" ? Colors.gameUI.orClair
         : state === "opponent" ? Colors.gameUI.rougeTerre
-        : isDark ? `rgba(166, 130, 88, 0.35)`
-        : `rgba(166, 130, 88, 0.3)`,
+        : `rgba(166, 130, 88, 0.35)`,
     },
     fill: {
       position: "absolute",
@@ -128,9 +119,7 @@ function TurnPip({
       bottom: 0,
       width: "100%",
       backgroundColor:
-        state === "player" ?
-          isDark ? Colors.gameUI.orClair
-          : Colors.gameUI.orSable
+        state === "player" ? Colors.gameUI.orClair
         : state === "opponent" ? Colors.gameUI.rougeVif
         : "transparent",
     },

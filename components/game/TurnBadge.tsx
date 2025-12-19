@@ -1,5 +1,4 @@
 import { Colors } from "@/constants/theme";
-import { useColors } from "@/hooks/useColors";
 import React, { useEffect } from "react";
 import { StyleSheet, Text } from "react-native";
 import Animated, {
@@ -16,9 +15,6 @@ interface TurnBadgeProps {
 }
 
 export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
-  const colors = useColors();
-  const isDark = colors.background === Colors.dark.background;
-
   const glowIntensity = useSharedValue(0.3);
   const scale = useSharedValue(visible ? 1 : 0.95);
   const opacity = useSharedValue(visible ? 1 : 0);
@@ -54,11 +50,9 @@ export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
       paddingHorizontal: 18,
       paddingVertical: 8,
       borderRadius: 18,
-      backgroundColor:
-        isDark ? `rgba(180, 68, 62, 0.25)` : `rgba(180, 68, 62, 0.2)`,
+      backgroundColor: `rgba(180, 68, 62, 0.25)`,
       borderWidth: 1,
-      borderColor:
-        isDark ? `rgba(201, 82, 75, 0.4)` : `rgba(180, 68, 62, 0.35)`,
+      borderColor: `rgba(201, 82, 75, 0.4)`,
     },
     icon: {
       fontSize: 14,
@@ -67,7 +61,7 @@ export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
       fontSize: 12,
       fontWeight: "600",
       letterSpacing: 0.4,
-      color: isDark ? Colors.gameUI.rougeVif : Colors.gameUI.rougeTerre,
+      color: Colors.gameUI.rougeVif,
     },
   });
 

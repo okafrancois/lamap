@@ -2,11 +2,11 @@ import { Colors } from './theme';
 
 export const FocusStyles = {
   outline: {
-    borderColor: Colors.light.ring,
+    borderColor: Colors.ring,
     borderWidth: 2,
   },
   ring: {
-    borderColor: Colors.light.ring,
+    borderColor: Colors.ring,
     borderWidth: 3,
     opacity: 0.5,
   },

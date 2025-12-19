@@ -1,4 +1,3 @@
-import { useColorScheme } from "@/hooks/use-color-scheme";
 import { useColors } from "@/hooks/useColors";
 import { Image } from "expo-image";
 import React from "react";
@@ -19,21 +18,19 @@ const SUIT_IMAGES = {
 };
 
 export function AuthBackground() {
-  const colorScheme = useColorScheme();
   const colors = useColors();
-  const isDark = colorScheme === "dark";
 
   const gradientColors = {
-    start: isDark ? "#141923" : "#FAFAF9",
-    end: isDark ? "#1E2530" : "#F5F2ED",
+    start: "#141923",
+    end: "#1E2530",
   };
 
   const decorativeColors = {
-    circle1: isDark ? "#3D4554" : "#D9D1C4",
-    circle2: isDark ? "#3D4554" : "#D9D1C4",
-    circle3: isDark ? "#B9966E" : "#C9A876",
-    circle4: isDark ? "#C34B44" : "#D4635D",
-    dots: isDark ? "#5A7A96" : "#A68258",
+    circle1: "#3D4554",
+    circle2: "#3D4554",
+    circle3: "#B9966E",
+    circle4: "#C34B44",
+    dots: "#5A7A96",
   };
 
   return (
@@ -53,28 +50,28 @@ export function AuthBackground() {
           cy="150"
           r="60"
           fill={decorativeColors.circle1}
-          opacity={isDark ? 0.06 : 0.08}
+          opacity={0.06}
         />
         <Circle
           cx="320"
           cy="100"
           r="80"
           fill={decorativeColors.circle2}
-          opacity={isDark ? 0.05 : 0.06}
+          opacity={0.05}
         />
         <Circle
           cx="280"
           cy="700"
           r="100"
           fill={decorativeColors.circle3}
-          opacity={isDark ? 0.04 : 0.05}
+          opacity={0.04}
         />
         <Circle
           cx="100"
           cy="600"
           r="70"
           fill={decorativeColors.circle4}
-          opacity={isDark ? 0.03 : 0.04}
+          opacity={0.03}
         />
 
         <Circle
@@ -82,35 +79,35 @@ export function AuthBackground() {
           cy="400"
           r="2"
           fill={decorativeColors.dots}
-          opacity={isDark ? 0.12 : 0.15}
+          opacity={0.12}
         />
         <Circle
           cx="340"
           cy="300"
           r="3"
           fill={colors.primary}
-          opacity={isDark ? 0.1 : 0.12}
+          opacity={0.1}
         />
         <Circle
           cx="180"
           cy="180"
           r="2"
           fill={decorativeColors.dots}
-          opacity={isDark ? 0.12 : 0.15}
+          opacity={0.12}
         />
         <Circle
           cx="280"
           cy="500"
           r="2"
           fill={decorativeColors.circle1}
-          opacity={isDark ? 0.12 : 0.15}
+          opacity={0.12}
         />
         <Circle
           cx="120"
           cy="720"
           r="2"
           fill={colors.primary}
-          opacity={isDark ? 0.08 : 0.1}
+          opacity={0.08}
         />
       </Svg>
 
@@ -118,7 +115,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.hearts}
         style={[
           styles.suitIcon,
-          { top: 80, left: 40, width: 60, height: 60, opacity: isDark ? 0.06 : 0.08 },
+          { top: 80, left: 40, width: 60, height: 60, opacity: 0.06 },
         ]}
         contentFit="contain"
       />
@@ -126,7 +123,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.spades}
         style={[
           styles.suitIcon,
-          { top: 150, right: 30, width: 80, height: 80, opacity: isDark ? 0.06 : 0.08 },
+          { top: 150, right: 30, width: 80, height: 80, opacity: 0.06 },
         ]}
         contentFit="contain"
       />
@@ -134,7 +131,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.diamonds}
         style={[
           styles.suitIcon,
-          { top: 300, left: 20, width: 50, height: 50, opacity: isDark ? 0.05 : 0.08 },
+          { top: 300, left: 20, width: 50, height: 50, opacity: 0.05 },
         ]}
         contentFit="contain"
       />
@@ -142,7 +139,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.clubs}
         style={[
           styles.suitIcon,
-          { top: 450, right: 50, width: 70, height: 70, opacity: isDark ? 0.06 : 0.08 },
+          { top: 450, right: 50, width: 70, height: 70, opacity: 0.06 },
         ]}
         contentFit="contain"
       />
@@ -150,7 +147,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.hearts}
         style={[
           styles.suitIcon,
-          { bottom: 200, left: 60, width: 55, height: 55, opacity: isDark ? 0.05 : 0.08 },
+          { bottom: 200, left: 60, width: 55, height: 55, opacity: 0.05 },
         ]}
         contentFit="contain"
       />
@@ -158,7 +155,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.spades}
         style={[
           styles.suitIcon,
-          { bottom: 150, right: 40, width: 65, height: 65, opacity: isDark ? 0.06 : 0.08 },
+          { bottom: 150, right: 40, width: 65, height: 65, opacity: 0.06 },
         ]}
         contentFit="contain"
       />
@@ -166,7 +163,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.diamonds}
         style={[
           styles.suitIcon,
-          { top: 200, left: 70, width: 45, height: 45, opacity: isDark ? 0.05 : 0.08 },
+          { top: 200, left: 70, width: 45, height: 45, opacity: 0.05 },
         ]}
         contentFit="contain"
       />
@@ -174,7 +171,7 @@ export function AuthBackground() {
         source={SUIT_IMAGES.clubs}
         style={[
           styles.suitIcon,
-          { top: 550, left: 50, width: 60, height: 60, opacity: isDark ? 0.06 : 0.08 },
+          { top: 550, left: 50, width: 60, height: 60, opacity: 0.06 },
         ]}
         contentFit="contain"
       />

@@ -1,5 +1,4 @@
 import { Colors } from "@/constants/theme";
-import { useColors } from "@/hooks/useColors";
 import React, { useEffect } from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 import Animated, {
@@ -22,9 +21,6 @@ export function ConfirmPlayButton({
   onPress,
   disabled = false,
 }: ConfirmPlayButtonProps) {
-  const colors = useColors();
-  const isDark = colors.background === Colors.dark.background;
-
   const translateY = useSharedValue(visible ? 0 : 20);
   const opacity = useSharedValue(visible ? 1 : 0);
 
@@ -48,7 +44,7 @@ export function ConfirmPlayButton({
       paddingHorizontal: 28,
       paddingVertical: 12,
       borderRadius: 24,
-      backgroundColor: isDark ? Colors.gameUI.orClair : Colors.gameUI.orSable,
+      backgroundColor: Colors.gameUI.orClair,
       shadowColor: Colors.gameUI.orSable,
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.5,
@@ -62,7 +58,7 @@ export function ConfirmPlayButton({
       fontSize: 13,
       fontWeight: "700",
       letterSpacing: 0.8,
-      color: isDark ? Colors.derived.black : Colors.derived.black,
+      color: Colors.derived.black,
       textAlign: "center",
     },
   });

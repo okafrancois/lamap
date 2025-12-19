@@ -1,4 +1,3 @@
-import { Colors } from "@/constants/theme";
 import { useColors } from "@/hooks/useColors";
 import React from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
@@ -101,9 +100,6 @@ export function CardStack({
   highlightLastN = 1,
   showEmptySlot = false,
 }: CardStackProps) {
-  const colors = useColors();
-  const isDark = colors.background === Colors.dark.background;
-
   const cardWidth =
     size === "large" ? 100
     : size === "medium" ? 80
@@ -118,18 +114,16 @@ export function CardStack({
         width: cardWidth,
         height: cardHeight,
         borderRadius: 8,
-        backgroundColor:
-          isDark ? `rgba(42, 59, 77, 0.4)` : `rgba(70, 93, 116, 0.15)`,
+        backgroundColor: `rgba(42, 59, 77, 0.4)`,
         borderWidth: 2,
         borderStyle: "dashed",
-        borderColor:
-          isDark ? `rgba(166, 130, 88, 0.35)` : `rgba(166, 130, 88, 0.3)`,
+        borderColor: `rgba(166, 130, 88, 0.35)`,
         justifyContent: "center",
         alignItems: "center",
       },
       emptyHint: {
         fontSize: 28,
-        color: isDark ? `rgba(166, 130, 88, 0.35)` : `rgba(166, 130, 88, 0.3)`,
+        color: `rgba(166, 130, 88, 0.35)`,
       },
     });
 
