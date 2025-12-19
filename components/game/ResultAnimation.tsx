@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo } from "react";
-import { StyleSheet, View, Dimensions } from "react-native";
+import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
-  withRepeat,
-  withSpring,
-  Easing,
   withDelay,
+  withRepeat,
   withSequence,
+  withSpring,
+  withTiming,
 } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -16,7 +16,14 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 interface ParticleProps {
   index: number;
   color: string;
-  victoryType: "normal" | "simple_kora" | "double_kora" | "triple_kora" | "auto_sum" | "auto_sevens" | "auto_lowest";
+  victoryType:
+    | "normal"
+    | "simple_kora"
+    | "double_kora"
+    | "triple_kora"
+    | "auto_sum"
+    | "auto_sevens"
+    | "auto_lowest";
 }
 
 function Particle({ index, color, victoryType }: ParticleProps) {
@@ -35,14 +42,8 @@ function Particle({ index, color, victoryType }: ParticleProps) {
   const startX = useMemo(() => SCREEN_WIDTH / 2, []);
   const startY = useMemo(() => SCREEN_HEIGHT / 2, []);
 
-  const endX = useMemo(
-    () => (Math.random() - 0.5) * SCREEN_WIDTH * 1.5,
-    []
-  );
-  const endY = useMemo(
-    () => (Math.random() - 0.8) * SCREEN_HEIGHT * 1.2,
-    []
-  );
+  const endX = useMemo(() => (Math.random() - 0.5) * SCREEN_WIDTH * 1.5, []);
+  const endY = useMemo(() => (Math.random() - 0.8) * SCREEN_HEIGHT * 1.2, []);
 
   const animationDelay = useMemo(() => Math.random() * 300, []);
 
@@ -99,7 +100,16 @@ function Particle({ index, color, victoryType }: ParticleProps) {
         false
       )
     );
-  }, [animationDelay, translateX, translateY, opacity, scale, rotate, endX, endY]);
+  }, [
+    animationDelay,
+    translateX,
+    translateY,
+    opacity,
+    scale,
+    rotate,
+    endX,
+    endY,
+  ]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -129,15 +139,30 @@ function Particle({ index, color, victoryType }: ParticleProps) {
 
 interface ResultAnimationProps {
   visible: boolean;
-  victoryType: "normal" | "simple_kora" | "double_kora" | "triple_kora" | "auto_sum" | "auto_sevens" | "auto_lowest";
+  victoryType:
+    | "normal"
+    | "simple_kora"
+    | "double_kora"
+    | "triple_kora"
+    | "auto_sum"
+    | "auto_sevens"
+    | "auto_lowest";
 }
 
-export function ResultAnimation({ visible, victoryType }: ResultAnimationProps) {
+export function ResultAnimation({
+  visible,
+  victoryType,
+}: ResultAnimationProps) {
   const particleCount = useMemo(() => {
     if (victoryType === "triple_kora") return 60;
     if (victoryType === "double_kora") return 40;
     if (victoryType === "simple_kora") return 25;
-    if (victoryType === "auto_sum" || victoryType === "auto_sevens" || victoryType === "auto_lowest") return 0;
+    if (
+      victoryType === "auto_sum" ||
+      victoryType === "auto_sevens" ||
+      victoryType === "auto_lowest"
+    )
+      return 0;
     return 0;
   }, [victoryType]);
 
@@ -184,4 +209,3 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 });
-

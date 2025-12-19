@@ -2,16 +2,16 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
+import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, {
+  Easing,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-  Easing,
 } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
 
 const PANEL_HEIGHT = 280;
 
@@ -125,8 +125,9 @@ export function ResultPanel({
     opacity: opacity.value,
   }));
 
-  const gradientColors: readonly [string, string, string] = isWinner
-    ? ["#2D5016", "#3D6B1F", "#4A8227"]
+  const gradientColors: readonly [string, string, string] =
+    isWinner ?
+      ["#2D5016", "#3D6B1F", "#4A8227"]
     : ["#2A2A2A", "#1F1F1F", "#141414"];
 
   return (
@@ -144,19 +145,21 @@ export function ResultPanel({
               {isWinner ? getVictoryTitle() : "Défaite"}
             </Text>
             {isWinner && multiplier > 1 && (
-              <Badge
-                label={`×${multiplier}`}
-                variant="kora"
-              />
+              <Badge label={`×${multiplier}`} variant="kora" />
             )}
           </View>
 
           {/* Stats */}
           <View style={styles.stats}>
-            {isWinner ? (
+            {isWinner ?
               <>
                 <View style={styles.statRow}>
-                  <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                  <Text
+                    style={[
+                      styles.statLabel,
+                      { color: colors.mutedForeground },
+                    ]}
+                  >
                     Gains
                   </Text>
                   <Text style={[styles.statValue, { color: "#A3D977" }]}>
@@ -165,25 +168,33 @@ export function ResultPanel({
                 </View>
                 {multiplier > 1 && (
                   <View style={styles.statRow}>
-                    <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+                    <Text
+                      style={[
+                        styles.statLabel,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
                       Multiplicateur
                     </Text>
-                    <Text style={[styles.statValue, { color: colors.secondary }]}>
+                    <Text
+                      style={[styles.statValue, { color: colors.secondary }]}
+                    >
                       ×{multiplier}
                     </Text>
                   </View>
                 )}
               </>
-            ) : (
-              <View style={styles.statRow}>
-                <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>
+            : <View style={styles.statRow}>
+                <Text
+                  style={[styles.statLabel, { color: colors.mutedForeground }]}
+                >
                   Perte
                 </Text>
                 <Text style={[styles.statValue, { color: colors.destructive }]}>
                   -{game.bet.amount} {game.bet.currency}
                 </Text>
               </View>
-            )}
+            }
           </View>
 
           {/* Actions */}
@@ -268,4 +279,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
