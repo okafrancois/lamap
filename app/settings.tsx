@@ -2,6 +2,9 @@ import { BattleLayoutPreview } from "@/components/settings/BattleLayoutPreview";
 import { CardLayoutPreview } from "@/components/settings/CardLayoutPreview";
 import { useColors } from "@/hooks/useColors";
 import { useSettings } from "@/hooks/useSettings";
+import { useAuth } from "@/hooks/useAuth";
+import { CURRENCY_SYMBOLS, CURRENCY_NAMES } from "@/convex/currencies";
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
   ActivityIndicator,
@@ -16,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SettingsScreen() {
   const colors = useColors();
+  const { convexUser } = useAuth();
   const {
     themeMode,
     cardLayout,
@@ -138,10 +142,54 @@ export default function SettingsScreen() {
     );
   }
 
+  const getCurrencyDisplay = (currency?: string) => {
+    if (!currency) return "Non définie";
+    const symbol = CURRENCY_SYMBOLS[currency as keyof typeof CURRENCY_SYMBOLS];
+    const name = CURRENCY_NAMES[currency as keyof typeof CURRENCY_NAMES];
+    return `${name} (${symbol})`;
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Compte</Text>
+            
+            <TouchableOpacity style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>Nom d'utilisateur</Text>
+                <Text style={styles.settingDescription}>
+                  {convexUser?.username || "Non défini"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+            </TouchableOpacity>
+
+            <View style={{ height: 12 }} />
+
+            <TouchableOpacity style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>Pays</Text>
+                <Text style={styles.settingDescription}>
+                  {convexUser?.country || "Non défini"}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+            </TouchableOpacity>
+
+            <View style={{ height: 12 }} />
+
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Text style={styles.settingTitle}>Devise</Text>
+                <Text style={styles.settingDescription}>
+                  {getCurrencyDisplay(convexUser?.currency)}
+                </Text>
+              </View>
+            </View>
+          </View>
+
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Apparence</Text>
             <View style={styles.settingRow}>
