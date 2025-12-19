@@ -5,6 +5,7 @@ import type { Currency } from "@/convex/currencies";
 import { INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
+import { useSettings } from "@/hooks/useSettings";
 import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -21,6 +22,7 @@ export default function RankedMatchmakingScreen() {
   const colors = useColors();
   const router = useRouter();
   const { userId, convexUser } = useAuth();
+  const { timerEnabled, timerDuration } = useSettings();
   const [searching, setSearching] = useState(false);
   const [searchTime, setSearchTime] = useState(0);
 
@@ -75,6 +77,8 @@ export default function RankedMatchmakingScreen() {
         currency,
         mode: "RANKED",
         competitive: true,
+        timerEnabled: timerEnabled,
+        timerDuration: timerDuration,
       });
     } catch (error) {
       console.error("Erreur lors de la recherche:", error);

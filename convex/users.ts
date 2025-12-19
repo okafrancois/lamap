@@ -143,6 +143,43 @@ export const getUserById = query({
   },
 });
 
+// Récupérer le profil public d'un utilisateur (sans infos confidentielles)
+export const getPublicUserProfile = query({
+  args: {
+    userId: v.id("users"),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      username: v.string(),
+      avatarUrl: v.optional(v.string()),
+      createdAt: v.number(),
+      isActive: v.boolean(),
+      country: v.optional(v.string()),
+      pr: v.optional(v.number()),
+      rankHistory: v.optional(v.array(v.string())),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user || !user.onboardingCompleted) return null;
+
+    return {
+      _id: user._id,
+      _creationTime: user._creationTime,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      createdAt: user.createdAt,
+      isActive: user.isActive,
+      country: user.country,
+      pr: user.pr,
+      rankHistory: user.rankHistory,
+    };
+  },
+});
+
 // Mutation publique pour créer/mettre à jour un utilisateur (pour compatibilité)
 export const createOrUpdateUser = mutation({
   args: {

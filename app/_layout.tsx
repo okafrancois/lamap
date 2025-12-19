@@ -70,16 +70,18 @@ function RootLayoutNav() {
           <Stack.Screen
             name="settings"
             options={{
-              presentation: "modal",
               title: "Paramètres",
+              headerBackTitle: "Retour",
+              headerShown: true,
               ...modalHeaderOptions,
             }}
           />
           <Stack.Screen
             name="profile"
             options={{
-              presentation: "modal",
               title: "Mon Profil",
+              headerBackTitle: "Retour",
+              headerShown: true,
               ...modalHeaderOptions,
             }}
           />

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query } from "./_generated/server";
 
 // ========== CONSTANTES DE RANKING ==========
@@ -222,19 +223,20 @@ export const getGlobalLeaderboard = query({
 export const updatePlayerPRInternal = internalMutation({
   args: {
     playerId: v.id("users"),
-    opponentId: v.id("users"),
+    opponentId: v.union(v.id("users"), v.string()), // Peut être un bot ID
+    playerPR: v.number(), // PR du joueur au moment de l'appel
+    opponentPR: v.number(), // PR de l'adversaire au moment de l'appel
     playerWon: v.boolean(),
   },
   handler: async (ctx, args) => {
     const player = await ctx.db.get(args.playerId);
-    const opponent = await ctx.db.get(args.opponentId);
-
-    if (!player || !opponent) {
+    if (!player) {
       throw new Error("Joueur non trouvé");
     }
 
-    const playerPR = player.pr || INITIAL_PR;
-    const opponentPR = opponent.pr || INITIAL_PR;
+    // Utiliser les PR passés en paramètres (évite les problèmes de timing)
+    const playerPR = args.playerPR;
+    const opponentPR = args.opponentPR;
 
     // Calculer le changement de PR
     const prChange = calculatePRChange(
@@ -275,13 +277,25 @@ export const updatePlayerPRInternal = internalMutation({
       pr: newPR,
     });
 
-    // Enregistrer dans l'historique
+    // Enregistrer dans l'historique (seulement si l'adversaire est un utilisateur, pas un bot)
+    if (typeof args.opponentId === "string" && args.opponentId.startsWith("ai-")) {
+      // Ne pas enregistrer l'historique pour les parties contre l'IA
+      return {
+        oldPR: playerPR,
+        newPR,
+        prChange,
+        rankUp,
+        koraReward,
+        newRank: rankUp ? getRankFromPR(newPR) : null,
+      };
+    }
+
     await ctx.db.insert("prHistory", {
       userId: args.playerId,
       oldPR: playerPR,
       newPR,
       change: prChange,
-      opponentId: args.opponentId,
+      opponentId: args.opponentId as Id<"users">, // Type assertion car on a vérifié que ce n'est pas un bot
       opponentPR,
       won: args.playerWon,
       timestamp: Date.now(),

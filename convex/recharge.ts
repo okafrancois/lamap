@@ -25,12 +25,26 @@ export const redeemRechargeCode = mutation({
       throw new Error("Ce code de recharge n'est plus actif");
     }
 
-    if (rechargeCode.usedBy) {
-      throw new Error("Ce code de recharge a déjà été utilisé");
-    }
-
     if (rechargeCode.expiresAt && rechargeCode.expiresAt < Date.now()) {
       throw new Error("Ce code de recharge a expiré");
+    }
+
+    if (
+      rechargeCode.maxUses !== undefined &&
+      rechargeCode.useCount >= rechargeCode.maxUses
+    ) {
+      throw new Error("Ce code de recharge a atteint sa limite d'utilisations");
+    }
+
+    const existingUsage = await ctx.db
+      .query("rechargeCodeUsages")
+      .withIndex("by_user_code", (q) =>
+        q.eq("userId", args.userId).eq("rechargeCodeId", rechargeCode._id)
+      )
+      .first();
+
+    if (existingUsage) {
+      throw new Error("Vous avez déjà utilisé ce code de recharge");
     }
 
     const currentBalance = user.balance || 0;
@@ -40,10 +54,21 @@ export const redeemRechargeCode = mutation({
       balance: newBalance,
     });
 
+    const newUseCount = (rechargeCode.useCount || 0) + 1;
+    const shouldDeactivate =
+      rechargeCode.maxUses !== undefined && newUseCount >= rechargeCode.maxUses;
+
     await ctx.db.patch(rechargeCode._id, {
-      usedBy: args.userId,
+      useCount: newUseCount,
+      isActive: !shouldDeactivate,
+    });
+
+    await ctx.db.insert("rechargeCodeUsages", {
+      rechargeCodeId: rechargeCode._id,
+      userId: args.userId,
       usedAt: Date.now(),
-      isActive: false,
+      amount: rechargeCode.amount,
+      currency: rechargeCode.currency,
     });
 
     await ctx.db.insert("transactions", {
@@ -67,6 +92,7 @@ export const redeemRechargeCode = mutation({
 export const getRechargeCode = query({
   args: {
     code: v.string(),
+    userId: v.optional(v.id("users")),
   },
   handler: async (ctx, args) => {
     const rechargeCode = await ctx.db
@@ -78,16 +104,39 @@ export const getRechargeCode = query({
       return null;
     }
 
+    const isExpired =
+      rechargeCode.expiresAt ? rechargeCode.expiresAt < Date.now() : false;
+
+    const hasReachedLimit =
+      rechargeCode.maxUses !== undefined &&
+      rechargeCode.useCount >= rechargeCode.maxUses;
+
+    let hasUserUsed = false;
+    if (args.userId) {
+      const existingUsage = await ctx.db
+        .query("rechargeCodeUsages")
+        .withIndex("by_user_code", (q) =>
+          q.eq("userId", args.userId!).eq("rechargeCodeId", rechargeCode._id)
+        )
+        .first();
+      hasUserUsed = !!existingUsage;
+    }
+
+    const isValid =
+      rechargeCode.isActive && !isExpired && !hasReachedLimit && !hasUserUsed;
+
     return {
       amount: rechargeCode.amount,
       currency: rechargeCode.currency,
-      isValid:
-        rechargeCode.isActive &&
-        !rechargeCode.usedBy &&
-        (!rechargeCode.expiresAt || rechargeCode.expiresAt >= Date.now()),
-      isUsed: !!rechargeCode.usedBy,
-      isExpired:
-        rechargeCode.expiresAt ? rechargeCode.expiresAt < Date.now() : false,
+      maxUses: rechargeCode.maxUses,
+      useCount: rechargeCode.useCount,
+      remainingUses:
+        rechargeCode.maxUses !== undefined ?
+          Math.max(0, rechargeCode.maxUses - rechargeCode.useCount)
+        : null,
+      hasUserUsed,
+      isValid,
+      isExpired,
     };
   },
 });
@@ -98,6 +147,7 @@ export const createRechargeCode = internalMutation({
     amount: v.number(),
     currency: v.string(),
     expiresAt: v.optional(v.number()),
+    maxUses: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
@@ -116,6 +166,8 @@ export const createRechargeCode = internalMutation({
       createdAt: Date.now(),
       expiresAt: args.expiresAt,
       isActive: true,
+      maxUses: args.maxUses,
+      useCount: 0,
     });
 
     return rechargeCodeId;

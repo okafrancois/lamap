@@ -147,12 +147,23 @@ const rechargeCodesTable = defineTable({
   code: v.string(),
   amount: v.number(),
   currency: v.string(),
-  usedBy: v.optional(v.id("users")),
-  usedAt: v.optional(v.number()),
   createdAt: v.number(),
   expiresAt: v.optional(v.number()),
   isActive: v.boolean(),
+  maxUses: v.optional(v.number()),
+  useCount: v.number(),
 }).index("by_code", ["code"]);
+
+const rechargeCodeUsagesTable = defineTable({
+  rechargeCodeId: v.id("rechargeCodes"),
+  userId: v.id("users"),
+  usedAt: v.number(),
+  amount: v.number(),
+  currency: v.string(),
+})
+  .index("by_code", ["rechargeCodeId"])
+  .index("by_user_code", ["userId", "rechargeCodeId"])
+  .index("by_user", ["userId"]);
 
 // Table pour les amitiés
 const friendshipsTable = defineTable({
@@ -180,6 +191,28 @@ const friendRequestsTable = defineTable({
   .index("by_status", ["status"])
   .index("by_sender_receiver", ["senderId", "receiverId"]);
 
+const challengesTable = defineTable({
+  challengerId: v.id("users"),
+  challengedId: v.id("users"),
+  mode: v.union(v.literal("RANKED"), v.literal("CASH")),
+  betAmount: v.optional(v.number()),
+  currency: v.optional(v.string()),
+  competitive: v.optional(v.boolean()),
+  status: v.union(
+    v.literal("pending"),
+    v.literal("accepted"),
+    v.literal("rejected"),
+    v.literal("expired")
+  ),
+  createdAt: v.number(),
+  expiresAt: v.number(),
+  respondedAt: v.optional(v.number()),
+  gameId: v.optional(v.string()),
+})
+  .index("by_challenger", ["challengerId"])
+  .index("by_challenged", ["challengedId"])
+  .index("by_status", ["status"]);
+
 export default defineSchema({
   numbers: numbersTable,
   users: usersTable,
@@ -190,7 +223,9 @@ export default defineSchema({
   conversations: conversationsTable,
   messages: messagesTable,
   rechargeCodes: rechargeCodesTable,
+  rechargeCodeUsages: rechargeCodeUsagesTable,
   prHistory: prHistoryTable,
   friendships: friendshipsTable,
   friendRequests: friendRequestsTable,
+  challenges: challengesTable,
 });

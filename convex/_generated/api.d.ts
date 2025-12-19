@@ -9,6 +9,7 @@
  */
 
 import type * as aiPlayer from "../aiPlayer.js";
+import type * as challenges from "../challenges.js";
 import type * as chat from "../chat.js";
 import type * as currencies from "../currencies.js";
 import type * as economy from "../economy.js";
@@ -35,6 +36,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   aiPlayer: typeof aiPlayer;
+  challenges: typeof challenges;
   chat: typeof chat;
   currencies: typeof currencies;
   economy: typeof economy;

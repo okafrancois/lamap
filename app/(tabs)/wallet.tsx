@@ -4,7 +4,9 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useEconomy } from "@/hooks/useEconomy";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
+import { type ErrorBoundaryProps, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
@@ -17,24 +19,91 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  const colors = useColors();
+  const router = useRouter();
+
+  const errorStyles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 20,
+      gap: 16,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: "700",
+      textAlign: "center",
+      color: colors.text,
+    },
+    message: {
+      fontSize: 16,
+      textAlign: "center",
+      lineHeight: 22,
+      maxWidth: 300,
+      color: colors.mutedForeground,
+    },
+    actions: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 8,
+    },
+    button: {
+      minWidth: 120,
+    },
+  });
+
+  return (
+    <SafeAreaView style={errorStyles.container}>
+      <View style={errorStyles.content}>
+        <Ionicons name="alert-circle" size={64} color={colors.destructive} />
+        <Text style={errorStyles.title}>Erreur de chargement</Text>
+        <Text style={errorStyles.message}>{error.message}</Text>
+        <View style={errorStyles.actions}>
+          <Button
+            title="Réessayer"
+            onPress={retry}
+            variant="primary"
+            style={errorStyles.button}
+          />
+          <Button
+            title="Retour"
+            onPress={() => router.back()}
+            variant="outline"
+            style={errorStyles.button}
+          />
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 export default function WalletScreen() {
   const colors = useColors();
-  const { isSignedIn, userId } = useAuth();
+  const { isSignedIn } = useAuth();
   const { balance, currency, transactions, redeemCode } = useEconomy();
   const [rechargeModalVisible, setRechargeModalVisible] = useState(false);
   const [rechargeCode, setRechargeCode] = useState("");
   const [redeeming, setRedeeming] = useState(false);
-  
+
   const codeInfoQuery = useQuery(
     api.recharge.getRechargeCode,
     rechargeCode.trim().length >= 3 ? { code: rechargeCode.trim() } : "skip"
   );
 
-  const codeInfo = codeInfoQuery ? {
-    amount: codeInfoQuery.amount,
-    currency: codeInfoQuery.currency,
-    isValid: codeInfoQuery.isValid,
-  } : null;
+  const codeInfo =
+    codeInfoQuery ?
+      {
+        amount: codeInfoQuery.amount,
+        currency: codeInfoQuery.currency,
+        isValid: codeInfoQuery.isValid,
+      }
+    : null;
 
   const handleRedeemCode = async () => {
     if (!codeInfo || !rechargeCode.trim()) return;
@@ -339,14 +408,28 @@ export default function WalletScreen() {
             />
 
             {codeInfoQuery === null && rechargeCode.trim().length >= 3 && (
-              <Text style={[styles.modalSubtitle, { color: colors.primary, marginTop: -16, marginBottom: 16 }]}>
+              <Text
+                style={[
+                  styles.modalSubtitle,
+                  { color: colors.primary, marginTop: -16, marginBottom: 16 },
+                ]}
+              >
                 Code invalide ou introuvable
               </Text>
             )}
 
             {codeInfoQuery && !codeInfoQuery.isValid && (
-              <Text style={[styles.modalSubtitle, { color: colors.primary, marginTop: -16, marginBottom: 16 }]}>
-                {codeInfoQuery.isUsed ? "Ce code a déjà été utilisé" : codeInfoQuery.isExpired ? "Ce code a expiré" : "Ce code n'est plus actif"}
+              <Text
+                style={[
+                  styles.modalSubtitle,
+                  { color: colors.primary, marginTop: -16, marginBottom: 16 },
+                ]}
+              >
+                {codeInfoQuery.hasUserUsed ?
+                  "Ce code a déjà été utilisé"
+                : codeInfoQuery.isExpired ?
+                  "Ce code a expiré"
+                : "Ce code n'est plus actif"}
               </Text>
             )}
 
@@ -360,7 +443,7 @@ export default function WalletScreen() {
             )}
 
             <View style={styles.modalActions}>
-              {codeInfo && codeInfo.isValid ? (
+              {codeInfo && codeInfo.isValid ?
                 <>
                   <Button
                     title={`Recharger ${codeInfo.amount.toLocaleString()} ${codeInfo.currency}`}
@@ -376,14 +459,13 @@ export default function WalletScreen() {
                     disabled={redeeming}
                   />
                 </>
-              ) : (
-                <Button
+              : <Button
                   title="Annuler"
                   onPress={handleCloseModal}
                   variant="ghost"
                   disabled={redeeming}
                 />
-              )}
+              }
             </View>
           </View>
         </View>

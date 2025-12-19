@@ -28,6 +28,7 @@ import {
   currencyValidator,
   gameModeValidator,
 } from "./validators";
+import { INITIAL_PR } from "./ranking";
 
 // ========== QUERIES ==========
 
@@ -415,6 +416,12 @@ export const startGame = mutation({
         );
 
         if (loserPlayer?.userId) {
+          // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
+          const winnerUser = await ctx.db.get(winnerPlayer.userId);
+          const loserUser = await ctx.db.get(loserPlayer.userId);
+          const winnerPR = winnerUser?.pr || INITIAL_PR;
+          const loserPR = loserUser?.pr || INITIAL_PR;
+
           // Mettre à jour le PR des deux joueurs
           try {
             // PR du gagnant
@@ -424,6 +431,8 @@ export const startGame = mutation({
               {
                 playerId: winnerPlayer.userId,
                 opponentId: loserPlayer.userId,
+                playerPR: winnerPR,
+                opponentPR: loserPR,
                 playerWon: true,
               }
             );
@@ -434,6 +443,8 @@ export const startGame = mutation({
               {
                 playerId: loserPlayer.userId,
                 opponentId: winnerPlayer.userId,
+                playerPR: loserPR,
+                opponentPR: winnerPR,
                 playerWon: false,
               }
             );
@@ -813,6 +824,54 @@ export const playCard = mutation({
         });
         gameState.version = gameState.version + 1;
         gameState.lastUpdatedAt = Date.now();
+
+        // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
+        const shouldUpdatePR =
+          game.mode !== "AI" &&
+          (game.mode === "RANKED" || game.competitive === true);
+        if (shouldUpdatePR && winnerPlayer?.userId) {
+          const loserPlayer = gameState.players.find(
+            (p) => getPlayerId(p) !== winnerId && p.userId
+          );
+
+          if (loserPlayer?.userId) {
+            // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
+            const winnerUser = await ctx.db.get(winnerPlayer.userId);
+            const loserUser = await ctx.db.get(loserPlayer.userId);
+            const winnerPR = winnerUser?.pr || INITIAL_PR;
+            const loserPR = loserUser?.pr || INITIAL_PR;
+
+            // Mettre à jour le PR des deux joueurs
+            try {
+              // PR du gagnant
+              await ctx.scheduler.runAfter(
+                0,
+                internal.ranking.updatePlayerPRInternal,
+                {
+                  playerId: winnerPlayer.userId,
+                  opponentId: loserPlayer.userId,
+                  playerPR: winnerPR,
+                  opponentPR: loserPR,
+                  playerWon: true,
+                }
+              );
+              // PR du perdant
+              await ctx.scheduler.runAfter(
+                0,
+                internal.ranking.updatePlayerPRInternal,
+                {
+                  playerId: loserPlayer.userId,
+                  opponentId: winnerPlayer.userId,
+                  playerPR: loserPR,
+                  opponentPR: winnerPR,
+                  playerWon: false,
+                }
+              );
+            } catch (error) {
+              console.error("Erreur mise à jour PR:", error);
+            }
+          }
+        }
       } else {
         // Next round
         gameState.currentRound++;
@@ -1139,6 +1198,54 @@ export const playCardInternal = internalMutation({
         });
         gameState.version = gameState.version + 1;
         gameState.lastUpdatedAt = Date.now();
+
+        // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
+        const shouldUpdatePR =
+          game.mode !== "AI" &&
+          (game.mode === "RANKED" || game.competitive === true);
+        if (shouldUpdatePR && winnerPlayer?.userId) {
+          const loserPlayer = gameState.players.find(
+            (p) => getPlayerId(p) !== winnerId && p.userId
+          );
+
+          if (loserPlayer?.userId) {
+            // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
+            const winnerUser = await ctx.db.get(winnerPlayer.userId);
+            const loserUser = await ctx.db.get(loserPlayer.userId);
+            const winnerPR = winnerUser?.pr || INITIAL_PR;
+            const loserPR = loserUser?.pr || INITIAL_PR;
+
+            // Mettre à jour le PR des deux joueurs
+            try {
+              // PR du gagnant
+              await ctx.scheduler.runAfter(
+                0,
+                internal.ranking.updatePlayerPRInternal,
+                {
+                  playerId: winnerPlayer.userId,
+                  opponentId: loserPlayer.userId,
+                  playerPR: winnerPR,
+                  opponentPR: loserPR,
+                  playerWon: true,
+                }
+              );
+              // PR du perdant
+              await ctx.scheduler.runAfter(
+                0,
+                internal.ranking.updatePlayerPRInternal,
+                {
+                  playerId: loserPlayer.userId,
+                  opponentId: winnerPlayer.userId,
+                  playerPR: loserPR,
+                  opponentPR: winnerPR,
+                  playerWon: false,
+                }
+              );
+            } catch (error) {
+              console.error("Erreur mise à jour PR:", error);
+            }
+          }
+        }
       } else {
         gameState.currentRound++;
       }
@@ -1420,14 +1527,23 @@ export const autoStartGame = internalMutation({
 
 export const getUserGameHistory = query({
   args: {
-    clerkUserId: v.string(),
+    clerkUserId: v.optional(v.string()), // Optionnel pour permettre la recherche par userId
+    userId: v.optional(v.id("users")), // Optionnel pour permettre la recherche par userId directement
+    viewerUserId: v.optional(v.id("users")), // ID de l'utilisateur qui consulte (pour masquer les mises)
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, { clerkUserId, limit = 20 }) => {
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", clerkUserId))
-      .first();
+  handler: async (ctx, { clerkUserId, userId, viewerUserId, limit = 20 }) => {
+    let user;
+    if (userId) {
+      user = await ctx.db.get(userId);
+    } else if (clerkUserId) {
+      user = await ctx.db
+        .query("users")
+        .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", clerkUserId))
+        .first();
+    } else {
+      return [];
+    }
 
     if (!user) {
       return [];
@@ -1458,6 +1574,7 @@ export const getUserGameHistory = query({
           } else if (opponent.userId) {
             const opponentUser = await ctx.db.get(opponent.userId);
             opponentInfo = {
+              _id: opponent.userId,
               username: opponentUser?.username || "Joueur",
               avatarUrl: opponentUser?.avatarUrl || null,
               isAI: false,
@@ -1466,14 +1583,24 @@ export const getUserGameHistory = query({
         }
 
         const isWinner = game.winnerId === user._id;
-        const gain = isWinner ? game.bet.amount : -game.bet.amount;
+        const isOwner = viewerUserId ? viewerUserId === user._id : true; // Si pas de viewerUserId, on assume que c'est le propriétaire
+        const isCashGame = game.mode === "CASH";
+        
+        // Masquer le montant de la mise pour les parties cash si ce n'est pas le propriétaire
+        const shouldMaskBet = isCashGame && !isOwner;
+        
+        const gain = shouldMaskBet ? 0 : (isWinner ? game.bet.amount : -game.bet.amount);
 
         return {
           gameId: game.gameId,
           _id: game._id,
           opponent: opponentInfo,
           result: isWinner ? ("win" as const) : ("loss" as const),
-          bet: game.bet,
+          bet: {
+            amount: shouldMaskBet ? 0 : game.bet.amount, // Masquer le montant
+            currency: game.bet.currency,
+            masked: shouldMaskBet, // Indicateur que la mise est masquée
+          },
           gain,
           endedAt: game.endedAt,
           victoryType: game.victoryType,
@@ -1597,6 +1724,12 @@ export const concedeGame = mutation({
       game.mode !== "AI" &&
       (game.mode === "RANKED" || game.competitive === true);
     if (shouldUpdatePR && forfeitPlayer.userId && opponentPlayer.userId) {
+      // Récupérer les PR des deux joueurs AVANT d'appeler updatePlayerPRInternal
+      const forfeitUser = await ctx.db.get(forfeitPlayer.userId);
+      const opponentUser = await ctx.db.get(opponentPlayer.userId);
+      const forfeitPR = forfeitUser?.pr || INITIAL_PR;
+      const opponentPR = opponentUser?.pr || INITIAL_PR;
+
       try {
         await ctx.scheduler.runAfter(
           0,
@@ -1604,6 +1737,8 @@ export const concedeGame = mutation({
           {
             playerId: opponentPlayer.userId,
             opponentId: forfeitPlayer.userId,
+            playerPR: opponentPR,
+            opponentPR: forfeitPR,
             playerWon: true,
           }
         );
@@ -1613,6 +1748,8 @@ export const concedeGame = mutation({
           {
             playerId: forfeitPlayer.userId,
             opponentId: opponentPlayer.userId,
+            playerPR: forfeitPR,
+            opponentPR: opponentPR,
             playerWon: false,
           }
         );

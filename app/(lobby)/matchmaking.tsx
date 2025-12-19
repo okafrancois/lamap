@@ -20,7 +20,7 @@ export default function MatchmakingScreen() {
   const router = useRouter();
   const { betAmount, competitive } = useLocalSearchParams<{ betAmount: string; competitive?: string }>();
   const { userId } = useAuth();
-  const { battleLayout } = useSettings();
+  const { battleLayout, timerEnabled, timerDuration } = useSettings();
   const user = useQuery(
     api.users.getCurrentUser,
     userId ? { clerkUserId: userId } : "skip"
@@ -36,7 +36,7 @@ export default function MatchmakingScreen() {
 
   useEffect(() => {
     if (bet > 0 && status === "idle" && user) {
-      joinQueue(bet, currency, "CASH", isCompetitive)
+      joinQueue(bet, currency, "CASH", isCompetitive, timerEnabled, timerDuration)
         .then(() => {
           playSound("confirmation");
         })
@@ -48,7 +48,7 @@ export default function MatchmakingScreen() {
           console.error("Error joining queue:", error);
         });
     }
-  }, [bet, status, joinQueue, playSound, user, currency, isCompetitive]);
+  }, [bet, status, joinQueue, playSound, user, currency, isCompetitive, timerEnabled, timerDuration]);
 
   useEffect(() => {
     if (previousStatus.current !== "matched" && status === "matched") {

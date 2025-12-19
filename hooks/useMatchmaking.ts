@@ -24,7 +24,9 @@ export function useMatchmaking() {
     betAmount: number,
     currency: "EUR" | "XAF" | "USD" = "XAF",
     mode?: "RANKED" | "CASH",
-    competitive?: boolean
+    competitive?: boolean,
+    timerEnabled?: boolean,
+    timerDuration?: number
   ) => {
     if (!myUserId) {
       throw new Error("User not authenticated");
@@ -32,13 +34,15 @@ export function useMatchmaking() {
     // Déterminer le mode automatiquement si non spécifié
     const gameMode = mode || (betAmount === 0 ? "RANKED" : "CASH");
     const isCompetitive = competitive !== undefined ? competitive : true;
-    
-    return await joinQueue({ 
-      userId: myUserId, 
-      betAmount, 
+
+    return await joinQueue({
+      userId: myUserId,
+      betAmount,
       currency,
       mode: gameMode,
-      competitive: isCompetitive
+      competitive: isCompetitive,
+      timerEnabled,
+      timerDuration,
     });
   };
 
