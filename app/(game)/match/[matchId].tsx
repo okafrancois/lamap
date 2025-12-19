@@ -1,7 +1,11 @@
 import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
+import { ConcedeButton } from "@/components/game/ConcedeButton";
+import { DemandedSuitIndicator } from "@/components/game/DemandedSuitIndicator";
+import { GameTimer } from "@/components/game/GameTimer";
 import { OpponentZone } from "@/components/game/OpponentZone";
 import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
+import { ResultAnimation } from "@/components/game/ResultAnimation";
 import { ResultPanel } from "@/components/game/ResultPanel";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
@@ -56,8 +60,13 @@ export default function MatchScreen() {
     string | undefined
   >(undefined);
   const [resultPanelVisible, setResultPanelVisible] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(30); // 30 secondes par tour
   const hasStartedGameRef = useRef(false);
   const currentGameIdRef = useRef<string | null>(null);
+
+  // Timer activé pour toutes les parties pour le moment
+  const isTimerActive = true;
+  const totalTime = 30;
 
   // Réinitialiser le flag de démarrage si on change de partie
   useEffect(() => {
@@ -112,6 +121,13 @@ export default function MatchScreen() {
       setResultPanelVisible(true);
     }
   }, [game?.status]);
+
+  // Réinitialiser le timer quand c'est à notre tour
+  useEffect(() => {
+    if (isMyTurn && game?.status === "PLAYING") {
+      setTimeRemaining(totalTime);
+    }
+  }, [isMyTurn, game?.currentRound, game?.status, totalTime]);
 
   // Démarrage automatique pour les parties en WAITING (AI ou ONLINE)
   useEffect(() => {
@@ -172,6 +188,23 @@ export default function MatchScreen() {
     },
     [isPlaying, playCard, playSound]
   );
+
+  const handleConcede = useCallback(() => {
+    // TODO: Implémenter la logique backend pour abandonner
+    Alert.alert(
+      "Abandon",
+      "La fonctionnalité d'abandon sera bientôt disponible côté serveur.",
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            // Pour l'instant, on retourne simplement à l'accueil
+            router.replace("/(tabs)");
+          },
+        },
+      ]
+    );
+  }, [router]);
 
   const styles = StyleSheet.create({
     container: {
@@ -470,6 +503,20 @@ export default function MatchScreen() {
             )}
           </View>
           <View style={styles.headerRight}>
+            {isTimerActive && game.status === "PLAYING" && (
+              <GameTimer
+                timeRemaining={timeRemaining}
+                totalTime={totalTime}
+                isMyTurn={isMyTurn}
+                isActive={true}
+              />
+            )}
+            {game.status === "PLAYING" && (
+              <ConcedeButton
+                onConcede={handleConcede}
+                disabled={isPlaying}
+              />
+            )}
             {game.mode === "ONLINE" && (
               <TouchableOpacity
                 onPress={() => router.push(`/(game)/chat/${matchId}`)}
@@ -495,6 +542,12 @@ export default function MatchScreen() {
       )}
 
       <View style={styles.playArea}>
+        {leadSuit && game.status === "PLAYING" && (
+          <DemandedSuitIndicator
+            suit={leadSuit as Suit}
+            visible={true}
+          />
+        )}
         {playAreaMode === "battle" ?
           <BattleZone
             opponentCards={allOpponentCards.map((card: any) => ({
@@ -533,19 +586,34 @@ export default function MatchScreen() {
       </View>
 
       {game.status === "ENDED" && (
-        <ResultPanel
-          visible={resultPanelVisible}
-          game={game}
-          myUserId={myUserId ?? null}
-          onPlayAgain={() => {
-            setResultPanelVisible(false);
-            router.replace("/(lobby)/select-mode");
-          }}
-          onGoHome={() => {
-            setResultPanelVisible(false);
-            router.replace("/(tabs)");
-          }}
-        />
+        <>
+          <ResultAnimation
+            visible={resultPanelVisible}
+            victoryType={
+              game.victoryType as
+                | "normal"
+                | "simple_kora"
+                | "double_kora"
+                | "triple_kora"
+                | "auto_sum"
+                | "auto_sevens"
+                | "auto_lowest"
+            }
+          />
+          <ResultPanel
+            visible={resultPanelVisible}
+            game={game}
+            myUserId={myUserId ?? null}
+            onPlayAgain={() => {
+              setResultPanelVisible(false);
+              router.replace("/(lobby)/select-mode");
+            }}
+            onGoHome={() => {
+              setResultPanelVisible(false);
+              router.replace("/(tabs)");
+            }}
+          />
+        </>
       )}
     </SafeAreaView>
   );
