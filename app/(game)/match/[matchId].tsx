@@ -512,10 +512,7 @@ export default function MatchScreen() {
               />
             )}
             {game.status === "PLAYING" && (
-              <ConcedeButton
-                onConcede={handleConcede}
-                disabled={isPlaying}
-              />
+              <ConcedeButton onConcede={handleConcede} disabled={isPlaying} />
             )}
             {game.mode === "ONLINE" && (
               <TouchableOpacity
@@ -543,10 +540,7 @@ export default function MatchScreen() {
 
       <View style={styles.playArea}>
         {leadSuit && game.status === "PLAYING" && (
-          <DemandedSuitIndicator
-            suit={leadSuit as Suit}
-            visible={true}
-          />
+          <DemandedSuitIndicator suit={leadSuit as Suit} visible={true} />
         )}
         {playAreaMode === "battle" ?
           <BattleZone
