@@ -260,7 +260,7 @@ export function ResultPanel({
               },
             ]}
           >
-            {isWinner ? getVictoryTitle() : "Défaite"}
+            {isWinner ? getVictoryTitle() : "Défaite 💀"}
           </Text>
 
           {/* Multiplicateur Kora */}

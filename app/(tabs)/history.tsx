@@ -250,7 +250,7 @@ export default function HistoryScreen() {
                     item.result === "win" ? styles.winText : styles.lossText,
                   ]}
                 >
-                  {item.result === "win" ? "Victoire" : "Défaite"}
+                  {item.result === "win" ? "Victoire 🎉 !" : "Défaite 😭"}
                 </Text>
               </View>
             </View>
