@@ -1,11 +1,14 @@
 import { BattleLayoutPreview } from "@/components/settings/BattleLayoutPreview";
 import { CardLayoutPreview } from "@/components/settings/CardLayoutPreview";
+import { Button } from "@/components/ui/Button";
 import { CURRENCY_NAMES, CURRENCY_SYMBOLS } from "@/convex/currencies";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useSettings } from "@/hooks/useSettings";
+import { useClerk } from "@clerk/clerk-expo";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
+import { useRouter } from "expo-router";
+import React, { useCallback } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -19,6 +22,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SettingsScreen() {
   const colors = useColors();
   const { convexUser } = useAuth();
+  const { signOut } = useClerk();
+  const router = useRouter();
   const {
     cardLayout,
     battleLayout,
@@ -26,6 +31,15 @@ export default function SettingsScreen() {
     setBattleLayout,
     isLoading,
   } = useSettings();
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await signOut();
+      router.replace("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  }, [signOut, router]);
 
   const styles = StyleSheet.create({
     container: {
@@ -273,6 +287,14 @@ export default function SettingsScreen() {
                 <Text style={styles.layoutLabel}>Haut/Bas</Text>
               </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <Button
+              title="Se déconnecter"
+              onPress={handleSignOut}
+              variant="destructive"
+            />
           </View>
         </View>
       </ScrollView>

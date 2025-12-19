@@ -7,28 +7,28 @@ import { api } from "@/convex/_generated/api";
 import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
-import { useClerk } from "@clerk/clerk-expo";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   FlatList,
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SceneMap, TabBar, TabView } from "react-native-tab-view";
 
 export default function ProfileScreen() {
   const colors = useColors();
   const { userId, clerkUser } = useAuth();
-  const { signOut } = useClerk();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"profile" | "history">("profile");
+  const [index, setIndex] = useState(0);
   const [showAIGames, setShowAIGames] = useState(false);
+  const layout = Dimensions.get("window");
 
   const user = useQuery(
     api.users.getCurrentUser,
@@ -52,16 +52,7 @@ export default function ProfileScreen() {
     return gameHistory.filter((game) => game.mode !== "AI");
   }, [gameHistory, showAIGames]);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      router.replace("/");
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
-  const formatDate = (timestamp: number) => {
+  const formatDate = useCallback((timestamp: number) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -78,7 +69,7 @@ export default function ProfileScreen() {
       day: "numeric",
       month: "short",
     });
-  };
+  }, []);
 
   const styles = StyleSheet.create({
     container: {
@@ -92,43 +83,30 @@ export default function ProfileScreen() {
       padding: 24,
     },
     header: {
+      flexDirection: "row",
       alignItems: "center",
-      marginBottom: 24,
+      paddingVertical: 8,
+      paddingHorizontal: 16,
+      backgroundColor: colors.background,
+      gap: 12,
+    },
+    headerInfo: {
+      flex: 1,
+      justifyContent: "center",
     },
     username: {
-      fontSize: 24,
+      fontSize: 18,
       fontWeight: "700",
       color: colors.text,
-      marginTop: 16,
+      marginTop: 0,
     },
     email: {
-      fontSize: 14,
+      fontSize: 12,
       color: colors.mutedForeground,
-      marginTop: 4,
+      marginTop: 2,
     },
-    tabs: {
-      flexDirection: "row",
-      gap: 8,
-      marginBottom: 24,
-    },
-    tab: {
+    sceneContainer: {
       flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 16,
-      borderRadius: 12,
-      backgroundColor: colors.muted,
-      alignItems: "center",
-    },
-    activeTab: {
-      backgroundColor: colors.primary,
-    },
-    tabText: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.mutedForeground,
-    },
-    activeTabText: {
-      color: colors.primaryForeground,
     },
     rankSection: {
       alignItems: "center",
@@ -267,16 +245,185 @@ export default function ProfileScreen() {
       alignItems: "center",
       gap: 8,
     },
-    betAmount: {
-      fontSize: 14,
-      fontWeight: "600",
-      color: colors.text,
-    },
     loadingContainer: {
       flex: 1,
       justifyContent: "center",
       alignItems: "center",
     },
+  });
+
+  const ProfileScene = React.useMemo(() => {
+    const ProfileSceneComponent = () => (
+      <ScrollView style={styles.sceneContainer}>
+        <View style={styles.content}>
+          <View style={styles.rankSection}>
+            <RankBadge
+              rank={getRankFromPR(user?.pr || INITIAL_PR)}
+              size="large"
+            />
+            <RankProgress pr={user?.pr || INITIAL_PR} />
+          </View>
+
+          <View style={styles.balanceSection}>
+            <Text style={styles.balanceLabel}>Solde</Text>
+            <Text style={styles.balanceAmount}>
+              {user?.balance?.toLocaleString() || 0} {user?.currency || "XAF"}
+            </Text>
+            <Text style={styles.koraAmount}>
+              {user?.kora?.toLocaleString() || 0} Kora
+            </Text>
+          </View>
+
+          <View style={styles.statsSection}>
+            <Text style={styles.sectionTitle}>Statistiques de classement</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{prStats?.currentPR || 0}</Text>
+                <Text style={styles.statLabel}>PR Actuel</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{prStats?.totalGames || 0}</Text>
+                <Text style={styles.statLabel}>Parties jouées</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{prStats?.wins || 0}</Text>
+                <Text style={styles.statLabel}>Victoires</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>
+                  {prStats?.winRate.toFixed(1) || "0.0"}%
+                </Text>
+                <Text style={styles.statLabel}>Taux de victoire</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>{prStats?.maxPR || 0}</Text>
+                <Text style={styles.statLabel}>PR Maximum</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statValue}>
+                  {prStats?.currentStreak || 0}
+                  {prStats?.streakType === "win" ? " 🔥" : ""}
+                </Text>
+                <Text style={styles.statLabel}>
+                  Série actuelle ({prStats?.streakType === "win" ? "V" : "D"})
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              title="Paramètres"
+              onPress={() => router.push("/settings")}
+              variant="secondary"
+            />
+          </View>
+        </View>
+      </ScrollView>
+    );
+    ProfileSceneComponent.displayName = "ProfileScene";
+    return ProfileSceneComponent;
+  }, [user, prStats, router, styles]);
+
+  const HistoryScene = React.useMemo(() => {
+    const HistorySceneComponent = () => (
+      <View style={styles.sceneContainer}>
+        <View style={styles.filterContainer}>
+          <Button
+            title={showAIGames ? "Masquer parties IA" : "Afficher parties IA"}
+            onPress={() => setShowAIGames(!showAIGames)}
+            variant="outline"
+            size="sm"
+          />
+        </View>
+
+        {!filteredGames || filteredGames.length === 0 ?
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              Aucune partie dans l&apos;historique.
+            </Text>
+            <Button
+              title="Jouer une partie"
+              onPress={() => router.push("/(tabs)")}
+              variant="primary"
+            />
+          </View>
+        : <FlatList
+            data={filteredGames}
+            keyExtractor={(item) => item.gameId}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <View style={styles.gameCard}>
+                <View style={styles.gameHeader}>
+                  <Avatar
+                    imageUrl={item.opponent?.avatarUrl || undefined}
+                    name={item.opponent?.username || "Adversaire"}
+                    size={40}
+                  />
+                  <View style={styles.opponentInfo}>
+                    <Text style={styles.opponentName}>
+                      {item.opponent?.username || "Adversaire"}
+                    </Text>
+                    <Text style={styles.gameDate}>
+                      {formatDate(item.endedAt || 0)}
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.resultBadge,
+                      {
+                        backgroundColor:
+                          item.result === "win" ?
+                            colors.secondary + "20"
+                          : colors.destructive + "20",
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.resultText,
+                        {
+                          color:
+                            item.result === "win" ?
+                              colors.secondary
+                            : colors.destructive,
+                        },
+                      ]}
+                    >
+                      {item.result === "win" ? "Victoire" : "Défaite"}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.gameDetails}>
+                  <View style={styles.betInfo}>
+                    <Badge
+                      label={
+                        item.bet.amount > 0 ?
+                          `${item.bet.amount} ${item.bet.currency}`
+                        : "Gratuit"
+                      }
+                      variant={item.bet.amount > 0 ? "default" : "warning"}
+                    />
+                  </View>
+                </View>
+              </View>
+            )}
+          />
+        }
+      </View>
+    );
+    HistorySceneComponent.displayName = "HistoryScene";
+    return HistorySceneComponent;
+  }, [filteredGames, showAIGames, colors, router, formatDate, styles]);
+
+  const routes = [
+    { key: "profile", title: "Profil" },
+    { key: "history", title: "Historique" },
+  ];
+
+  const renderScene = SceneMap({
+    profile: ProfileScene,
+    history: HistoryScene,
   });
 
   if (!user || !prStats) {
@@ -289,218 +436,60 @@ export default function ProfileScreen() {
     );
   }
 
+  const renderTabBar = (props: any) => (
+    <TabBar
+      {...props}
+      indicatorStyle={{
+        backgroundColor: colors.primary,
+        height: 3,
+        borderRadius: 2,
+      }}
+      style={{
+        backgroundColor: colors.background,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.border,
+      }}
+      activeColor={colors.primary}
+      inactiveColor={colors.mutedForeground}
+      labelStyle={{
+        fontSize: 14,
+        fontWeight: "600",
+        textTransform: "none",
+      }}
+      tabStyle={{
+        width: "auto",
+        paddingHorizontal: 16,
+      }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+      }}
+    />
+  );
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Avatar
-              imageUrl={user.avatarUrl || undefined}
-              name={user.username}
-              size={100}
-            />
-            <Text style={styles.username}>{user.username}</Text>
-            {clerkUser?.primaryEmailAddress && (
-              <Text style={styles.email}>
-                {clerkUser.primaryEmailAddress.emailAddress}
-              </Text>
-            )}
-          </View>
-
-          <View style={styles.tabs}>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "profile" && styles.activeTab]}
-              onPress={() => setActiveTab("profile")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "profile" && styles.activeTabText,
-                ]}
-              >
-                Profil
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, activeTab === "history" && styles.activeTab]}
-              onPress={() => setActiveTab("history")}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  activeTab === "history" && styles.activeTabText,
-                ]}
-              >
-                Historique
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {activeTab === "profile" ?
-            <>
-              <View style={styles.rankSection}>
-                <RankBadge
-                  rank={getRankFromPR(user.pr || INITIAL_PR)}
-                  size="large"
-                />
-                <RankProgress pr={user.pr || INITIAL_PR} />
-              </View>
-
-              <View style={styles.balanceSection}>
-                <Text style={styles.balanceLabel}>Solde</Text>
-                <Text style={styles.balanceAmount}>
-                  {user.balance?.toLocaleString() || 0} {user.currency || "XAF"}
-                </Text>
-                <Text style={styles.koraAmount}>
-                  {user.kora?.toLocaleString() || 0} Kora
-                </Text>
-              </View>
-
-              <View style={styles.statsSection}>
-                <Text style={styles.sectionTitle}>
-                  Statistiques de classement
-                </Text>
-                <View style={styles.statsGrid}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{prStats.currentPR}</Text>
-                    <Text style={styles.statLabel}>PR Actuel</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{prStats.totalGames}</Text>
-                    <Text style={styles.statLabel}>Parties jouées</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{prStats.wins}</Text>
-                    <Text style={styles.statLabel}>Victoires</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>
-                      {prStats.winRate.toFixed(1)}%
-                    </Text>
-                    <Text style={styles.statLabel}>Taux de victoire</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>{prStats.maxPR}</Text>
-                    <Text style={styles.statLabel}>PR Maximum</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statValue}>
-                      {prStats.currentStreak}
-                      {prStats.streakType === "win" ? " 🔥" : ""}
-                    </Text>
-                    <Text style={styles.statLabel}>
-                      Série actuelle ({prStats.streakType === "win" ? "V" : "D"}
-                      )
-                    </Text>
-                  </View>
-                </View>
-              </View>
-
-              <View style={styles.actions}>
-                <Button
-                  title="Paramètres"
-                  onPress={() => router.push("/settings")}
-                  variant="secondary"
-                />
-                <Button
-                  title="Se déconnecter"
-                  onPress={handleSignOut}
-                  variant="destructive"
-                />
-              </View>
-            </>
-          : <>
-              <View style={styles.filterContainer}>
-                <Button
-                  title={
-                    showAIGames ? "Masquer parties IA" : "Afficher parties IA"
-                  }
-                  onPress={() => setShowAIGames(!showAIGames)}
-                  variant="outline"
-                  size="sm"
-                />
-              </View>
-
-              {!filteredGames || filteredGames.length === 0 ?
-                <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>
-                    Aucune partie dans l&apos;historique.
-                  </Text>
-                  <Button
-                    title="Jouer une partie"
-                    onPress={() => router.push("/(tabs)")}
-                    variant="primary"
-                  />
-                </View>
-              : <FlatList
-                  data={filteredGames}
-                  scrollEnabled={false}
-                  keyExtractor={(item) => item.gameId}
-                  contentContainerStyle={styles.listContent}
-                  renderItem={({ item }) => (
-                    <View style={styles.gameCard}>
-                      <View style={styles.gameHeader}>
-                        <Avatar
-                          imageUrl={item.opponent?.avatarUrl || undefined}
-                          name={item.opponent?.username || "Adversaire"}
-                          size={40}
-                        />
-                        <View style={styles.opponentInfo}>
-                          <Text style={styles.opponentName}>
-                            {item.opponent?.username || "Adversaire"}
-                          </Text>
-                          <Text style={styles.gameDate}>
-                            {formatDate(item.endedAt || 0)}
-                          </Text>
-                        </View>
-                        <View
-                          style={[
-                            styles.resultBadge,
-                            {
-                              backgroundColor:
-                                item.result === "win" ?
-                                  colors.secondary + "20"
-                                : colors.destructive + "20",
-                            },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.resultText,
-                              {
-                                color:
-                                  item.result === "win" ?
-                                    colors.secondary
-                                  : colors.destructive,
-                              },
-                            ]}
-                          >
-                            {item.result === "win" ? "Victoire" : "Défaite"}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.gameDetails}>
-                        <View style={styles.betInfo}>
-                          <Badge
-                            label={
-                              item.bet.amount > 0 ?
-                                `${item.bet.amount} ${item.bet.currency}`
-                              : "Gratuit"
-                            }
-                            variant={
-                              item.bet.amount > 0 ? "default" : "warning"
-                            }
-                          />
-                        </View>
-                      </View>
-                    </View>
-                  )}
-                />
-              }
-            </>
-          }
+      <View style={styles.header}>
+        <Avatar
+          imageUrl={user.avatarUrl || undefined}
+          name={user.username}
+          size={60}
+        />
+        <View style={styles.headerInfo}>
+          <Text style={styles.username}>{user.username}</Text>
+          {clerkUser?.primaryEmailAddress && (
+            <Text style={styles.email}>
+              {clerkUser.primaryEmailAddress.emailAddress}
+            </Text>
+          )}
         </View>
-      </ScrollView>
+      </View>
+      <TabView
+        navigationState={{ index, routes }}
+        renderScene={renderScene}
+        onIndexChange={setIndex}
+        initialLayout={{ width: layout.width }}
+        renderTabBar={renderTabBar}
+      />
     </SafeAreaView>
   );
 }

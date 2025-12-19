@@ -28,6 +28,7 @@ const MAPPING = {
   "message.fill": "message",
   "wallet.pass.fill": "account-balance-wallet",
   "person.fill": "person",
+  "person.2.fill": "people",
 } as IconMapping;
 
 /**

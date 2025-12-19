@@ -1,3 +1,4 @@
+import { useColors } from "@/hooks/useColors";
 import {
   ClerkProvider,
   useAuth,
@@ -9,6 +10,7 @@ import { ConvexReactClient } from "convex/react";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { Platform } from "react-native";
 import "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
@@ -23,10 +25,34 @@ export const unstable_settings = {
 
 function RootLayoutNav() {
   const { isSignedIn, isLoaded } = useClerkAuth();
+  const colors = useColors();
 
   if (!isLoaded) {
     return null;
   }
+
+  const modalHeaderOptions = {
+    headerStyle: {
+      backgroundColor: colors.background,
+      elevation: 0,
+      shadowOpacity: 0,
+      borderBottomWidth: 0,
+    },
+    headerTintColor: colors.secondary,
+    headerTitleStyle: {
+      fontSize: 22,
+      fontWeight: "700" as const,
+      color: colors.secondary,
+    },
+    headerShadowVisible: false,
+    contentStyle: {
+      backgroundColor: colors.background,
+    },
+    ...(Platform.OS === "android" && {
+      headerTitleAlign: "center" as const,
+      headerBackTitleVisible: false,
+    }),
+  };
 
   return (
     <ThemeProvider value={DarkTheme}>
@@ -46,15 +72,24 @@ function RootLayoutNav() {
             options={{
               presentation: "modal",
               title: "Paramètres",
+              ...modalHeaderOptions,
             }}
           />
           <Stack.Screen
             name="profile"
-            options={{ presentation: "modal", title: "Mon Profil" }}
+            options={{
+              presentation: "modal",
+              title: "Mon Profil",
+              ...modalHeaderOptions,
+            }}
           />
           <Stack.Screen
             name="user/[userId]"
-            options={{ presentation: "modal", title: "Profil" }}
+            options={{
+              presentation: "modal",
+              title: "Profil",
+              ...modalHeaderOptions,
+            }}
           />
         </Stack.Protected>
       </Stack>
