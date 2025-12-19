@@ -15,13 +15,13 @@ export type GameHistory = Game["history"][number];
 
 export function createDeck(seed: string): Card[] {
   const suits: Card["suit"][] = ["hearts", "diamonds", "clubs", "spades"];
-  const ranks: Card["rank"][] = ["3", "4", "5", "6", "7", "8", "9", "10"];
+  const ranks: Card["rank"][] = ["3", "4", "5", "6", "7", "8", "9"];
   const deck: Card[] = [];
 
   suits.forEach((suit) => {
     ranks.forEach((rank) => {
       // Exclude 10 of spades
-      if (suit === "spades" && rank === "10") {
+      if (suit === "spades" && rank === "9") {
         return;
       }
 
@@ -52,8 +52,6 @@ export function shuffleDeck(deck: Card[]): Card[] {
 
 export function getCardValue(rank: Card["rank"]): number {
   switch (rank) {
-    case "10":
-      return 10;
     case "9":
       return 9;
     case "8":

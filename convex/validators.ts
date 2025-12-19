@@ -1,10 +1,10 @@
-import { v } from "convex/values";
+import { Infer, v } from "convex/values";
 
 // Validators avec valeurs littérales directes
 export const gameStatusValidator = v.union(
   v.literal("WAITING"),
   v.literal("PLAYING"),
-  v.literal("ENDED"),
+  v.literal("ENDED")
 );
 
 export const playerTypeValidator = v.union(v.literal("user"), v.literal("ai"));
@@ -12,13 +12,13 @@ export const playerTypeValidator = v.union(v.literal("user"), v.literal("ai"));
 export const aiDifficultyValidator = v.union(
   v.literal("easy"),
   v.literal("medium"),
-  v.literal("hard"),
+  v.literal("hard")
 );
 
 export const gameModeValidator = v.union(
   v.literal("AI"),
   v.literal("ONLINE"),
-  v.literal("LOCAL"),
+  v.literal("LOCAL")
 );
 
 export const currencyValidator = v.union(v.literal("EUR"), v.literal("XAF"));
@@ -27,7 +27,7 @@ export const suitValidator = v.union(
   v.literal("hearts"),
   v.literal("diamonds"),
   v.literal("clubs"),
-  v.literal("spades"),
+  v.literal("spades")
 );
 
 export const rankValidator = v.union(
@@ -38,7 +38,7 @@ export const rankValidator = v.union(
   v.literal("7"),
   v.literal("8"),
   v.literal("9"),
-  v.literal("10"),
+  v.literal("10")
 );
 
 export const victoryTypeValidator = v.union(
@@ -48,7 +48,7 @@ export const victoryTypeValidator = v.union(
   v.literal("auto_sevens"),
   v.literal("simple_kora"),
   v.literal("double_kora"),
-  v.literal("triple_kora"),
+  v.literal("triple_kora")
 );
 
 export const gameHistoryActionValidator = v.union(
@@ -59,7 +59,7 @@ export const gameHistoryActionValidator = v.union(
   v.literal("kora_achieved"),
   v.literal("game_ended"),
   v.literal("player_joined"),
-  v.literal("player_left"),
+  v.literal("player_left")
 );
 
 // Card validator
@@ -113,7 +113,7 @@ export const gameHistoryValidator = v.object({
       koraType: v.optional(v.string()),
       multiplier: v.optional(v.number()),
       message: v.optional(v.string()),
-    }),
+    })
   ),
 });
 
@@ -124,3 +124,6 @@ export const gameChatMessageValidator = v.object({
   message: v.string(),
   timestamp: v.number(),
 });
+
+export type Rank = Infer<typeof rankValidator>;
+export type Suit = Infer<typeof suitValidator>;

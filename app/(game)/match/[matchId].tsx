@@ -8,6 +8,7 @@ import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
+import { Rank, Suit } from "@/convex/validators";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useSettings } from "@/hooks/useSettings";
@@ -497,32 +498,14 @@ export default function MatchScreen() {
         {playAreaMode === "battle" ?
           <BattleZone
             opponentCards={allOpponentCards.map((card: any) => ({
-              suit: card?.suit as "hearts" | "diamonds" | "clubs" | "spades",
-              rank: card?.rank as
-                | "3"
-                | "4"
-                | "5"
-                | "6"
-                | "7"
-                | "8"
-                | "9"
-                | "10",
+              suit: card?.suit as Suit,
+              rank: card?.rank as Rank,
             }))}
             playerCards={allPlayerCards.map((card: any) => ({
-              suit: card?.suit as "hearts" | "diamonds" | "clubs" | "spades",
-              rank: card?.rank as
-                | "3"
-                | "4"
-                | "5"
-                | "6"
-                | "7"
-                | "8"
-                | "9"
-                | "10",
+              suit: card?.suit as Suit,
+              rank: card?.rank as Rank,
             }))}
-            leadSuit={
-              leadSuit as "hearts" | "diamonds" | "clubs" | "spades" | undefined
-            }
+            leadSuit={leadSuit as Suit | undefined}
             battleLayout={battleLayout}
           />
         : <TurnHistory

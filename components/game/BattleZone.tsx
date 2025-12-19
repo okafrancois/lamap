@@ -1,12 +1,10 @@
 import { Colors } from "@/constants/theme";
+import { Rank, Suit } from "@/convex/validators";
 import { useColors } from "@/hooks/useColors";
 import { Image } from "expo-image";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { CardStack } from "./CardStack";
-
-type Suit = "hearts" | "diamonds" | "clubs" | "spades";
-type Rank = "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
 
 interface Card {
   suit: Suit;
