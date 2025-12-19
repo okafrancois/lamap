@@ -106,6 +106,9 @@ const getUserQuery = {
       clerkUserId: v.string(),
       balance: v.optional(v.number()),
       currency: v.optional(v.string()),
+      country: v.optional(v.string()),
+      onboardingCompleted: v.optional(v.boolean()),
+      tutorialCompleted: v.optional(v.boolean()),
     }),
     v.null()
   ),
