@@ -1,6 +1,8 @@
+import { RankProgress } from "@/components/ranking/RankProgress";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
+import { INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
@@ -52,6 +54,14 @@ export default function HomeScreen() {
     content: {
       padding: 20,
       paddingBottom: 100,
+    },
+    rankSection: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 16,
+      marginBottom: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     header: {
       marginBottom: 24,
@@ -329,6 +339,11 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={[]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
+          {/* Section Ranking */}
+          <View style={styles.rankSection}>
+            <RankProgress pr={user?.pr || INITIAL_PR} showDetails />
+          </View>
+
           {activeGame && (
             <View style={styles.activeMatchCard}>
               <View style={styles.activeMatchContent}>

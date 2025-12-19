@@ -27,9 +27,14 @@ const usersTable = defineTable({
   country: v.optional(v.string()),
   onboardingCompleted: v.optional(v.boolean()),
   tutorialCompleted: v.optional(v.boolean()),
+  // Système de ranking
+  pr: v.optional(v.number()), // Points de Rang (1000 par défaut)
+  kora: v.optional(v.number()), // Tokens cosmétiques
+  rankHistory: v.optional(v.array(v.string())), // Historique des rangs atteints (pour les récompenses)
 })
   .index("by_clerk_id", ["clerkUserId"])
-  .index("by_username", ["username"]);
+  .index("by_username", ["username"])
+  .index("by_pr", ["pr"]); // Index pour le classement
 
 const numbersTable = defineTable({
   value: v.number(),

@@ -405,6 +405,33 @@ export const startGame = mutation({
         }
       }
 
+      // Mettre à jour le PR pour les parties classées (PvP sans IA)
+      if (game.mode !== "AI" && winnerPlayer?.userId) {
+        const loserPlayer = updatedPlayers.find(
+          (p) => getPlayerId(p) !== winnerId && p.userId
+        );
+        
+        if (loserPlayer?.userId) {
+          // Mettre à jour le PR des deux joueurs
+          try {
+            // PR du gagnant
+            await ctx.scheduler.runAfter(0, internal.ranking.updatePlayerPRInternal, {
+              playerId: winnerPlayer.userId,
+              opponentId: loserPlayer.userId,
+              playerWon: true,
+            });
+            // PR du perdant
+            await ctx.scheduler.runAfter(0, internal.ranking.updatePlayerPRInternal, {
+              playerId: loserPlayer.userId,
+              opponentId: winnerPlayer.userId,
+              playerWon: false,
+            });
+          } catch (error) {
+            console.error("Erreur mise à jour PR:", error);
+          }
+        }
+      }
+
       await ctx.db.patch(game._id, {
         status: "ENDED" as const,
         players: updatedPlayers,
@@ -1492,6 +1519,28 @@ export const concedeGame = mutation({
       winnerId: winnerId,
       endedAt: Date.now(),
     });
+
+    // Mettre à jour le PR pour les parties classées (PvP sans IA)
+    const forfeitPlayer = game.players[playerIndex];
+    const opponentPlayer = game.players[opponentIndex];
+
+    if (game.mode !== "AI" && forfeitPlayer.userId && opponentPlayer.userId) {
+      try {
+        // Le joueur qui abandonne perd, l'adversaire gagne
+        await ctx.scheduler.runAfter(0, internal.ranking.updatePlayerPRInternal, {
+          playerId: opponentPlayer.userId,
+          opponentId: forfeitPlayer.userId,
+          playerWon: true,
+        });
+        await ctx.scheduler.runAfter(0, internal.ranking.updatePlayerPRInternal, {
+          playerId: forfeitPlayer.userId,
+          opponentId: opponentPlayer.userId,
+          playerWon: false,
+        });
+      } catch (error) {
+        console.error("Erreur mise à jour PR:", error);
+      }
+    }
 
     // Handle transactions if there's a bet
     if (game.bet.amount > 0 && winnerId) {

@@ -87,6 +87,22 @@ export default function ProfileScreen() {
       color: colors.mutedForeground,
       textAlign: "center",
     },
+    section: {
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: colors.text,
+      marginBottom: 12,
+    },
+    rankCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 16,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
     balanceSection: {
       marginBottom: 24,
     },
@@ -143,6 +159,14 @@ export default function ProfileScreen() {
               {user?.username || clerkUser?.username || "Utilisateur"}
             </Text>
             {user?.email && <Text style={styles.email}>{user.email}</Text>}
+          </View>
+
+          {/* Rank Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Classement</Text>
+            <View style={styles.rankCard}>
+              <RankProgress pr={user?.pr || INITIAL_PR} showDetails />
+            </View>
           </View>
 
           <View style={styles.balanceSection}>
