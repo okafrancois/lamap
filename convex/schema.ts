@@ -40,6 +40,21 @@ const numbersTable = defineTable({
   value: v.number(),
 });
 
+// Table pour l'historique des changements de PR
+const prHistoryTable = defineTable({
+  userId: v.id("users"),
+  oldPR: v.number(),
+  newPR: v.number(),
+  change: v.number(),
+  opponentId: v.id("users"),
+  opponentPR: v.number(),
+  won: v.boolean(),
+  gameId: v.optional(v.string()),
+  timestamp: v.number(),
+})
+  .index("by_user", ["userId"])
+  .index("by_user_timestamp", ["userId", "timestamp"]);
+
 // Games table - utilise les validators pour les enums
 const gamesTable = defineTable({
   gameId: v.string(),
@@ -139,4 +154,5 @@ export default defineSchema({
   conversations: conversationsTable,
   messages: messagesTable,
   rechargeCodes: rechargeCodesTable,
+  prHistory: prHistoryTable,
 });

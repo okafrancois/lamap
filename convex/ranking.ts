@@ -1,10 +1,16 @@
 import { v } from "convex/values";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 // ========== CONSTANTES DE RANKING ==========
 
-export type RankTier = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM" | "DIAMOND" | "MASTER" | "LEGEND";
+export type RankTier =
+  | "BRONZE"
+  | "SILVER"
+  | "GOLD"
+  | "PLATINUM"
+  | "DIAMOND"
+  | "MASTER"
+  | "LEGEND";
 
 export interface RankInfo {
   tier: RankTier;
@@ -172,7 +178,10 @@ export const getUserRank = query({
     return {
       pr,
       rank,
-      progress: rank.maxPR === Infinity ? 100 : ((pr - rank.minPR) / (rank.maxPR - rank.minPR)) * 100,
+      progress:
+        rank.maxPR === Infinity ?
+          100
+        : ((pr - rank.minPR) / (rank.maxPR - rank.minPR)) * 100,
     };
   },
 });
@@ -186,11 +195,8 @@ export const getGlobalLeaderboard = query({
   },
   handler: async (ctx, args) => {
     const limit = args.limit || 100;
-    
-    const users = await ctx.db
-      .query("users")
-      .order("desc")
-      .collect();
+
+    const users = await ctx.db.query("users").order("desc").collect();
 
     // Trier par PR décroissant
     const sortedUsers = users
@@ -231,7 +237,11 @@ export const updatePlayerPRInternal = internalMutation({
     const opponentPR = opponent.pr || INITIAL_PR;
 
     // Calculer le changement de PR
-    const prChange = calculatePRChange(playerPR, opponentPR, args.playerWon ? 1 : 0);
+    const prChange = calculatePRChange(
+      playerPR,
+      opponentPR,
+      args.playerWon ? 1 : 0
+    );
     const newPR = applyPRChange(playerPR, prChange);
 
     // Vérifier si c'est une montée de rang
@@ -240,15 +250,14 @@ export const updatePlayerPRInternal = internalMutation({
 
     if (rankUp) {
       const newRank = getRankFromPR(newPR);
-      const oldRank = getRankFromPR(playerPR);
-      
+
       // Vérifier si c'est la première fois que le joueur atteint ce rang
       const rankHistory = player.rankHistory || [];
       const hasReachedBefore = rankHistory.includes(newRank.tier);
 
       if (!hasReachedBefore) {
         koraReward = newRank.koraReward;
-        
+
         // Ajouter les Kora au joueur
         await ctx.db.patch(args.playerId, {
           kora: (player.kora || 0) + koraReward,
@@ -264,6 +273,18 @@ export const updatePlayerPRInternal = internalMutation({
     // Mettre à jour le PR
     await ctx.db.patch(args.playerId, {
       pr: newPR,
+    });
+
+    // Enregistrer dans l'historique
+    await ctx.db.insert("prHistory", {
+      userId: args.playerId,
+      oldPR: playerPR,
+      newPR,
+      change: prChange,
+      opponentId: args.opponentId,
+      opponentPR,
+      won: args.playerWon,
+      timestamp: Date.now(),
     });
 
     return {
@@ -299,3 +320,103 @@ export const initializePlayerPR = mutation({
   },
 });
 
+/**
+ * Récupère l'historique des changements de PR d'un joueur
+ */
+export const getPRHistory = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+
+    const history = await ctx.db
+      .query("prHistory")
+      .withIndex("by_user_timestamp", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(limit);
+
+    // Enrichir avec les infos de l'adversaire
+    return await Promise.all(
+      history.map(async (entry) => {
+        const opponent = await ctx.db.get(entry.opponentId);
+        return {
+          ...entry,
+          opponentUsername: opponent?.username || "Joueur",
+          opponentRank: getRankFromPR(entry.opponentPR),
+        };
+      })
+    );
+  },
+});
+
+/**
+ * Récupère les statistiques de PR d'un joueur
+ */
+export const getPRStats = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+
+    const currentPR = user.pr || INITIAL_PR;
+    const currentRank = getRankFromPR(currentPR);
+
+    // Récupérer l'historique complet
+    const history = await ctx.db
+      .query("prHistory")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    const totalGames = history.length;
+    const wins = history.filter((h) => h.won).length;
+    const losses = totalGames - wins;
+    const winRate = totalGames > 0 ? (wins / totalGames) * 100 : 0;
+
+    // PR max et min
+    const maxPR =
+      history.length > 0 ? Math.max(...history.map((h) => h.newPR)) : currentPR;
+    const minPR =
+      history.length > 0 ? Math.min(...history.map((h) => h.newPR)) : currentPR;
+
+    // Total PR gagné/perdu
+    const totalPRGained = history
+      .filter((h) => h.change > 0)
+      .reduce((sum, h) => sum + h.change, 0);
+    const totalPRLost = history
+      .filter((h) => h.change < 0)
+      .reduce((sum, h) => sum + Math.abs(h.change), 0);
+
+    // Série actuelle (win/loss streak)
+    let currentStreak = 0;
+    for (let i = 0; i < history.length; i++) {
+      if (i === 0) {
+        currentStreak = history[i].won ? 1 : -1;
+      } else if (
+        (history[i].won && currentStreak > 0) ||
+        (!history[i].won && currentStreak < 0)
+      ) {
+        currentStreak += history[i].won ? 1 : -1;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      currentPR,
+      currentRank,
+      totalGames,
+      wins,
+      losses,
+      winRate: Math.round(winRate * 10) / 10,
+      maxPR,
+      minPR,
+      totalPRGained,
+      totalPRLost,
+      currentStreak,
+    };
+  },
+});

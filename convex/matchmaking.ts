@@ -1,6 +1,14 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { INITIAL_PR } from "./ranking";
 import { aiDifficultyValidator, currencyValidator } from "./validators";
+
+// Fonction helper pour calculer le range PR en fonction du temps d'attente
+function getPRRange(waitTimeMs: number): number {
+  if (waitTimeMs < 30000) return 100; // 0-30s : ±100 PR
+  if (waitTimeMs < 60000) return 200; // 30-60s : ±200 PR
+  return 300; // 60s+ : ±300 PR
+}
 
 export const joinQueue = mutation({
   args: {
@@ -12,7 +20,10 @@ export const joinQueue = mutation({
     const existing = await ctx.db
       .query("matchmakingQueue")
       .withIndex("by_status_bet_currency", (q) =>
-        q.eq("status", "searching").eq("betAmount", args.betAmount).eq("currency", args.currency)
+        q
+          .eq("status", "searching")
+          .eq("betAmount", args.betAmount)
+          .eq("currency", args.currency)
       )
       .filter((q) => q.eq(q.field("userId"), args.userId))
       .first();
@@ -38,13 +49,42 @@ export const joinQueue = mutation({
       joinedAt: Date.now(),
     });
 
-    const potentialMatch = await ctx.db
+    // Chercher un match avec PR similaire
+    const currentPlayerPR = user.pr || INITIAL_PR;
+    const now = Date.now();
+
+    // Récupérer tous les joueurs en attente avec le même bet et devise
+    const waitingPlayers = await ctx.db
       .query("matchmakingQueue")
       .withIndex("by_status_bet_currency", (q) =>
-        q.eq("status", "searching").eq("betAmount", args.betAmount).eq("currency", args.currency)
+        q
+          .eq("status", "searching")
+          .eq("betAmount", args.betAmount)
+          .eq("currency", args.currency)
       )
       .filter((q) => q.neq(q.field("userId"), args.userId))
-      .first();
+      .collect();
+
+    // Trouver le meilleur match en fonction du PR et du temps d'attente
+    let potentialMatch = null;
+    let bestPRDifference = Infinity;
+
+    for (const candidate of waitingPlayers) {
+      const candidateUser = await ctx.db.get(candidate.userId);
+      if (!candidateUser) continue;
+
+      const candidatePR = candidateUser.pr || INITIAL_PR;
+      const candidateWaitTime = now - candidate.joinedAt;
+      const candidatePRRange = getPRRange(candidateWaitTime);
+
+      const prDifference = Math.abs(currentPlayerPR - candidatePR);
+
+      // Vérifier si le match est possible selon le temps d'attente du candidat
+      if (prDifference <= candidatePRRange && prDifference < bestPRDifference) {
+        potentialMatch = candidate;
+        bestPRDifference = prDifference;
+      }
+    }
 
     if (potentialMatch) {
       const player1 = await ctx.db.get(args.userId);
