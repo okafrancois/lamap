@@ -6,16 +6,20 @@ export function useAuth() {
   const { userId, isLoaded, isSignedIn } = useClerkAuth();
   const { user: clerkUser } = useUser();
 
-  const currentUser = useQuery(
+  const convexUser = useQuery(
     api.users.getCurrentUser,
     userId && isLoaded && isSignedIn ? { clerkUserId: userId } : "skip"
   );
+
+  const needsOnboarding = convexUser && !convexUser.onboardingCompleted;
 
   return {
     userId,
     isLoaded,
     isSignedIn,
-    user: currentUser,
+    user: convexUser,
+    convexUser,
     clerkUser,
+    needsOnboarding,
   };
 }

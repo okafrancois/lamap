@@ -19,6 +19,7 @@ import type * as games from "../games.js";
 import type * as http from "../http.js";
 import type * as matchmaking from "../matchmaking.js";
 import type * as messaging from "../messaging.js";
+import type * as onboarding from "../onboarding.js";
 import type * as recharge from "../recharge.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   matchmaking: typeof matchmaking;
   messaging: typeof messaging;
+  onboarding: typeof onboarding;
   recharge: typeof recharge;
   users: typeof users;
   validators: typeof validators;

@@ -1,15 +1,15 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import {
-  gameStatusValidator,
-  gameModeValidator,
   aiDifficultyValidator,
-  playerValidator,
-  playedCardValidator,
   betValidator,
-  gameHistoryValidator,
-  victoryTypeValidator,
   gameChatMessageValidator,
+  gameHistoryValidator,
+  gameModeValidator,
+  gameStatusValidator,
+  playedCardValidator,
+  playerValidator,
+  victoryTypeValidator,
 } from "./validators";
 
 const usersTable = defineTable({
@@ -22,8 +22,11 @@ const usersTable = defineTable({
   isActive: v.boolean(),
   username: v.string(),
   clerkUserId: v.string(),
-  balance: v.optional(v.number()), // User's current balance
-  currency: v.optional(v.string()), // User's preferred currency (EUR, XAF)
+  balance: v.optional(v.number()),
+  currency: v.optional(v.string()),
+  country: v.optional(v.string()),
+  onboardingCompleted: v.optional(v.boolean()),
+  tutorialCompleted: v.optional(v.boolean()),
 })
   .index("by_clerk_id", ["clerkUserId"])
   .index("by_username", ["username"]);
@@ -98,8 +101,7 @@ const conversationsTable = defineTable({
   participants: v.array(v.id("users")),
   lastMessageAt: v.number(),
   createdAt: v.number(),
-})
-  .index("by_last_message", ["lastMessageAt"]);
+}).index("by_last_message", ["lastMessageAt"]);
 
 const messagesTable = defineTable({
   conversationId: v.id("conversations"),
