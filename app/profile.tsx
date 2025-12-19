@@ -1,7 +1,9 @@
+import { RankProgress } from "@/components/ranking/RankProgress";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
+import { INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useClerk } from "@clerk/clerk-expo";
@@ -89,12 +91,6 @@ export default function ProfileScreen() {
     },
     section: {
       marginBottom: 24,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: "700",
-      color: colors.text,
-      marginBottom: 12,
     },
     rankCard: {
       backgroundColor: colors.card,
