@@ -1,7 +1,8 @@
+import { Button } from "@/components/ui/Button";
 import { useSound } from "@/hooks/useSound";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -156,7 +157,17 @@ export function ResultPanel({
       soundPlayedRef.current = false;
       setCountedGains(0);
     }
-  }, [visible, translateY, opacity, isWinner, winnings, isKoraWin, starScale1, starScale2, starScale3]);
+  }, [
+    visible,
+    translateY,
+    opacity,
+    isWinner,
+    winnings,
+    isKoraWin,
+    starScale1,
+    starScale2,
+    starScale3,
+  ]);
 
   useEffect(() => {
     if (visible && game && !soundPlayedRef.current) {
@@ -219,13 +230,19 @@ export function ResultPanel({
           {isWinner && isKoraWin && (
             <View style={styles.starsContainer}>
               {getStarCount() >= 1 && (
-                <Animated.Text style={[styles.star, star1Style]}>★</Animated.Text>
+                <Animated.Text style={[styles.star, star1Style]}>
+                  ★
+                </Animated.Text>
               )}
               {getStarCount() >= 2 && (
-                <Animated.Text style={[styles.star, star2Style]}>★</Animated.Text>
+                <Animated.Text style={[styles.star, star2Style]}>
+                  ★
+                </Animated.Text>
               )}
               {getStarCount() >= 3 && (
-                <Animated.Text style={[styles.star, star3Style]}>★</Animated.Text>
+                <Animated.Text style={[styles.star, star3Style]}>
+                  ★
+                </Animated.Text>
               )}
             </View>
           )}
@@ -237,9 +254,9 @@ export function ResultPanel({
               {
                 color: isWinner && isKoraWin ? "#A68258" : "#F5F2ED",
                 textShadowColor:
-                  isWinner && isKoraWin
-                    ? "rgba(166, 130, 88, 0.5)"
-                    : "transparent",
+                  isWinner && isKoraWin ?
+                    "rgba(166, 130, 88, 0.5)"
+                  : "transparent",
               },
             ]}
           >
@@ -277,20 +294,18 @@ export function ResultPanel({
 
           {/* Boutons */}
           <View style={styles.actions}>
-            <TouchableOpacity
-              style={styles.secondaryButton}
+            <Button
+              title="Accueil"
               onPress={onGoHome}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.secondaryButtonText}>Accueil</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.primaryButton}
+              variant="secondary"
+              style={styles.button}
+            />
+            <Button
+              title="Rejouer"
               onPress={onPlayAgain}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.primaryButtonText}>Rejouer</Text>
-            </TouchableOpacity>
+              variant="primary"
+              style={styles.button}
+            />
           </View>
         </View>
       </LinearGradient>
@@ -446,39 +461,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
   },
-  secondaryButton: {
+  button: {
     flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: "#A68258",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  secondaryButtonText: {
-    color: "#A68258",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  primaryButton: {
-    flex: 1,
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    backgroundColor: "#B4443E",
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#B4443E",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  primaryButtonText: {
-    color: "#F5F2ED",
-    fontSize: 16,
-    fontWeight: "600",
   },
 });
