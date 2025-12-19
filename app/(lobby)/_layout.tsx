@@ -1,6 +1,10 @@
 import { TopBar } from "@/components/ui/TopBar";
 import { Stack } from "expo-router";
 
+export const unstable_settings = {
+  initialRouteName: "select-mode",
+};
+
 export default function LobbyLayout() {
   return (
     <Stack

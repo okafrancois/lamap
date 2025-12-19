@@ -7,6 +7,10 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { TopBar } from "@/components/ui/TopBar";
 import { useColors } from "@/hooks/useColors";
 
+export const unstable_settings = {
+  initialRouteName: "index",
+};
+
 export default function TabLayout() {
   const colors = useColors();
 

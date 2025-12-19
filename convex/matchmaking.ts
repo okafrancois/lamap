@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { INITIAL_PR } from "./ranking";
 import { aiDifficultyValidator, currencyValidator } from "./validators";
 
@@ -21,10 +21,9 @@ export const joinQueue = mutation({
     timerDuration: v.optional(v.number()), // Durée du timer en secondes
   },
   handler: async (ctx, args) => {
-    // Déterminer le mode automatiquement si non spécifié
     const gameMode = args.mode || (args.betAmount === 0 ? "RANKED" : "CASH");
     const isCompetitive =
-      args.competitive !== undefined ? args.competitive : true; // Par défaut compétitif
+      args.competitive !== undefined ? args.competitive : true;
 
     const existing = await ctx.db
       .query("matchmakingQueue")
@@ -263,6 +262,25 @@ export const leaveQueue = mutation({
   },
 });
 
+export const cleanupQueueForGame = internalMutation({
+  args: {
+    gameId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const matchedEntries = await ctx.db
+      .query("matchmakingQueue")
+      .filter((q) => q.eq(q.field("status"), "matched"))
+      .filter((q) => q.eq(q.field("gameId"), args.gameId))
+      .collect();
+
+    for (const entry of matchedEntries) {
+      await ctx.db.delete(entry._id);
+    }
+
+    return { cleaned: matchedEntries.length };
+  },
+});
+
 export const getMyStatus = query({
   args: {
     userId: v.id("users"),
@@ -288,14 +306,17 @@ export const getMyStatus = query({
           .first();
         const opponent =
           matched.matchedWith ? await ctx.db.get(matched.matchedWith) : null;
+        const isGameEnded = game?.status === "ENDED";
 
-        return {
-          status: "matched",
-          gameId: matched.gameId,
-          opponent,
-          game,
-          betAmount: matched.betAmount,
-        };
+        if (!isGameEnded) {
+          return {
+            status: "matched",
+            gameId: matched.gameId,
+            opponent,
+            game,
+            betAmount: matched.betAmount,
+          };
+        }
       }
 
       return { status: "idle" };

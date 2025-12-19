@@ -471,6 +471,14 @@ export const startGame = mutation({
         endedAt: Date.now(),
       } as any);
 
+      await ctx.scheduler.runAfter(
+        0,
+        internal.matchmaking.cleanupQueueForGame,
+        {
+          gameId,
+        }
+      );
+
       return { gameId, winnerId, autoVictory: true };
     }
 
@@ -754,6 +762,15 @@ export const playCard = mutation({
         if (!gameState.victoryType) {
           gameState.victoryType = "normal";
         }
+
+        // Nettoyer les entrées de queue pour cette partie terminée
+        await ctx.scheduler.runAfter(
+          0,
+          internal.matchmaking.cleanupQueueForGame,
+          {
+            gameId: game.gameId,
+          }
+        );
 
         const winnerPlayer = gameState.players.find(
           (p) => getPlayerId(p) === winnerId
@@ -1074,6 +1091,14 @@ export const playCardInternal = internalMutation({
         gameState.winnerId = winnerId;
         gameState.endedAt = Date.now();
 
+        await ctx.scheduler.runAfter(
+          0,
+          internal.matchmaking.cleanupQueueForGame,
+          {
+            gameId: game.gameId,
+          }
+        );
+
         const winnerPlayer = gameState.players.find(
           (p) => getPlayerId(p) === winnerId
         );
@@ -1150,27 +1175,26 @@ export const joinGame = mutation({
       .first();
 
     if (!game) {
-      throw new Error("Game not found");
+      throw new Error("Partie non trouvée");
     }
 
     if (game.status !== "WAITING") {
-      throw new Error("Game already started");
+      throw new Error("Partie déjà commencée");
     }
 
     if (game.players.length >= game.maxPlayers) {
-      throw new Error("Game is full");
+      throw new Error("Partie pleine");
     }
 
     // Check if player is already in the game
     const isAlreadyInGame = game.players.some((p) => p.userId === userId);
     if (isAlreadyInGame) {
-      throw new Error("You are already in this game");
+      throw new Error("Vous êtes déjà dans cette partie");
     }
 
-    // Get user info
     const user = await ctx.db.get(userId);
     if (!user) {
-      throw new Error("User not found");
+      throw new Error("Utilisateur non trouvé");
     }
 
     const newPlayer: any = {
@@ -1525,7 +1549,6 @@ export const concedeGame = mutation({
     clerkUserId: v.string(),
   },
   handler: async (ctx, args) => {
-    // Get the game
     const game = await ctx.db
       .query("games")
       .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
@@ -1535,12 +1558,10 @@ export const concedeGame = mutation({
       throw new Error("Game not found");
     }
 
-    // Check if game is in progress
     if (game.status !== "PLAYING") {
       throw new Error("Game is not in progress");
     }
 
-    // Get the user
     const user = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", args.clerkUserId))
@@ -1550,25 +1571,25 @@ export const concedeGame = mutation({
       throw new Error("User not found");
     }
 
-    // Check if user is a player in this game
     const playerIndex = game.players.findIndex((p) => p.userId === user._id);
     if (playerIndex === -1) {
       throw new Error("User is not a player in this game");
     }
 
-    // Determine the winner (the other player)
     const opponentIndex = playerIndex === 0 ? 1 : 0;
     const opponent = game.players[opponentIndex];
     const winnerId = opponent.userId;
 
-    // Update game status to ENDED
     await ctx.db.patch(game._id, {
       status: "ENDED",
       winnerId: winnerId,
       endedAt: Date.now(),
     });
 
-    // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
+    await ctx.scheduler.runAfter(0, internal.matchmaking.cleanupQueueForGame, {
+      gameId: game.gameId,
+    });
+
     const forfeitPlayer = game.players[playerIndex];
     const opponentPlayer = game.players[opponentIndex];
 
@@ -1577,7 +1598,6 @@ export const concedeGame = mutation({
       (game.mode === "RANKED" || game.competitive === true);
     if (shouldUpdatePR && forfeitPlayer.userId && opponentPlayer.userId) {
       try {
-        // Le joueur qui abandonne perd, l'adversaire gagne
         await ctx.scheduler.runAfter(
           0,
           internal.ranking.updatePlayerPRInternal,
@@ -1601,13 +1621,11 @@ export const concedeGame = mutation({
       }
     }
 
-    // Handle transactions if there's a bet
     if (game.bet.amount > 0 && winnerId) {
       const winnings = game.bet.amount * 2;
       const winner = await ctx.db.get(winnerId);
 
       if (winner) {
-        // Credit winnings to winner
         await ctx.db.patch(winnerId, {
           balance: (winner.balance || 0) + winnings,
         });

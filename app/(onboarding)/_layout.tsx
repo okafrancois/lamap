@@ -2,6 +2,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
+export const unstable_settings = {
+  initialRouteName: "username",
+};
+
 export default function OnboardingLayout() {
   const { isSignedIn, isLoaded, isConvexUserLoaded, convexUser } = useAuth();
 

@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: PANEL_HEIGHT,
+    minHeight: PANEL_HEIGHT,
     zIndex: 1000,
   },
   panel: {
