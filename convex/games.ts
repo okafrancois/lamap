@@ -405,8 +405,9 @@ export const startGame = mutation({
         }
       }
 
-      // Mettre à jour le PR pour les parties classées (PvP sans IA)
-      if (game.mode !== "AI" && winnerPlayer?.userId) {
+      // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
+      const shouldUpdatePR = game.mode !== "AI" && (game.mode === "RANKED" || game.competitive === true);
+      if (shouldUpdatePR && winnerPlayer?.userId) {
         const loserPlayer = updatedPlayers.find(
           (p) => getPlayerId(p) !== winnerId && p.userId
         );
@@ -1528,11 +1529,12 @@ export const concedeGame = mutation({
       endedAt: Date.now(),
     });
 
-    // Mettre à jour le PR pour les parties classées (PvP sans IA)
+    // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
     const forfeitPlayer = game.players[playerIndex];
     const opponentPlayer = game.players[opponentIndex];
 
-    if (game.mode !== "AI" && forfeitPlayer.userId && opponentPlayer.userId) {
+    const shouldUpdatePR = game.mode !== "AI" && (game.mode === "RANKED" || game.competitive === true);
+    if (shouldUpdatePR && forfeitPlayer.userId && opponentPlayer.userId) {
       try {
         // Le joueur qui abandonne perd, l'adversaire gagne
         await ctx.scheduler.runAfter(

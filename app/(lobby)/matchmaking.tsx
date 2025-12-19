@@ -18,7 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function MatchmakingScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { betAmount } = useLocalSearchParams<{ betAmount: string }>();
+  const { betAmount, competitive } = useLocalSearchParams<{ betAmount: string; competitive?: string }>();
   const { userId } = useAuth();
   const { battleLayout } = useSettings();
   const user = useQuery(
@@ -31,11 +31,12 @@ export default function MatchmakingScreen() {
   const previousStatus = useRef<string | undefined>(undefined);
 
   const bet = betAmount ? parseInt(betAmount, 10) : 0;
-  const currency = (user?.currency || "XAF") as "EUR" | "XAF";
+  const isCompetitive = competitive === "true";
+  const currency = (user?.currency || "XAF") as "EUR" | "XAF" | "USD";
 
   useEffect(() => {
     if (bet > 0 && status === "idle" && user) {
-      joinQueue(bet, currency)
+      joinQueue(bet, currency, "CASH", isCompetitive)
         .then(() => {
           playSound("confirmation");
         })
@@ -47,7 +48,7 @@ export default function MatchmakingScreen() {
           console.error("Error joining queue:", error);
         });
     }
-  }, [bet, status, joinQueue, playSound, user, currency]);
+  }, [bet, status, joinQueue, playSound, user, currency, isCompetitive]);
 
   useEffect(() => {
     if (previousStatus.current !== "matched" && status === "matched") {

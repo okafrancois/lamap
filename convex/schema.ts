@@ -72,6 +72,7 @@ const gamesTable = defineTable({
   endReason: v.union(v.string(), v.null()),
   history: v.array(gameHistoryValidator), // Historique complet pour reconstituer la partie
   mode: gameModeValidator,
+  competitive: v.optional(v.boolean()), // Pour les modes Cash: true = affecte le PR, false = ne l'affecte pas
   maxPlayers: v.number(),
   aiDifficulty: v.union(aiDifficultyValidator, v.null()),
   roomName: v.optional(v.string()),

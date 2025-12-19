@@ -15,8 +15,14 @@ export const joinQueue = mutation({
     userId: v.id("users"),
     betAmount: v.number(),
     currency: currencyValidator,
+    mode: v.optional(v.union(v.literal("RANKED"), v.literal("CASH"))), // Mode de jeu (par défaut RANKED si betAmount=0, sinon CASH)
+    competitive: v.optional(v.boolean()), // Pour CASH: true = affecte le PR, false = ne l'affecte pas
   },
   handler: async (ctx, args) => {
+    // Déterminer le mode automatiquement si non spécifié
+    const gameMode = args.mode || (args.betAmount === 0 ? "RANKED" : "CASH");
+    const isCompetitive = args.competitive !== undefined ? args.competitive : true; // Par défaut compétitif
+
     const existing = await ctx.db
       .query("matchmakingQueue")
       .withIndex("by_status_bet_currency", (q) =>
@@ -192,7 +198,8 @@ export const joinQueue = mutation({
             },
           },
         ],
-        mode: "ONLINE" as const,
+        mode: gameMode === "RANKED" ? ("RANKED" as const) : ("CASH" as const),
+        competitive: isCompetitive,
         maxPlayers: 2,
         aiDifficulty: null as string | null,
         roomName: undefined,
@@ -358,6 +365,7 @@ export const createMatchVsAI = mutation({
         },
       ],
       mode: "AI" as const,
+      competitive: false, // Les parties contre l'IA n'affectent jamais le PR
       maxPlayers: 2,
       aiDifficulty: args.difficulty,
       roomName: undefined,

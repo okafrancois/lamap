@@ -1,8 +1,10 @@
+import { RankBadge } from "@/components/ranking/RankBadge";
 import { Button } from "@/components/ui/Button";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { api } from "@/convex/_generated/api";
+import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
+import { Ionicons } from "@expo/vector-icons";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
 import React from "react";
@@ -12,12 +14,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SelectModeScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { userId } = useAuth();
+  const { userId, convexUser } = useAuth();
 
   const activeGame = useQuery(
     api.games.getActiveMatch,
     userId ? { clerkId: userId } : "skip"
   );
+
+  const userPR = convexUser?.pr || INITIAL_PR;
+  const userRank = getRankFromPR(userPR);
 
   const styles = StyleSheet.create({
     activeMatchCard: {
@@ -118,6 +123,12 @@ export default function SelectModeScreen() {
       fontSize: 14,
       color: colors.mutedForeground,
     },
+    modeFeatures: {
+      fontSize: 13,
+      lineHeight: 20,
+      marginTop: 12,
+      marginBottom: 4,
+    },
     modeButton: {
       minHeight: 48,
       marginTop: 12,
@@ -179,48 +190,110 @@ export default function SelectModeScreen() {
           </View>
 
           <View style={styles.modesContainer}>
-            <View style={styles.modeCard}>
+            {/* Mode Classé */}
+            <View
+              style={[
+                styles.modeCard,
+                { borderColor: userRank.color, borderWidth: 2 },
+              ]}
+            >
               <View style={styles.modeHeader}>
-                <View style={styles.modeIconContainer}>
-                  <IconSymbol
-                    name="person.fill"
-                    size={24}
-                    color={colors.secondaryForeground}
-                  />
+                <View
+                  style={[
+                    styles.modeIconContainer,
+                    { backgroundColor: userRank.color },
+                  ]}
+                >
+                  <Ionicons name="trophy" size={28} color="#FFF" />
                 </View>
                 <View style={styles.modeInfo}>
-                  <Text style={styles.modeTitle}>Contre un joueur</Text>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <Text style={styles.modeTitle}>Mode Classé</Text>
+                    <RankBadge rank={userRank} size="small" />
+                  </View>
                   <Text style={styles.modeDescription}>
-                    Affrontez un joueur en ligne
+                    Gratuit • Affecte votre PR • {userPR} PR
                   </Text>
                 </View>
               </View>
+              <Text
+                style={[styles.modeFeatures, { color: colors.mutedForeground }]}
+              >
+                ✓ Matchmaking par rang{"\n"}✓ Progression compétitive{"\n"}✓
+                Sans mise &apos;argent&apos;
+              </Text>
               <Button
-                title="Jouer en ligne"
-                onPress={() => router.push("/(lobby)/select-bet")}
+                title="Jouer en Classé"
+                onPress={() => router.push("/(lobby)/ranked-matchmaking")}
                 variant="primary"
                 style={styles.modeButton}
               />
             </View>
 
+            {/* Mode Cash */}
             <View style={styles.modeCard}>
               <View style={styles.modeHeader}>
-                <View style={styles.modeIconContainer}>
-                  <IconSymbol
-                    name="gamecontroller.fill"
-                    size={24}
-                    color={colors.secondaryForeground}
-                  />
+                <View
+                  style={[
+                    styles.modeIconContainer,
+                    { backgroundColor: "#7A9D54" },
+                  ]}
+                >
+                  <Ionicons name="cash" size={28} color="#FFF" />
                 </View>
                 <View style={styles.modeInfo}>
-                  <Text style={styles.modeTitle}>Contre l&apos;IA</Text>
+                  <Text style={styles.modeTitle}>Mode Cash</Text>
                   <Text style={styles.modeDescription}>
-                    Entraînez-vous contre l&apos;ordinateur
+                    Avec mise • Option compétitif
                   </Text>
                 </View>
               </View>
+              <Text
+                style={[styles.modeFeatures, { color: colors.mutedForeground }]}
+              >
+                ✓ Mise d&apos;argent réel{"\n"}✓ Choix compétitif/non-compétitif
+                {"\n"}✓ Gains réels
+              </Text>
               <Button
-                title="Jouer contre l'IA"
+                title="Jouer en Cash"
+                onPress={() => router.push("/(lobby)/select-bet?mode=cash")}
+                variant="primary"
+                style={[styles.modeButton, { backgroundColor: "#7A9D54" }]}
+              />
+            </View>
+
+            {/* Mode IA */}
+            <View style={styles.modeCard}>
+              <View style={styles.modeHeader}>
+                <View
+                  style={[
+                    styles.modeIconContainer,
+                    { backgroundColor: colors.muted },
+                  ]}
+                >
+                  <Ionicons name="hardware-chip" size={28} color="#FFF" />
+                </View>
+                <View style={styles.modeInfo}>
+                  <Text style={styles.modeTitle}>Mode IA</Text>
+                  <Text style={styles.modeDescription}>
+                    Entraînement • Sans PR
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={[styles.modeFeatures, { color: colors.mutedForeground }]}
+              >
+                ✓ Pratiquez sans risque{"\n"}✓ 3 niveaux de difficulté{"\n"}✓
+                N&apos;affecte pas le PR
+              </Text>
+              <Button
+                title="S'entraîner"
                 onPress={() => router.push("/(lobby)/select-difficulty")}
                 variant="secondary"
                 style={styles.modeButton}

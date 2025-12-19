@@ -17,8 +17,10 @@ export const aiDifficultyValidator = v.union(
 
 export const gameModeValidator = v.union(
   v.literal("AI"),
-  v.literal("ONLINE"),
-  v.literal("LOCAL")
+  v.literal("RANKED"),
+  v.literal("CASH"),
+  v.literal("ONLINE"), // Rétrocompatibilité
+  v.literal("LOCAL") // Rétrocompatibilité
 );
 
 export const currencyValidator = v.union(

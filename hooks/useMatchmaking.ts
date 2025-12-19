@@ -22,12 +22,24 @@ export function useMatchmaking() {
 
   const handleJoinQueue = async (
     betAmount: number,
-    currency: "EUR" | "XAF" = "XAF"
+    currency: "EUR" | "XAF" | "USD" = "XAF",
+    mode?: "RANKED" | "CASH",
+    competitive?: boolean
   ) => {
     if (!myUserId) {
       throw new Error("User not authenticated");
     }
-    return await joinQueue({ userId: myUserId, betAmount, currency });
+    // Déterminer le mode automatiquement si non spécifié
+    const gameMode = mode || (betAmount === 0 ? "RANKED" : "CASH");
+    const isCompetitive = competitive !== undefined ? competitive : true;
+    
+    return await joinQueue({ 
+      userId: myUserId, 
+      betAmount, 
+      currency,
+      mode: gameMode,
+      competitive: isCompetitive
+    });
   };
 
   const handleLeaveQueue = async () => {
