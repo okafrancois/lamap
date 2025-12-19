@@ -10,6 +10,7 @@
 
 import type * as aiPlayer from "../aiPlayer.js";
 import type * as chat from "../chat.js";
+import type * as currencies from "../currencies.js";
 import type * as economy from "../economy.js";
 import type * as friendlyMatches from "../friendlyMatches.js";
 import type * as gameChat from "../gameChat.js";
@@ -18,6 +19,7 @@ import type * as games from "../games.js";
 import type * as http from "../http.js";
 import type * as matchmaking from "../matchmaking.js";
 import type * as messaging from "../messaging.js";
+import type * as onboarding from "../onboarding.js";
 import type * as recharge from "../recharge.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
@@ -31,6 +33,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   aiPlayer: typeof aiPlayer;
   chat: typeof chat;
+  currencies: typeof currencies;
   economy: typeof economy;
   friendlyMatches: typeof friendlyMatches;
   gameChat: typeof gameChat;
@@ -39,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   matchmaking: typeof matchmaking;
   messaging: typeof messaging;
+  onboarding: typeof onboarding;
   recharge: typeof recharge;
   users: typeof users;
   validators: typeof validators;
