@@ -50,6 +50,7 @@ export const redeemRechargeCode = mutation({
       userId: args.userId,
       type: "deposit",
       amount: rechargeCode.amount,
+      currency: rechargeCode.currency,
       description: `Recharge via code: ${rechargeCode.amount} ${rechargeCode.currency}`,
       createdAt: Date.now(),
     });
