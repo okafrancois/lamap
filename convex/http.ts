@@ -5,7 +5,6 @@ import { httpAction } from "./_generated/server";
 
 const http = httpRouter();
 
-// Clerk webhook handler
 const handleClerkWebhook = httpAction(async (ctx, request) => {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
   if (!WEBHOOK_SECRET) {
@@ -67,7 +66,6 @@ const handleClerkWebhook = httpAction(async (ctx, request) => {
   return new Response("Webhook processed successfully", { status: 200 });
 });
 
-// Route pour les webhooks Clerk
 http.route({
   path: "/clerk-users-webhook",
   method: "POST",

@@ -3,11 +3,22 @@ import { Redirect } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
 export default function Index() {
-  const { isSignedIn, isLoaded, isConvexUserLoaded, needsOnboarding } =
-    useAuth();
+  const {
+    isSignedIn,
+    isLoaded,
+    isConvexUserLoaded,
+    needsOnboarding,
+    convexUser,
+  } = useAuth();
 
-  // Attendre que Clerk ET Convex soient chargés
-  if (!isLoaded || (isSignedIn && !isConvexUserLoaded)) {
+  const isLoading =
+    !isLoaded ||
+    (isSignedIn &&
+      (!isConvexUserLoaded ||
+        convexUser === null ||
+        needsOnboarding === undefined));
+
+  if (isLoading) {
     return (
       <View
         style={{
@@ -23,12 +34,10 @@ export default function Index() {
   }
 
   if (isSignedIn) {
-    // Si needsOnboarding est true, rediriger vers onboarding
-    if (needsOnboarding) {
+    if (needsOnboarding === true) {
       return <Redirect href="/(onboarding)/username" />;
     }
 
-    // Sinon, aller vers les tabs
     return <Redirect href="/(tabs)" />;
   }
 

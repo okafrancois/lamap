@@ -11,9 +11,10 @@ export function useAuth() {
     userId && isLoaded && isSignedIn ? { clerkUserId: userId } : "skip"
   );
 
-  // Si l'utilisateur existe et n'a pas complété l'onboarding
   const needsOnboarding =
-    convexUser ? !convexUser.onboardingCompleted : undefined;
+    convexUser === null ? undefined
+    : convexUser !== undefined ? !convexUser.onboardingCompleted
+    : undefined;
 
   const isConvexUserLoaded = !isSignedIn || convexUser !== undefined;
 

@@ -19,9 +19,10 @@ const clerkPublishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "";
 
 const convex = new ConvexReactClient(convexUrl);
 
-export const unstable_settings = {
-  anchor: "(tabs)",
-};
+// Removed anchor to ensure index.tsx is always rendered for onboarding check
+// export const unstable_settings = {
+//   anchor: "(tabs)",
+// };
 
 function RootLayoutNav() {
   const { isSignedIn, isLoaded } = useClerkAuth();

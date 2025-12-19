@@ -25,29 +25,27 @@ const usersTable = defineTable({
   balance: v.optional(v.number()),
   currency: v.optional(v.string()),
   country: v.optional(v.string()),
-  onboardingCompleted: v.optional(v.boolean()),
+  onboardingCompleted: v.boolean(),
   tutorialCompleted: v.optional(v.boolean()),
-  // Système de ranking
-  pr: v.optional(v.number()), // Points de Rang (1000 par défaut) - arrondi à l'entier
-  kora: v.optional(v.number()), // Tokens cosmétiques - arrondi à l'entier
-  rankHistory: v.optional(v.array(v.string())), // Historique des rangs atteints (pour les récompenses)
+  pr: v.optional(v.number()),
+  kora: v.optional(v.number()),
+  rankHistory: v.optional(v.array(v.string())),
 })
   .index("by_clerk_id", ["clerkUserId"])
   .index("by_username", ["username"])
-  .index("by_pr", ["pr"]); // Index pour le classement
+  .index("by_pr", ["pr"]);
 
 const numbersTable = defineTable({
   value: v.number(),
 });
 
-// Table pour l'historique des changements de PR
 const prHistoryTable = defineTable({
   userId: v.id("users"),
-  oldPR: v.number(), // Arrondi à l'entier
-  newPR: v.number(), // Arrondi à l'entier
-  change: v.number(), // Arrondi à l'entier
+  oldPR: v.number(),
+  newPR: v.number(),
+  change: v.number(),
   opponentId: v.id("users"),
-  opponentPR: v.number(), // Arrondi à l'entier
+  opponentPR: v.number(),
   won: v.boolean(),
   gameId: v.optional(v.string()),
   timestamp: v.number(),
@@ -59,20 +57,20 @@ const prHistoryTable = defineTable({
 const gamesTable = defineTable({
   gameId: v.string(),
   seed: v.string(),
-  version: v.number(), // S'incrémente à chaque mise à jour
+  version: v.number(),
   status: gameStatusValidator,
   currentRound: v.number(),
   maxRounds: v.number(),
-  hasHandPlayerId: v.union(v.id("users"), v.string(), v.null()), // Utilise ai-bindi, ai-ndoss, ai-bandi pour l'IA
+  hasHandPlayerId: v.union(v.id("users"), v.string(), v.null()),
   currentTurnPlayerId: v.union(v.id("users"), v.string(), v.null()),
   players: v.array(playerValidator),
   playedCards: v.array(playedCardValidator),
   bet: betValidator,
   winnerId: v.union(v.id("users"), v.string(), v.null()),
   endReason: v.union(v.string(), v.null()),
-  history: v.array(gameHistoryValidator), // Historique complet pour reconstituer la partie
+  history: v.array(gameHistoryValidator),
   mode: gameModeValidator,
-  competitive: v.optional(v.boolean()), // Pour les modes Cash: true = affecte le PR, false = ne l'affecte pas
+  competitive: v.optional(v.boolean()),
   maxPlayers: v.number(),
   aiDifficulty: v.union(aiDifficultyValidator, v.null()),
   roomName: v.optional(v.string()),
@@ -81,18 +79,17 @@ const gamesTable = defineTable({
   joinCode: v.optional(v.string()),
   startedAt: v.number(),
   endedAt: v.union(v.number(), v.null()),
-  lastUpdatedAt: v.number(), // Mis à jour à chaque action
+  lastUpdatedAt: v.number(),
   victoryType: v.union(victoryTypeValidator, v.null()),
-  rematchGameId: v.optional(v.union(v.string(), v.null())), // ID de la partie rematch si créée
-  // Timer de jeu (comme aux échecs)
-  timerEnabled: v.optional(v.boolean()), // Si le timer est activé pour cette partie
-  timerDuration: v.optional(v.number()), // Durée du timer par tour en secondes (ex: 30, 60, 120)
+  rematchGameId: v.optional(v.union(v.string(), v.null())),
+  timerEnabled: v.optional(v.boolean()),
+  timerDuration: v.optional(v.number()),
   playerTimers: v.optional(
     v.array(
       v.object({
         playerId: v.union(v.id("users"), v.string()),
-        timeRemaining: v.number(), // Temps restant en secondes
-        lastUpdated: v.number(), // Timestamp de la dernière mise à jour
+        timeRemaining: v.number(),
+        lastUpdated: v.number(),
       })
     )
   ),
@@ -159,18 +156,17 @@ const rechargeCodesTable = defineTable({
 
 // Table pour les amitiés
 const friendshipsTable = defineTable({
-  user1Id: v.id("users"), // Le premier utilisateur (ordre alphabétique des IDs pour éviter les doublons)
-  user2Id: v.id("users"), // Le deuxième utilisateur
+  user1Id: v.id("users"),
+  user2Id: v.id("users"),
   createdAt: v.number(),
 })
   .index("by_user1", ["user1Id"])
   .index("by_user2", ["user2Id"])
-  .index("by_users", ["user1Id", "user2Id"]); // Index composé pour les requêtes bidirectionnelles
+  .index("by_users", ["user1Id", "user2Id"]);
 
-// Table pour les demandes d'amitié
 const friendRequestsTable = defineTable({
-  senderId: v.id("users"), // Celui qui envoie la demande
-  receiverId: v.id("users"), // Celui qui reçoit la demande
+  senderId: v.id("users"),
+  receiverId: v.id("users"),
   status: v.union(
     v.literal("pending"),
     v.literal("accepted"),

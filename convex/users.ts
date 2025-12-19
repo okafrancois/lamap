@@ -31,14 +31,12 @@ export const updateOrCreateUser = internalMutation({
     const avatarUrl =
       clerkUser.profile_image_url || clerkUser.image_url || null;
 
-    // Vérifier si l'utilisateur existe déjà
     const existing = await ctx.db
       .query("users")
       .withIndex("by_clerk_id", (q) => q.eq("clerkUserId", clerkUser.id))
       .first();
 
     if (existing) {
-      // Mettre à jour l'utilisateur existant
       await ctx.db.patch(existing._id, {
         firstName: firstName,
         lastName: lastName,
@@ -48,7 +46,6 @@ export const updateOrCreateUser = internalMutation({
       });
       return existing._id;
     } else {
-      // Créer un nouvel utilisateur
       const newUserId = await ctx.db.insert("users", {
         firstName: firstName,
         lastName: lastName,
@@ -59,6 +56,7 @@ export const updateOrCreateUser = internalMutation({
         isActive: true,
         username: clerkUser.username ?? email.split("@")[0],
         clerkUserId: clerkUser.id,
+        onboardingCompleted: false,
       });
       return newUserId;
     }
@@ -103,7 +101,7 @@ const getUserQuery = {
       balance: v.optional(v.number()),
       currency: v.optional(v.string()),
       country: v.optional(v.string()),
-      onboardingCompleted: v.optional(v.boolean()),
+      onboardingCompleted: v.boolean(),
       tutorialCompleted: v.optional(v.boolean()),
       // Système de ranking
       pr: v.optional(v.number()),
@@ -179,15 +177,15 @@ export const createOrUpdateUser = mutation({
       clerkUserId: args.clerkId,
       balance: 1000,
       currency: "XAF",
+      onboardingCompleted: false,
     });
   },
 });
 
-// Mutation to update user balance
 export const updateBalance = internalMutation({
   args: {
     userId: v.id("users"),
-    amount: v.number(), // Positive to add, negative to subtract
+    amount: v.number(),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -209,7 +207,6 @@ export const updateBalance = internalMutation({
   },
 });
 
-// Mutation to update user currency preference
 export const updateCurrency = internalMutation({
   args: {
     userId: v.id("users"),
@@ -228,7 +225,6 @@ export const updateCurrency = internalMutation({
   },
 });
 
-// Query to get user balance (for display purposes)
 export const getUserBalance = query({
   args: {
     userId: v.id("users"),
