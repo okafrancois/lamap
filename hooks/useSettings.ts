@@ -7,12 +7,15 @@ export type ThemeMode = "light" | "dark" | "system";
 export type CardLayout = "fan" | "linear" | "compact";
 export type PlayAreaMode = "battle" | "history";
 export type BattleLayout = "vertical" | "horizontal";
+export type TimerDuration = 30 | 60 | 120 | 300;
 
 interface Settings {
   themeMode: ThemeMode;
   cardLayout: CardLayout;
   playAreaMode: PlayAreaMode;
   battleLayout: BattleLayout;
+  timerEnabled: boolean;
+  timerDuration: TimerDuration;
 }
 
 const defaultSettings: Settings = {
@@ -20,6 +23,8 @@ const defaultSettings: Settings = {
   cardLayout: "fan",
   playAreaMode: "battle",
   battleLayout: "vertical",
+  timerEnabled: false,
+  timerDuration: 60,
 };
 
 export function useSettings() {
@@ -70,15 +75,27 @@ export function useSettings() {
     updateSettings({ battleLayout: layout });
   };
 
+  const setTimerEnabled = (enabled: boolean) => {
+    updateSettings({ timerEnabled: enabled });
+  };
+
+  const setTimerDuration = (duration: TimerDuration) => {
+    updateSettings({ timerDuration: duration });
+  };
+
   return {
     themeMode: settings.themeMode,
     cardLayout: settings.cardLayout,
     playAreaMode: settings.playAreaMode,
     battleLayout: settings.battleLayout,
+    timerEnabled: settings.timerEnabled,
+    timerDuration: settings.timerDuration,
     setThemeMode,
     setCardLayout,
     setPlayAreaMode,
     setBattleLayout,
+    setTimerEnabled,
+    setTimerDuration,
     isLoading,
   };
 }

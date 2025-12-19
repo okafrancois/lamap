@@ -17,6 +17,7 @@ import { Rank, Suit } from "@/convex/validators";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
+import { useGameTimer } from "@/hooks/useGameTimer";
 import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
@@ -65,13 +66,15 @@ export default function MatchScreen() {
     string | undefined
   >(undefined);
   const [resultPanelVisible, setResultPanelVisible] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(30); // 30 secondes par tour
   const hasStartedGameRef = useRef(false);
   const currentGameIdRef = useRef<string | null>(null);
 
-  // Timer activé pour toutes les parties pour le moment
-  const isTimerActive = true;
-  const totalTime = 30;
+  // Timer de jeu
+  const {
+    enabled: isTimerActive,
+    timeRemaining,
+    totalTime,
+  } = useGameTimer(game?.gameId, game?.currentTurnPlayerId);
 
   // Réinitialiser le flag de démarrage si on change de partie
   useEffect(() => {
@@ -126,13 +129,6 @@ export default function MatchScreen() {
       setResultPanelVisible(true);
     }
   }, [game?.status]);
-
-  // Réinitialiser le timer quand c'est à notre tour
-  useEffect(() => {
-    if (isMyTurn && game?.status === "PLAYING") {
-      setTimeRemaining(totalTime);
-    }
-  }, [isMyTurn, game?.currentRound, game?.status, totalTime]);
 
   // Démarrage automatique pour les parties en WAITING (AI ou ONLINE)
   useEffect(() => {

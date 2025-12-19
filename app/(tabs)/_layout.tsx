@@ -50,6 +50,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="friends"
+        options={{
+          title: "Amis",
+          header: () => <TopBar title="Amis" />,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="person.2.fill" color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
@@ -66,16 +76,6 @@ export default function TabLayout() {
           header: () => <TopBar title="Portefeuille" />,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={28} name="wallet.pass.fill" color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="history"
-        options={{
-          title: "Mes parties",
-          header: () => <TopBar title="Mes parties" />,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="clock.fill" color={color} />
           ),
         }}
       />

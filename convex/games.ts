@@ -406,7 +406,9 @@ export const startGame = mutation({
       }
 
       // Mettre à jour le PR pour les parties compétitives (RANKED ou CASH compétitif, sans IA)
-      const shouldUpdatePR = game.mode !== "AI" && (game.mode === "RANKED" || game.competitive === true);
+      const shouldUpdatePR =
+        game.mode !== "AI" &&
+        (game.mode === "RANKED" || game.competitive === true);
       if (shouldUpdatePR && winnerPlayer?.userId) {
         const loserPlayer = updatedPlayers.find(
           (p) => getPlayerId(p) !== winnerId && p.userId
@@ -535,6 +537,43 @@ export const playCard = mutation({
 
     if (!game) {
       throw new Error("Game not found");
+    }
+
+    // Vérifier si le timer est activé et si le temps du joueur est écoulé
+    if (game.timerEnabled && game.playerTimers) {
+      const now = Date.now();
+      const playerTimer = game.playerTimers.find(
+        (t) => t.playerId === playerId
+      );
+
+      if (playerTimer) {
+        const elapsedSeconds = Math.floor(
+          (now - playerTimer.lastUpdated) / 1000
+        );
+        const actualTimeRemaining = Math.max(
+          0,
+          playerTimer.timeRemaining - elapsedSeconds
+        );
+
+        if (actualTimeRemaining === 0) {
+          throw new Error("Time expired - you have run out of time");
+        }
+
+        // Mettre à jour le timer du joueur
+        const updatedTimers = game.playerTimers.map((t) =>
+          t.playerId === playerId ?
+            {
+              ...t,
+              timeRemaining: actualTimeRemaining,
+              lastUpdated: now,
+            }
+          : t
+        );
+
+        await ctx.db.patch(game._id, {
+          playerTimers: updatedTimers,
+        });
+      }
     }
 
     // Validate the play
@@ -1533,7 +1572,9 @@ export const concedeGame = mutation({
     const forfeitPlayer = game.players[playerIndex];
     const opponentPlayer = game.players[opponentIndex];
 
-    const shouldUpdatePR = game.mode !== "AI" && (game.mode === "RANKED" || game.competitive === true);
+    const shouldUpdatePR =
+      game.mode !== "AI" &&
+      (game.mode === "RANKED" || game.competitive === true);
     if (shouldUpdatePR && forfeitPlayer.userId && opponentPlayer.userId) {
       try {
         // Le joueur qui abandonne perd, l'adversaire gagne

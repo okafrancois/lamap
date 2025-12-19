@@ -13,6 +13,7 @@ import type * as chat from "../chat.js";
 import type * as currencies from "../currencies.js";
 import type * as economy from "../economy.js";
 import type * as friendlyMatches from "../friendlyMatches.js";
+import type * as friends from "../friends.js";
 import type * as gameChat from "../gameChat.js";
 import type * as gameEngine from "../gameEngine.js";
 import type * as games from "../games.js";
@@ -22,6 +23,7 @@ import type * as messaging from "../messaging.js";
 import type * as onboarding from "../onboarding.js";
 import type * as ranking from "../ranking.js";
 import type * as recharge from "../recharge.js";
+import type * as timer from "../timer.js";
 import type * as users from "../users.js";
 import type * as validators from "../validators.js";
 
@@ -37,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   currencies: typeof currencies;
   economy: typeof economy;
   friendlyMatches: typeof friendlyMatches;
+  friends: typeof friends;
   gameChat: typeof gameChat;
   gameEngine: typeof gameEngine;
   games: typeof games;
@@ -46,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   onboarding: typeof onboarding;
   ranking: typeof ranking;
   recharge: typeof recharge;
+  timer: typeof timer;
   users: typeof users;
   validators: typeof validators;
 }>;

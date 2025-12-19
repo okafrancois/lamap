@@ -124,6 +124,27 @@ const getUserQuery = {
 export const getUser = internalQuery(getUserQuery);
 export const getCurrentUser = query(getUserQuery);
 
+// Récupérer un utilisateur par son ID
+export const getUserById = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) return null;
+
+    return {
+      _id: user._id,
+      username: user.username,
+      avatarUrl: user.avatarUrl,
+      pr: user.pr,
+      kora: user.kora,
+      createdAt: user.createdAt,
+      isActive: user.isActive,
+    };
+  },
+});
+
 // Mutation publique pour créer/mettre à jour un utilisateur (pour compatibilité)
 export const createOrUpdateUser = mutation({
   args: {

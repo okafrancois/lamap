@@ -59,6 +59,10 @@ function RootLayoutNav() {
             name="profile"
             options={{ presentation: "modal", title: "Mon Profil" }}
           />
+          <Stack.Screen
+            name="user/[userId]"
+            options={{ presentation: "modal", title: "Profil" }}
+          />
         </Stack.Protected>
       </Stack>
       <StatusBar style="auto" />

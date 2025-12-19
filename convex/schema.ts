@@ -84,6 +84,18 @@ const gamesTable = defineTable({
   lastUpdatedAt: v.number(), // Mis à jour à chaque action
   victoryType: v.union(victoryTypeValidator, v.null()),
   rematchGameId: v.optional(v.union(v.string(), v.null())), // ID de la partie rematch si créée
+  // Timer de jeu (comme aux échecs)
+  timerEnabled: v.optional(v.boolean()), // Si le timer est activé pour cette partie
+  timerDuration: v.optional(v.number()), // Durée du timer par tour en secondes (ex: 30, 60, 120)
+  playerTimers: v.optional(
+    v.array(
+      v.object({
+        playerId: v.union(v.id("users"), v.string()),
+        timeRemaining: v.number(), // Temps restant en secondes
+        lastUpdated: v.number(), // Timestamp de la dernière mise à jour
+      })
+    )
+  ),
 })
   .index("by_game_id", ["gameId"])
   .index("by_host", ["hostId"])
@@ -145,6 +157,33 @@ const rechargeCodesTable = defineTable({
   isActive: v.boolean(),
 }).index("by_code", ["code"]);
 
+// Table pour les amitiés
+const friendshipsTable = defineTable({
+  user1Id: v.id("users"), // Le premier utilisateur (ordre alphabétique des IDs pour éviter les doublons)
+  user2Id: v.id("users"), // Le deuxième utilisateur
+  createdAt: v.number(),
+})
+  .index("by_user1", ["user1Id"])
+  .index("by_user2", ["user2Id"])
+  .index("by_users", ["user1Id", "user2Id"]); // Index composé pour les requêtes bidirectionnelles
+
+// Table pour les demandes d'amitié
+const friendRequestsTable = defineTable({
+  senderId: v.id("users"), // Celui qui envoie la demande
+  receiverId: v.id("users"), // Celui qui reçoit la demande
+  status: v.union(
+    v.literal("pending"),
+    v.literal("accepted"),
+    v.literal("rejected")
+  ),
+  createdAt: v.number(),
+  respondedAt: v.optional(v.number()),
+})
+  .index("by_sender", ["senderId"])
+  .index("by_receiver", ["receiverId"])
+  .index("by_status", ["status"])
+  .index("by_sender_receiver", ["senderId", "receiverId"]);
+
 export default defineSchema({
   numbers: numbersTable,
   users: usersTable,
@@ -156,4 +195,6 @@ export default defineSchema({
   messages: messagesTable,
   rechargeCodes: rechargeCodesTable,
   prHistory: prHistoryTable,
+  friendships: friendshipsTable,
+  friendRequests: friendRequestsTable,
 });

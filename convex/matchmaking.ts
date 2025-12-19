@@ -17,6 +17,8 @@ export const joinQueue = mutation({
     currency: currencyValidator,
     mode: v.optional(v.union(v.literal("RANKED"), v.literal("CASH"))), // Mode de jeu (par défaut RANKED si betAmount=0, sinon CASH)
     competitive: v.optional(v.boolean()), // Pour CASH: true = affecte le PR, false = ne l'affecte pas
+    timerEnabled: v.optional(v.boolean()), // Si le timer est activé
+    timerDuration: v.optional(v.number()), // Durée du timer en secondes
   },
   handler: async (ctx, args) => {
     // Déterminer le mode automatiquement si non spécifié
@@ -211,6 +213,20 @@ export const joinQueue = mutation({
         lastUpdatedAt: now,
         victoryType: null as string | null,
         rematchGameId: undefined,
+        timerEnabled: args.timerEnabled || false,
+        timerDuration: args.timerDuration,
+        playerTimers: args.timerEnabled ? [
+          {
+            playerId: args.userId,
+            timeRemaining: args.timerDuration || 60,
+            lastUpdated: now,
+          },
+          {
+            playerId: potentialMatch.userId,
+            timeRemaining: args.timerDuration || 60,
+            lastUpdated: now,
+          },
+        ] : undefined,
       };
 
       await ctx.db.insert("games", gameData as any);
