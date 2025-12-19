@@ -1,17 +1,14 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useColors } from "@/hooks/useColors";
-import { Button } from "@/components/ui/Button";
 import { CountrySelector } from "@/components/onboarding/CountrySelector";
+import { Button } from "@/components/ui/Button";
+import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-} from "react-native-reanimated";
+import { useColors } from "@/hooks/useColors";
+import { useMutation } from "convex/react";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function CountryScreen() {
   const colors = useColors();
@@ -19,29 +16,31 @@ export default function CountryScreen() {
   const { convexUser } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState<string>();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const setCountryMutation = useMutation(api.onboarding.setCountry);
-  const completeOnboardingMutation = useMutation(api.onboarding.completeOnboarding);
-  
+  const completeOnboardingMutation = useMutation(
+    api.onboarding.completeOnboarding
+  );
+
   const handleCountrySelect = (countryCode: string) => {
     setSelectedCountry(countryCode);
   };
-  
+
   const handleContinue = async () => {
     if (!convexUser?._id || !selectedCountry) return;
-    
+
     try {
       setIsSubmitting(true);
-      
+
       await setCountryMutation({
         userId: convexUser._id,
         countryCode: selectedCountry,
       });
-      
+
       await completeOnboardingMutation({
         userId: convexUser._id,
       });
-      
+
       router.replace("/(tabs)");
     } catch (error) {
       console.error("Erreur lors de la sauvegarde du pays:", error);
@@ -49,7 +48,7 @@ export default function CountryScreen() {
       setIsSubmitting(false);
     }
   };
-  
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -100,7 +99,7 @@ export default function CountryScreen() {
       paddingBottom: 32,
     },
   });
-  
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <View style={styles.content}>
@@ -114,7 +113,7 @@ export default function CountryScreen() {
             Cela détermine la devise que vous utiliserez pour vos mises.
           </Text>
         </Animated.View>
-        
+
         <Animated.View
           entering={FadeInDown.duration(600).delay(200)}
           style={styles.selectorWrapper}
@@ -125,7 +124,7 @@ export default function CountryScreen() {
           />
         </Animated.View>
       </View>
-      
+
       <Animated.View
         entering={FadeInUp.duration(600).delay(300)}
         style={styles.footer}
@@ -141,4 +140,3 @@ export default function CountryScreen() {
     </SafeAreaView>
   );
 }
-

@@ -81,9 +81,13 @@ export const getRechargeCode = query({
     return {
       amount: rechargeCode.amount,
       currency: rechargeCode.currency,
-      isValid: rechargeCode.isActive && !rechargeCode.usedBy && (!rechargeCode.expiresAt || rechargeCode.expiresAt >= Date.now()),
+      isValid:
+        rechargeCode.isActive &&
+        !rechargeCode.usedBy &&
+        (!rechargeCode.expiresAt || rechargeCode.expiresAt >= Date.now()),
       isUsed: !!rechargeCode.usedBy,
-      isExpired: rechargeCode.expiresAt ? rechargeCode.expiresAt < Date.now() : false,
+      isExpired:
+        rechargeCode.expiresAt ? rechargeCode.expiresAt < Date.now() : false,
     };
   },
 });
@@ -117,4 +121,3 @@ export const createRechargeCode = internalMutation({
     return rechargeCodeId;
   },
 });
-

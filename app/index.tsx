@@ -35,11 +35,11 @@ export default function Index() {
         </View>
       );
     }
-    
+
     if (needsOnboarding) {
       return <Redirect href="/(onboarding)/username" />;
     }
-    
+
     return <Redirect href="/(tabs)" />;
   }
 
