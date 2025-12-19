@@ -16,7 +16,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 interface ParticleProps {
   index: number;
   color: string;
-  victoryType: "normal" | "simple_kora" | "double_kora" | "triple_kora";
+  victoryType: "normal" | "simple_kora" | "double_kora" | "triple_kora" | "auto_sum" | "auto_sevens" | "auto_lowest";
 }
 
 function Particle({ index, color, victoryType }: ParticleProps) {
@@ -44,11 +44,11 @@ function Particle({ index, color, victoryType }: ParticleProps) {
     []
   );
 
-  useEffect(() => {
-    const delay = Math.random() * 300;
+  const animationDelay = useMemo(() => Math.random() * 300, []);
 
+  useEffect(() => {
     opacity.value = withDelay(
-      delay,
+      animationDelay,
       withSequence(
         withTiming(1, { duration: 200 }),
         withDelay(
@@ -59,7 +59,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
     );
 
     scale.value = withDelay(
-      delay,
+      animationDelay,
       withSpring(1, {
         damping: 8,
         stiffness: 100,
@@ -67,7 +67,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
     );
 
     translateX.value = withDelay(
-      delay,
+      animationDelay,
       withTiming(endX, {
         duration: 2500,
         easing: Easing.out(Easing.cubic),
@@ -75,7 +75,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
     );
 
     translateY.value = withDelay(
-      delay,
+      animationDelay,
       withSequence(
         withTiming(endY * 0.6, {
           duration: 800,
@@ -89,7 +89,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
     );
 
     rotate.value = withDelay(
-      delay,
+      animationDelay,
       withRepeat(
         withTiming(360, {
           duration: 2000,
@@ -99,7 +99,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
         false
       )
     );
-  }, [delay, translateX, translateY, opacity, scale, rotate, endX, endY]);
+  }, [animationDelay, translateX, translateY, opacity, scale, rotate, endX, endY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -129,7 +129,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
 
 interface ResultAnimationProps {
   visible: boolean;
-  victoryType: "normal" | "simple_kora" | "double_kora" | "triple_kora" | "auto";
+  victoryType: "normal" | "simple_kora" | "double_kora" | "triple_kora" | "auto_sum" | "auto_sevens" | "auto_lowest";
 }
 
 export function ResultAnimation({ visible, victoryType }: ResultAnimationProps) {
@@ -137,6 +137,7 @@ export function ResultAnimation({ visible, victoryType }: ResultAnimationProps) 
     if (victoryType === "triple_kora") return 60;
     if (victoryType === "double_kora") return 40;
     if (victoryType === "simple_kora") return 25;
+    if (victoryType === "auto_sum" || victoryType === "auto_sevens" || victoryType === "auto_lowest") return 0;
     return 0;
   }, [victoryType]);
 
@@ -146,6 +147,9 @@ export function ResultAnimation({ visible, victoryType }: ResultAnimationProps) 
     }
     if (victoryType === "double_kora") {
       return ["#A68258", "#C9A56B", "#8B6F47", "#D4AF7A"];
+    }
+    if (victoryType === "simple_kora") {
+      return ["#A3D977", "#8BC34A", "#7CB342", "#CDDC39"];
     }
     return ["#A3D977", "#8BC34A", "#7CB342", "#CDDC39"];
   }, [victoryType]);

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/Button";
 import { useColors } from "@/hooks/useColors";
 import { useSound } from "@/hooks/useSound";
 import React, { useEffect, useRef } from "react";
-import { StyleSheet, Text, View, Dimensions } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -13,7 +13,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 const PANEL_HEIGHT = 280;
 
 interface ResultPanelProps {
@@ -126,7 +125,7 @@ export function ResultPanel({
     opacity: opacity.value,
   }));
 
-  const gradientColors = isWinner
+  const gradientColors: readonly [string, string, string] = isWinner
     ? ["#2D5016", "#3D6B1F", "#4A8227"]
     : ["#2A2A2A", "#1F1F1F", "#141414"];
 
@@ -146,9 +145,8 @@ export function ResultPanel({
             </Text>
             {isWinner && multiplier > 1 && (
               <Badge
-                text={`×${multiplier}`}
-                color={colors.secondary}
-                size="large"
+                label={`×${multiplier}`}
+                variant="kora"
               />
             )}
           </View>

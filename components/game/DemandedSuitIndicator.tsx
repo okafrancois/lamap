@@ -31,7 +31,7 @@ const SUIT_NAMES: Record<Suit, string> = {
   diamonds: "Carreau",
 };
 
-const SUIT_COLORS: Record<Suit, string[]> = {
+const SUIT_COLORS: Record<Suit, readonly [string, string]> = {
   spades: ["#1A1A1A", "#2A2A2A"],
   clubs: ["#1A1A1A", "#2A2A2A"],
   hearts: ["#B4443E", "#D35750"],
