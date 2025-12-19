@@ -1,11 +1,16 @@
 import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
+import { ConcedeButton } from "@/components/game/ConcedeButton";
+import { DemandedSuitIndicator } from "@/components/game/DemandedSuitIndicator";
+import { GameTimer } from "@/components/game/GameTimer";
 import { OpponentZone } from "@/components/game/OpponentZone";
 import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
-import { ResultModal } from "@/components/game/ResultModal";
+import { ResultAnimation } from "@/components/game/ResultAnimation";
+import { ResultPanel } from "@/components/game/ResultPanel";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
+import { BackgroundGradient } from "@/components/ui/BackgroundGradient";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
 import { Rank, Suit } from "@/convex/validators";
@@ -55,9 +60,14 @@ export default function MatchScreen() {
   const [previousGameStatus, setPreviousGameStatus] = useState<
     string | undefined
   >(undefined);
-  const [resultModalVisible, setResultModalVisible] = useState(false);
+  const [resultPanelVisible, setResultPanelVisible] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(30); // 30 secondes par tour
   const hasStartedGameRef = useRef(false);
   const currentGameIdRef = useRef<string | null>(null);
+
+  // Timer activé pour toutes les parties pour le moment
+  const isTimerActive = true;
+  const totalTime = 30;
 
   // Réinitialiser le flag de démarrage si on change de partie
   useEffect(() => {
@@ -109,9 +119,16 @@ export default function MatchScreen() {
 
   useEffect(() => {
     if (game?.status === "ENDED") {
-      setResultModalVisible(true);
+      setResultPanelVisible(true);
     }
   }, [game?.status]);
+
+  // Réinitialiser le timer quand c'est à notre tour
+  useEffect(() => {
+    if (isMyTurn && game?.status === "PLAYING") {
+      setTimeRemaining(totalTime);
+    }
+  }, [isMyTurn, game?.currentRound, game?.status, totalTime]);
 
   // Démarrage automatique pour les parties en WAITING (AI ou ONLINE)
   useEffect(() => {
@@ -173,10 +190,26 @@ export default function MatchScreen() {
     [isPlaying, playCard, playSound]
   );
 
+  const handleConcede = useCallback(() => {
+    // TODO: Implémenter la logique backend pour abandonner
+    Alert.alert(
+      "Abandon",
+      "La fonctionnalité d'abandon sera bientôt disponible côté serveur.",
+      [
+        {
+          text: "OK",
+          onPress: () => {
+            // Pour l'instant, on retourne simplement à l'accueil
+            router.replace("/(tabs)");
+          },
+        },
+      ]
+    );
+  }, [router]);
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: colors.background,
     },
     loadingText: {
       color: colors.text,
@@ -421,6 +454,9 @@ export default function MatchScreen() {
     : opponentHasHand && playerPlayedCard ? playerPlayedCard.suit
     : undefined;
 
+  // Ne pas inclure les cartes du currentPlays si le jeu est terminé (évite les doublons)
+  const includeCurrentPlays = game.status !== "ENDED";
+
   const allOpponentCards = [
     ...(turnResults
       ?.map(
@@ -430,7 +466,7 @@ export default function MatchScreen() {
             .find((pc: any) => pc.playerId !== myUserId)?.card
       )
       .filter(Boolean) || []),
-    ...(opponentPlayedCard ? [opponentPlayedCard] : []),
+    ...(includeCurrentPlays && opponentPlayedCard ? [opponentPlayedCard] : []),
   ].filter(Boolean);
 
   const allPlayerCards = [
@@ -442,111 +478,142 @@ export default function MatchScreen() {
             .find((pc: any) => pc.playerId === myUserId)?.card
       )
       .filter(Boolean) || []),
-    ...(playerPlayedCard ? [playerPlayedCard] : []),
+    ...(includeCurrentPlays && playerPlayedCard ? [playerPlayedCard] : []),
   ].filter(Boolean);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View style={styles.headerLeft}>
-            <TurnPips
-              totalRounds={game.maxRounds}
-              currentRound={game.currentRound}
-              roundsWonByPlayer={roundsWonByPlayer}
-              roundsWonByOpponent={roundsWonByOpponent}
+    <BackgroundGradient>
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.headerLeft}>
+              <TurnPips
+                totalRounds={game.maxRounds}
+                currentRound={game.currentRound}
+                roundsWonByPlayer={roundsWonByPlayer}
+                roundsWonByOpponent={roundsWonByOpponent}
+              />
+              {game.bet.amount > 0 && (
+                <View style={styles.betBadge}>
+                  <Ionicons
+                    name="trophy"
+                    size={12}
+                    color={colors.secondaryForeground}
+                  />
+                  <Text style={styles.betText}>
+                    {game.bet.amount} {game.bet.currency}
+                  </Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.headerRight}>
+              {isTimerActive && game.status === "PLAYING" && (
+                <GameTimer
+                  timeRemaining={timeRemaining}
+                  totalTime={totalTime}
+                  isMyTurn={isMyTurn}
+                  isActive={true}
+                />
+              )}
+              {game.status === "PLAYING" && (
+                <ConcedeButton onConcede={handleConcede} disabled={isPlaying} />
+              )}
+              {game.mode === "ONLINE" && (
+                <TouchableOpacity
+                  onPress={() => router.push(`/(game)/chat/${matchId}`)}
+                  style={styles.chatButton}
+                >
+                  <Ionicons
+                    name="chatbubble"
+                    size={20}
+                    color={colors.secondary}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {opponent && (
+          <OpponentZone
+            name={opponent.username}
+            hasHand={opponentHasHand}
+            cardsRemaining={opponentCardsRemaining}
+          />
+        )}
+
+        <View style={styles.playArea}>
+          {leadSuit && game.status === "PLAYING" && (
+            <DemandedSuitIndicator suit={leadSuit as Suit} visible={true} />
+          )}
+          {playAreaMode === "battle" ?
+            <BattleZone
+              opponentCards={allOpponentCards.map((card: any) => ({
+                suit: card?.suit as Suit,
+                rank: card?.rank as Rank,
+              }))}
+              playerCards={allPlayerCards.map((card: any) => ({
+                suit: card?.suit as Suit,
+                rank: card?.rank as Rank,
+              }))}
+              leadSuit={leadSuit as Suit | undefined}
+              battleLayout={battleLayout}
             />
-            {game.bet.amount > 0 && (
-              <View style={styles.betBadge}>
-                <Ionicons
-                  name="trophy"
-                  size={12}
-                  color={colors.secondaryForeground}
-                />
-                <Text style={styles.betText}>
-                  {game.bet.amount} {game.bet.currency}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.headerRight}>
-            {game.mode === "ONLINE" && (
-              <TouchableOpacity
-                onPress={() => router.push(`/(game)/chat/${matchId}`)}
-                style={styles.chatButton}
-              >
-                <Ionicons
-                  name="chatbubble"
-                  size={20}
-                  color={colors.secondary}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
+          : <TurnHistory
+              results={turnResults}
+              myPlayerId={myUserId}
+              game={game}
+              currentPlays={currentPlays}
+              currentRound={game.currentRound}
+            />
+          }
         </View>
-      </View>
 
-      {opponent && (
-        <OpponentZone
-          name={opponent.username}
-          hasHand={opponentHasHand}
-          cardsRemaining={opponentCardsRemaining}
-        />
-      )}
-
-      <View style={styles.playArea}>
-        {playAreaMode === "battle" ?
-          <BattleZone
-            opponentCards={allOpponentCards.map((card: any) => ({
-              suit: card?.suit as Suit,
-              rank: card?.rank as Rank,
-            }))}
-            playerCards={allPlayerCards.map((card: any) => ({
-              suit: card?.suit as Suit,
-              rank: card?.rank as Rank,
-            }))}
-            leadSuit={leadSuit as Suit | undefined}
-            battleLayout={battleLayout}
+        <View style={styles.handArea}>
+          <View style={styles.turnBadgeContainer}>
+            <TurnBadge visible={isMyTurn} hasHand={iHaveHand} />
+          </View>
+          <CardHand
+            cards={myHand}
+            isMyTurn={isMyTurn}
+            onCardSelect={handleCardSelect}
+            onCardDoubleTap={handleDoubleTapCard}
+            selectedCard={selectedCard}
+            disabled={isPlaying}
           />
-        : <TurnHistory
-            results={turnResults}
-            myPlayerId={myUserId}
-            game={game}
-            currentPlays={currentPlays}
-            currentRound={game.currentRound}
-          />
-        }
-      </View>
-
-      <View style={styles.handArea}>
-        <View style={styles.turnBadgeContainer}>
-          <TurnBadge visible={isMyTurn} hasHand={iHaveHand} />
         </View>
-        <CardHand
-          cards={myHand}
-          isMyTurn={isMyTurn}
-          onCardSelect={handleCardSelect}
-          onCardDoubleTap={handleDoubleTapCard}
-          selectedCard={selectedCard}
-          disabled={isPlaying}
-        />
-      </View>
 
-      {game.status === "ENDED" && (
-        <ResultModal
-          visible={resultModalVisible}
-          game={game}
-          myUserId={myUserId ?? null}
-          onClose={() => {
-            setResultModalVisible(false);
-            router.replace("/(tabs)");
-          }}
-          onGoHome={() => {
-            setResultModalVisible(false);
-            router.replace("/(lobby)/select-mode");
-          }}
-        />
-      )}
-    </SafeAreaView>
+        {game.status === "ENDED" && (
+          <>
+            <ResultAnimation
+              visible={resultPanelVisible}
+              victoryType={
+                game.victoryType as
+                  | "normal"
+                  | "simple_kora"
+                  | "double_kora"
+                  | "triple_kora"
+                  | "auto_sum"
+                  | "auto_sevens"
+                  | "auto_lowest"
+              }
+            />
+            <ResultPanel
+              visible={resultPanelVisible}
+              game={game}
+              myUserId={myUserId ?? null}
+              onPlayAgain={() => {
+                setResultPanelVisible(false);
+                router.replace("/(lobby)/select-mode");
+              }}
+              onGoHome={() => {
+                setResultPanelVisible(false);
+                router.replace("/(tabs)");
+              }}
+            />
+          </>
+        )}
+      </SafeAreaView>
+    </BackgroundGradient>
   );
 }

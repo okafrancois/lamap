@@ -387,7 +387,7 @@ export const startGame = mutation({
       }
 
       // Credit winnings to winner (only if human player)
-      if (winnerPlayer?.userId) {
+      if (winnerPlayer?.userId && game.bet.amount > 0) {
         const winner = await ctx.db.get(winnerPlayer.userId);
         if (winner) {
           await ctx.db.patch(winnerPlayer.userId, {
@@ -1435,6 +1435,7 @@ export const getRecentGames = query({
           result: isWinner ? ("win" as const) : ("loss" as const),
           betAmount: game.bet.amount,
           endedAt: game.endedAt,
+          mode: game.mode,
         };
       })
     );

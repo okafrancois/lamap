@@ -31,10 +31,15 @@ export default function HomeScreen() {
     api.users.getUserStats,
     userId ? { clerkUserId: userId } : "skip"
   );
-  const recentGames = useQuery(
+  const allRecentGames = useQuery(
     api.games.getRecentGames,
-    userId ? { clerkUserId: userId, limit: 3 } : "skip"
+    userId ? { clerkUserId: userId, limit: 10 } : "skip"
   );
+
+  // Filtrer les parties IA et ne garder que les 3 premières parties PvP
+  const recentGames = allRecentGames
+    ?.filter((game) => game.mode !== "AI")
+    .slice(0, 3);
 
   const styles = StyleSheet.create({
     container: {

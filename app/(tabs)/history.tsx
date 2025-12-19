@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -20,11 +20,19 @@ export default function HistoryScreen() {
   const colors = useColors();
   const router = useRouter();
   const { userId, isSignedIn } = useAuth();
+  const [showAIGames, setShowAIGames] = useState(false);
 
   const gameHistory = useQuery(
     api.games.getUserGameHistory,
     userId ? { clerkUserId: userId, limit: 50 } : "skip"
   );
+
+  // Filtrer les parties IA par défaut
+  const filteredGames = useMemo(() => {
+    if (!gameHistory) return [];
+    if (showAIGames) return gameHistory;
+    return gameHistory.filter((game) => game.mode !== "AI");
+  }, [gameHistory, showAIGames]);
 
   const styles = StyleSheet.create({
     container: {
@@ -41,6 +49,13 @@ export default function HistoryScreen() {
       justifyContent: "center",
       alignItems: "center",
       padding: 24,
+    },
+    filterContainer: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      alignItems: "center",
     },
     emptyText: {
       fontSize: 16,
@@ -217,8 +232,18 @@ export default function HistoryScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
+      {gameHistory && gameHistory.some(g => g.mode === "AI") && (
+        <View style={styles.filterContainer}>
+          <Button
+            title={showAIGames ? "Masquer parties IA" : "Afficher parties IA"}
+            onPress={() => setShowAIGames(!showAIGames)}
+            variant="ghost"
+            size="sm"
+          />
+        </View>
+      )}
       <FlatList
-        data={gameHistory}
+        data={filteredGames}
         contentContainerStyle={styles.listContent}
         keyExtractor={(item) => item.gameId}
         renderItem={({ item }) => (
@@ -250,7 +275,7 @@ export default function HistoryScreen() {
                     item.result === "win" ? styles.winText : styles.lossText,
                   ]}
                 >
-                  {item.result === "win" ? "Victoire" : "Défaite"}
+                  {item.result === "win" ? "Victoire 🎉 !" : "Défaite 😭"}
                 </Text>
               </View>
             </View>
