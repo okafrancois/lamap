@@ -17,6 +17,8 @@ import Animated, {
   useSharedValue,
   withSequence,
   withTiming,
+  withRepeat,
+  withSpring,
 } from "react-native-reanimated";
 
 type Suit = "hearts" | "diamonds" | "clubs" | "spades";
@@ -78,6 +80,7 @@ export const PlayingCard = React.memo(function PlayingCard({
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(50);
   const rotateY = useSharedValue(0);
+  const pulseOpacity = useSharedValue(1);
 
   const styles = StyleSheet.create({
     card: {
@@ -129,13 +132,33 @@ export const PlayingCard = React.memo(function PlayingCard({
         duration: AnimationDurations.fast,
         easing: Easing.out(Easing.ease),
       });
+      pulseOpacity.value = 1;
+    } else if (state === "playable") {
+      // Pulsation subtile pour les cartes jouables
+      scale.value = withRepeat(
+        withSpring(1.02, {
+          damping: 15,
+          stiffness: 150,
+        }),
+        -1,
+        true
+      );
+      pulseOpacity.value = withRepeat(
+        withTiming(0.95, {
+          duration: 1200,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        -1,
+        true
+      );
     } else {
       scale.value = withTiming(1, {
         duration: AnimationDurations.fast,
         easing: Easing.out(Easing.ease),
       });
+      pulseOpacity.value = 1;
     }
-  }, [isSelected, scale]);
+  }, [isSelected, state, scale, pulseOpacity]);
 
   useEffect(() => {
     if (isPlayed) {
@@ -152,7 +175,7 @@ export const PlayingCard = React.memo(function PlayingCard({
       { translateY: translateY.value },
       { rotateY: `${rotateY.value}deg` },
     ],
-    opacity: opacity.value,
+    opacity: opacity.value * pulseOpacity.value,
   }));
 
   const suitIconSize = Math.round(cardWidth * SMALL_ICON_RATIO);

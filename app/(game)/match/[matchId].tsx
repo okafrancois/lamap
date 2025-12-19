@@ -2,7 +2,7 @@ import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
 import { OpponentZone } from "@/components/game/OpponentZone";
 import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
-import { ResultModal } from "@/components/game/ResultModal";
+import { ResultPanel } from "@/components/game/ResultPanel";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
@@ -55,7 +55,7 @@ export default function MatchScreen() {
   const [previousGameStatus, setPreviousGameStatus] = useState<
     string | undefined
   >(undefined);
-  const [resultModalVisible, setResultModalVisible] = useState(false);
+  const [resultPanelVisible, setResultPanelVisible] = useState(false);
   const hasStartedGameRef = useRef(false);
   const currentGameIdRef = useRef<string | null>(null);
 
@@ -109,7 +109,7 @@ export default function MatchScreen() {
 
   useEffect(() => {
     if (game?.status === "ENDED") {
-      setResultModalVisible(true);
+      setResultPanelVisible(true);
     }
   }, [game?.status]);
 
@@ -533,17 +533,17 @@ export default function MatchScreen() {
       </View>
 
       {game.status === "ENDED" && (
-        <ResultModal
-          visible={resultModalVisible}
+        <ResultPanel
+          visible={resultPanelVisible}
           game={game}
           myUserId={myUserId ?? null}
-          onClose={() => {
-            setResultModalVisible(false);
-            router.replace("/(tabs)");
+          onPlayAgain={() => {
+            setResultPanelVisible(false);
+            router.replace("/(lobby)/select-mode");
           }}
           onGoHome={() => {
-            setResultModalVisible(false);
-            router.replace("/(lobby)/select-mode");
+            setResultPanelVisible(false);
+            router.replace("/(tabs)");
           }}
         />
       )}
