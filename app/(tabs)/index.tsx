@@ -37,7 +37,9 @@ export default function HomeScreen() {
   );
 
   // Filtrer les parties IA et ne garder que les 3 premières parties PvP
-  const recentGames = allRecentGames?.filter((game) => game.mode !== "AI").slice(0, 3);
+  const recentGames = allRecentGames
+    ?.filter((game) => game.mode !== "AI")
+    .slice(0, 3);
 
   const styles = StyleSheet.create({
     container: {

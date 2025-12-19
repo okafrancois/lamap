@@ -387,23 +387,23 @@ export const startGame = mutation({
       }
 
       // Credit winnings to winner (only if human player)
-        if (winnerPlayer?.userId && game.bet.amount > 0) {
-          const winner = await ctx.db.get(winnerPlayer.userId);
-          if (winner) {
-            await ctx.db.patch(winnerPlayer.userId, {
-              balance: (winner.balance || 0) + winnings,
-            });
-            await ctx.db.insert("transactions", {
-              userId: winnerPlayer.userId,
-              type: "win",
-              amount: winnings,
-              currency: game.bet.currency,
-              gameId: game.gameId,
-              description: `Gain de ${winnings} ${game.bet.currency} (victoire automatique)`,
-              createdAt: Date.now(),
-            });
-          }
+      if (winnerPlayer?.userId && game.bet.amount > 0) {
+        const winner = await ctx.db.get(winnerPlayer.userId);
+        if (winner) {
+          await ctx.db.patch(winnerPlayer.userId, {
+            balance: (winner.balance || 0) + winnings,
+          });
+          await ctx.db.insert("transactions", {
+            userId: winnerPlayer.userId,
+            type: "win",
+            amount: winnings,
+            currency: game.bet.currency,
+            gameId: game.gameId,
+            description: `Gain de ${winnings} ${game.bet.currency} (victoire automatique)`,
+            createdAt: Date.now(),
+          });
         }
+      }
 
       await ctx.db.patch(game._id, {
         status: "ENDED" as const,
