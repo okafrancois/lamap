@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { INITIAL_PR } from "./ranking";
 import { aiDifficultyValidator, currencyValidator } from "./validators";
@@ -146,6 +147,24 @@ export const joinQueue = mutation({
         matchedWith: args.userId,
         gameId,
       });
+
+      // Envoyer des notifications push aux deux joueurs
+      await ctx.scheduler.runAfter(
+        0,
+        internal.notifications.sendMatchFoundNotification,
+        {
+          userId: args.userId,
+          opponentUsername: player2.username,
+        }
+      );
+      await ctx.scheduler.runAfter(
+        0,
+        internal.notifications.sendMatchFoundNotification,
+        {
+          userId: potentialMatch.userId,
+          opponentUsername: player1.username,
+        }
+      );
 
       const now = Date.now();
       const players: any[] = [

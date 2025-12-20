@@ -4,12 +4,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -19,6 +20,7 @@ export default function MessagesScreen() {
   const colors = useColors();
   const router = useRouter();
   const { userId } = useAuth();
+  const [searchQuery, setSearchQuery] = useState("");
   const user = useQuery(
     api.users.getCurrentUser,
     userId ? { clerkUserId: userId } : "skip"
@@ -29,6 +31,14 @@ export default function MessagesScreen() {
     (api as any).messaging.getConversations,
     myUserId ? { userId: myUserId } : "skip"
   );
+
+  const filteredConversations = useMemo(() => {
+    if (!conversations || !searchQuery.trim()) return conversations;
+    const query = searchQuery.toLowerCase().trim();
+    return conversations.filter((conv: any) =>
+      conv.otherParticipant?.username?.toLowerCase().includes(query)
+    );
+  }, [conversations, searchQuery]);
 
   const styles = StyleSheet.create({
     container: {
@@ -44,6 +54,17 @@ export default function MessagesScreen() {
       fontSize: 28,
       fontWeight: "700",
       color: colors.text,
+      marginBottom: 12,
+    },
+    searchInput: {
+      backgroundColor: colors.card,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      fontSize: 14,
+      color: colors.text,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
     scrollView: {
       flex: 1,
@@ -157,20 +178,36 @@ export default function MessagesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Messages</Text>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher une conversation..."
+          placeholderTextColor={colors.mutedForeground}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
       <ScrollView style={styles.scrollView}>
         {conversations === undefined ?
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.secondary} />
           </View>
-        : conversations.length === 0 ?
+        : filteredConversations?.length === 0 ?
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Aucune conversation</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery ?
+                "Aucune conversation trouvée"
+              : "Aucune conversation"}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Commencez une conversation avec un autre joueur
+              {searchQuery ?
+                "Essayez avec un autre nom d'utilisateur"
+              : "Commencez une conversation avec un autre joueur"}
             </Text>
           </View>
         : <View style={styles.conversationsList}>
-            {conversations.map((conv: any) => (
+            {filteredConversations?.map((conv: any) => (
               <TouchableOpacity
                 key={conv._id}
                 style={styles.conversationItem}

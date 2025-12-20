@@ -273,16 +273,22 @@ export const updatePlayerPRInternal = internalMutation({
       };
     }
 
-    await ctx.db.insert("prHistory", {
-      userId: args.playerId,
-      oldPR: playerPR,
-      newPR,
-      change: prChange,
-      opponentId: args.opponentId as Id<"users">,
-      opponentPR,
-      won: args.playerWon,
-      timestamp: Date.now(),
-    });
+    // Enregistrer dans l'historique seulement si l'adversaire est un utilisateur (pas un bot)
+    if (
+      typeof args.opponentId !== "string" ||
+      !args.opponentId.startsWith("ai-")
+    ) {
+      await ctx.db.insert("prHistory", {
+        userId: args.playerId,
+        oldPR: playerPR,
+        newPR,
+        change: prChange,
+        opponentId: args.opponentId as Id<"users">,
+        opponentPR,
+        won: args.playerWon,
+        timestamp: Date.now(),
+      });
+    }
 
     return {
       oldPR: playerPR,

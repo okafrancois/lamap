@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { getMinimumBalance } from "./currencies";
 import { currencyValidator } from "./validators";
@@ -72,6 +73,17 @@ export const sendChallenge = mutation({
       createdAt: now,
       expiresAt,
     });
+
+    // Envoyer une notification push au destinataire
+    await ctx.scheduler.runAfter(
+      0,
+      internal.notifications.sendChallengeNotification,
+      {
+        challengedUserId: args.challengedId,
+        challengerUsername: challenger.username,
+        mode: args.mode,
+      }
+    );
 
     return { challengeId, success: true };
   },
@@ -244,6 +256,17 @@ export const acceptChallenge = mutation({
       respondedAt: now,
       gameId,
     });
+
+    // Envoyer une notification push au challenger
+    await ctx.scheduler.runAfter(
+      0,
+      internal.notifications.sendChallengeNotification,
+      {
+        challengedUserId: challenge.challengerId,
+        challengerUsername: challenged.username,
+        mode: challenge.mode,
+      }
+    );
 
     return { gameId, success: true };
   },

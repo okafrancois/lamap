@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 
 export const createConversation = mutation({
@@ -70,6 +71,25 @@ export const sendMessage = mutation({
       lastMessageAt: now,
     });
 
+    // Envoyer une notification push au destinataire
+    const receiverId = conversation.participants.find(
+      (id) => id !== args.senderId
+    );
+    if (receiverId) {
+      const sender = await ctx.db.get(args.senderId);
+      if (sender) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.notifications.sendMessageNotification,
+          {
+            receiverUserId: receiverId,
+            senderUsername: sender.username,
+            messagePreview: args.content.trim(),
+          }
+        );
+      }
+    }
+
     return { success: true };
   },
 });
@@ -93,23 +113,18 @@ export const getConversations = query({
         const otherParticipantId = conv.participants.find(
           (id) => id !== args.userId
         );
-        const otherParticipant = otherParticipantId
-          ? await ctx.db.get(otherParticipantId)
-          : null;
+        const otherParticipant =
+          otherParticipantId ? await ctx.db.get(otherParticipantId) : null;
 
         const lastMessage = await ctx.db
           .query("messages")
-          .withIndex("by_conversation", (q) =>
-            q.eq("conversationId", conv._id)
-          )
+          .withIndex("by_conversation", (q) => q.eq("conversationId", conv._id))
           .order("desc")
           .first();
 
         const unreadCount = await ctx.db
           .query("messages")
-          .withIndex("by_conversation", (q) =>
-            q.eq("conversationId", conv._id)
-          )
+          .withIndex("by_conversation", (q) => q.eq("conversationId", conv._id))
           .filter((q) => q.eq(q.field("read"), false))
           .filter((q) => q.neq(q.field("senderId"), args.userId))
           .collect()
@@ -117,15 +132,17 @@ export const getConversations = query({
 
         return {
           _id: conv._id,
-          otherParticipant: otherParticipant
-            ? {
+          otherParticipant:
+            otherParticipant ?
+              {
                 _id: otherParticipant._id,
                 username: otherParticipant.username,
                 avatarUrl: otherParticipant.avatarUrl,
               }
             : null,
-          lastMessage: lastMessage
-            ? {
+          lastMessage:
+            lastMessage ?
+              {
                 content: lastMessage.content,
                 timestamp: lastMessage.timestamp,
                 senderId: lastMessage.senderId,
@@ -164,8 +181,9 @@ export const getMessages = query({
           content: msg.content,
           timestamp: msg.timestamp,
           read: msg.read,
-          sender: sender
-            ? {
+          sender:
+            sender ?
+              {
                 _id: sender._id,
                 username: sender.username,
                 avatarUrl: sender.avatarUrl,
@@ -205,4 +223,3 @@ export const markAsRead = mutation({
     return { success: true };
   },
 });
-

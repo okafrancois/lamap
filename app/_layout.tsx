@@ -1,4 +1,5 @@
 import { useColors } from "@/hooks/useColors";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import {
   ClerkProvider,
   useAuth,
@@ -26,6 +27,7 @@ export const unstable_settings = {
 function RootLayoutNav() {
   const { isSignedIn, isLoaded } = useClerkAuth();
   const colors = useColors();
+  usePushNotifications();
 
   if (!isLoaded) {
     return null;

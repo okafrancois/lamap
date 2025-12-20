@@ -841,6 +841,30 @@ export const playCard = mutation({
 
     await ctx.db.patch(game._id, gameState as any);
 
+    // Envoyer une notification au nouveau joueur si timer actif et temps restant < 1 minute
+    if (
+      game.timerEnabled &&
+      game.playerTimers &&
+      gameState.status === "PLAYING" &&
+      typeof gameState.currentTurnPlayerId === "string" &&
+      !gameState.currentTurnPlayerId.startsWith("ai-")
+    ) {
+      const nextPlayerTimer = game.playerTimers.find(
+        (t) => t.playerId === gameState.currentTurnPlayerId
+      );
+      if (nextPlayerTimer && nextPlayerTimer.timeRemaining < 60) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.notifications.sendTurnNotification,
+          {
+            userId: gameState.currentTurnPlayerId as any,
+            gameId,
+            timeRemaining: nextPlayerTimer.timeRemaining,
+          }
+        );
+      }
+    }
+
     if (game.mode === "AI" && gameState.status === "PLAYING") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (aiPlayer && gameState.currentTurnPlayerId === getPlayerId(aiPlayer)) {
@@ -1195,6 +1219,30 @@ export const playCardInternal = internalMutation({
     gameState = updatePlayableCards(gameState);
 
     await ctx.db.patch(game._id, gameState as any);
+
+    // Envoyer une notification au nouveau joueur si timer actif et temps restant < 1 minute
+    if (
+      game.timerEnabled &&
+      game.playerTimers &&
+      gameState.status === "PLAYING" &&
+      typeof gameState.currentTurnPlayerId === "string" &&
+      !gameState.currentTurnPlayerId.startsWith("ai-")
+    ) {
+      const nextPlayerTimer = game.playerTimers.find(
+        (t) => t.playerId === gameState.currentTurnPlayerId
+      );
+      if (nextPlayerTimer && nextPlayerTimer.timeRemaining < 60) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.notifications.sendTurnNotification,
+          {
+            userId: gameState.currentTurnPlayerId as any,
+            gameId,
+            timeRemaining: nextPlayerTimer.timeRemaining,
+          }
+        );
+      }
+    }
 
     if (game.mode === "AI" && gameState.status === "PLAYING") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");

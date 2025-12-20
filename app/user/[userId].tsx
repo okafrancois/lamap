@@ -11,7 +11,7 @@ import { getCurrencyFromCountry } from "@/convex/currencies";
 import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
-import { useQuery } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useLocalSearchParams, useRouter } from "expo-router";
@@ -57,6 +57,8 @@ export default function PublicProfileScreen() {
       { userId: profileUserId, viewerUserId: convexUser._id, limit: 50 }
     : "skip"
   );
+
+  const createConversation = useMutation(api.messaging.createConversation);
 
   const filteredGames = useMemo(() => {
     if (!gameHistory) return [];
@@ -348,7 +350,18 @@ export default function PublicProfileScreen() {
               />
               <Button
                 title="Envoyer un message"
-                onPress={() => {}}
+                onPress={async () => {
+                  if (!convexUser?._id || !profileUserId) return;
+                  try {
+                    const conversationId = await createConversation({
+                      userId1: convexUser._id,
+                      userId2: profileUserId as any,
+                    });
+                    router.push(`/(messages)/${conversationId}`);
+                  } catch (error) {
+                    console.error("Error creating conversation:", error);
+                  }
+                }}
                 variant="secondary"
               />
             </View>
