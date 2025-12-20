@@ -1,9 +1,11 @@
 import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import React from "react";
+import { View } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { MessageBadge } from "@/components/ui/MessageBadge";
 import { TopBar } from "@/components/ui/TopBar";
 import { useColors } from "@/hooks/useColors";
 
@@ -52,12 +54,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="friends"
+        name="profile"
         options={{
-          title: "Amis",
-          header: () => <TopBar title="Amis" />,
+          title: "Mon profil",
+          header: () => <TopBar title="Mon profil" />,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="person.2.fill" color={color} />
+            <IconSymbol size={28} name="person.fill" color={color} />
           ),
         }}
       />
@@ -67,7 +69,10 @@ export default function TabLayout() {
           title: "Messages",
           header: () => <TopBar title="Messages" />,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="message.fill" color={color} />
+            <View style={{ position: "relative" }}>
+              <IconSymbol size={28} name="message.fill" color={color} />
+              <MessageBadge />
+            </View>
           ),
         }}
       />

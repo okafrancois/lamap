@@ -79,9 +79,9 @@ function RootLayoutNav() {
             }}
           />
           <Stack.Screen
-            name="profile"
+            name="notifications"
             options={{
-              title: "Mon Profil",
+              title: "Notifications",
               headerBackTitle: "Retour",
               headerShown: true,
               ...modalHeaderOptions,

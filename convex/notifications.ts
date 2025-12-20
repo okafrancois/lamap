@@ -2,7 +2,7 @@ import { PushNotifications } from "@convex-dev/expo-push-notifications";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-import { internalMutation, mutation } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 
 let pushNotifications: PushNotifications<Id<"users">> | null = null;
 
@@ -182,5 +182,23 @@ export const sendTurnNotification = internalMutation({
       console.error("Error sending turn notification:", error);
       return { success: false };
     }
+  },
+});
+
+export const getNotificationsForUser = query({
+  args: {
+    userId: v.id("users"),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const notifications = await ctx.runQuery(
+      components.pushNotifications.public.getNotificationsForUser,
+      {
+        userId: args.userId as any,
+        limit: args.limit || 50,
+        logLevel: "INFO" as const,
+      }
+    );
+    return notifications;
   },
 });

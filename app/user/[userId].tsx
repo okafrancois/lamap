@@ -371,7 +371,37 @@ export default function PublicProfileScreen() {
     );
     ProfileSceneComponent.displayName = "ProfileScene";
     return ProfileSceneComponent;
-  }, [user, prStats, styles, colors, isOwnProfile]);
+  }, [
+    styles.sceneContainer,
+    styles.content,
+    styles.rankSection,
+    styles.statsSection,
+    styles.sectionTitle,
+    styles.statsGrid,
+    styles.statItem,
+    styles.statItemHighlight,
+    styles.statIcon,
+    styles.statValue,
+    styles.statValueHighlight,
+    styles.statLabel,
+    styles.statLabelHighlight,
+    styles.actions,
+    user?.pr,
+    prStats?.currentPR,
+    prStats?.totalGames,
+    prStats?.wins,
+    prStats?.winRate,
+    prStats?.maxPR,
+    prStats?.streakType,
+    prStats?.currentStreak,
+    colors.mutedForeground,
+    colors.secondary,
+    isOwnProfile,
+    convexUser?._id,
+    profileUserId,
+    createConversation,
+    router,
+  ]);
 
   const HistoryScene = React.useMemo(() => {
     const HistorySceneComponent = () => (
