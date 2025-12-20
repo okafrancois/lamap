@@ -19,8 +19,7 @@ export function MessageBadge() {
   );
 
   const unreadCount =
-    conversations?.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0) ||
-    0;
+    conversations?.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0) || 0;
 
   if (unreadCount === 0) return null;
 
@@ -51,4 +50,3 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 });
-

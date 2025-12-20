@@ -3,6 +3,8 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useQuery } from "convex/react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -14,8 +16,6 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
 
 export default function NotificationsScreen() {
   const colors = useColors();
@@ -223,4 +223,3 @@ export default function NotificationsScreen() {
     </SafeAreaView>
   );
 }
-
