@@ -151,18 +151,8 @@ const rechargeCodesTable = defineTable({
   isActive: v.boolean(),
   maxUses: v.optional(v.number()),
   useCount: v.number(),
+  usedByUserIds: v.array(v.id("users")),
 }).index("by_code", ["code"]);
-
-const rechargeCodeUsagesTable = defineTable({
-  rechargeCodeId: v.id("rechargeCodes"),
-  userId: v.id("users"),
-  usedAt: v.number(),
-  amount: v.number(),
-  currency: v.string(),
-})
-  .index("by_code", ["rechargeCodeId"])
-  .index("by_user_code", ["userId", "rechargeCodeId"])
-  .index("by_user", ["userId"]);
 
 const friendshipsTable = defineTable({
   user1Id: v.id("users"),
@@ -221,7 +211,6 @@ export default defineSchema({
   conversations: conversationsTable,
   messages: messagesTable,
   rechargeCodes: rechargeCodesTable,
-  rechargeCodeUsages: rechargeCodeUsagesTable,
   prHistory: prHistoryTable,
   friendships: friendshipsTable,
   friendRequests: friendRequestsTable,

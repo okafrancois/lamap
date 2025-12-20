@@ -129,7 +129,7 @@ export default function WelcomeScreen() {
         easing: Easing.out(Easing.ease),
       })
     );
-  }, []);
+  });
 
   const handleOAuth = async (strategy: "google" | "facebook") => {
     try {

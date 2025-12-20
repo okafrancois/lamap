@@ -36,14 +36,7 @@ export const redeemRechargeCode = mutation({
       throw new Error("Ce code de recharge a atteint sa limite d'utilisations");
     }
 
-    const existingUsage = await ctx.db
-      .query("rechargeCodeUsages")
-      .withIndex("by_user_code", (q) =>
-        q.eq("userId", args.userId).eq("rechargeCodeId", rechargeCode._id)
-      )
-      .first();
-
-    if (existingUsage) {
+    if (rechargeCode.usedByUserIds?.includes(args.userId)) {
       throw new Error("Vous avez déjà utilisé ce code de recharge");
     }
 
@@ -58,17 +51,11 @@ export const redeemRechargeCode = mutation({
     const shouldDeactivate =
       rechargeCode.maxUses !== undefined && newUseCount >= rechargeCode.maxUses;
 
+    const currentUsedByUserIds = rechargeCode.usedByUserIds || [];
     await ctx.db.patch(rechargeCode._id, {
       useCount: newUseCount,
       isActive: !shouldDeactivate,
-    });
-
-    await ctx.db.insert("rechargeCodeUsages", {
-      rechargeCodeId: rechargeCode._id,
-      userId: args.userId,
-      usedAt: Date.now(),
-      amount: rechargeCode.amount,
-      currency: rechargeCode.currency,
+      usedByUserIds: [...currentUsedByUserIds, args.userId],
     });
 
     await ctx.db.insert("transactions", {
@@ -111,16 +98,10 @@ export const getRechargeCode = query({
       rechargeCode.maxUses !== undefined &&
       rechargeCode.useCount >= rechargeCode.maxUses;
 
-    let hasUserUsed = false;
-    if (args.userId) {
-      const existingUsage = await ctx.db
-        .query("rechargeCodeUsages")
-        .withIndex("by_user_code", (q) =>
-          q.eq("userId", args.userId!).eq("rechargeCodeId", rechargeCode._id)
-        )
-        .first();
-      hasUserUsed = !!existingUsage;
-    }
+    const hasUserUsed =
+      args.userId ?
+        rechargeCode.usedByUserIds?.includes(args.userId) || false
+      : false;
 
     const isValid =
       rechargeCode.isActive && !isExpired && !hasReachedLimit && !hasUserUsed;
@@ -168,6 +149,7 @@ export const createRechargeCode = internalMutation({
       isActive: true,
       maxUses: args.maxUses,
       useCount: 0,
+      usedByUserIds: [],
     });
 
     return rechargeCodeId;
