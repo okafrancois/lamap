@@ -1,6 +1,8 @@
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation } from "convex/react";
+import Constants from "expo-constants";
+import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useEffect, useRef, useState } from "react";
 import { Platform } from "react-native";
@@ -28,14 +30,29 @@ export function usePushNotifications() {
   );
 
   useEffect(() => {
-    registerForPushNotificationsAsync().then((token) => {
-      if (token && convexUser?._id) {
-        setExpoPushToken(token);
-        recordToken({ userId: convexUser._id, token }).catch((error) => {
-          console.error("Error recording push token:", error);
-        });
+    if (!convexUser?._id) {
+      return;
+    }
+
+    let isMounted = true;
+
+    const registerToken = async () => {
+      try {
+        const token = await registerForPushNotificationsAsync();
+        if (token && isMounted && convexUser?._id) {
+          setExpoPushToken(token);
+          console.log("Registering push token for user:", convexUser._id);
+          await recordToken({ userId: convexUser._id, token });
+          console.log("Push token registered successfully");
+        } else if (!token) {
+          console.warn("No push token obtained");
+        }
+      } catch (error) {
+        console.error("Error registering push token:", error);
       }
-    });
+    };
+
+    registerToken();
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener((notification) => {
@@ -55,6 +72,7 @@ export function usePushNotifications() {
       });
 
     return () => {
+      isMounted = false;
       if (notificationListener.current) {
         notificationListener.current.remove();
       }
@@ -71,8 +89,6 @@ export function usePushNotifications() {
 }
 
 async function registerForPushNotificationsAsync(): Promise<string | null> {
-  let token: string | null = null;
-
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync("default", {
       name: "default",
@@ -80,6 +96,11 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
       vibrationPattern: [0, 250, 250, 250],
       lightColor: "#FF231F7C",
     });
+  }
+
+  if (!Device.isDevice) {
+    console.warn("Must use physical device for push notifications");
+    return null;
   }
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -91,21 +112,31 @@ async function registerForPushNotificationsAsync(): Promise<string | null> {
   }
 
   if (finalStatus !== "granted") {
-    console.warn("Failed to get push token for push notification!");
+    console.warn(
+      "Permission not granted to get push token for push notification!"
+    );
+    return null;
+  }
+
+  const projectId =
+    Constants?.expoConfig?.extra?.eas?.projectId ??
+    Constants?.easConfig?.projectId;
+
+  if (!projectId) {
+    console.warn("Project ID not found");
     return null;
   }
 
   try {
-    const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
-    if (!projectId) {
-      console.warn("EXPO_PUBLIC_PROJECT_ID is not set");
-      return null;
-    }
-
-    token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    const pushTokenString = (
+      await Notifications.getExpoPushTokenAsync({
+        projectId,
+      })
+    ).data;
+    console.log("Expo push token obtained:", pushTokenString);
+    return pushTokenString;
   } catch (error) {
     console.error("Error getting push token:", error);
+    return null;
   }
-
-  return token;
 }
