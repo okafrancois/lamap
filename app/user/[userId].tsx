@@ -1,5 +1,4 @@
 import { ChallengeModal } from "@/components/challenges/ChallengeModal";
-import { RankBadge } from "@/components/ranking/RankBadge";
 import { RankProgress } from "@/components/ranking/RankProgress";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
@@ -80,7 +79,10 @@ export default function PublicProfileScreen() {
       padding: 24,
     },
     header: {
+      display: "flex",
+      flexDirection: "row",
       alignItems: "center",
+      gap: 20,
       paddingVertical: 10,
       paddingHorizontal: 16,
       backgroundColor: colors.background,
@@ -167,17 +169,38 @@ export default function PublicProfileScreen() {
       fontSize: 14,
       fontWeight: "600",
     },
+    balanceSection: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      padding: 20,
+      marginBottom: 24,
+      borderWidth: 2,
+      borderColor: Colors.gameUI.orSable,
+    },
+    balanceLabel: {
+      fontSize: 14,
+      color: colors.mutedForeground,
+      marginBottom: 12,
+      fontWeight: "600",
+    },
+    koraRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
+    koraAmount: {
+      fontSize: 20,
+      fontWeight: "600",
+      color: Colors.gameUI.orSable,
+    },
     actions: {
       gap: 12,
       marginBottom: 24,
     },
     filterContainer: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      alignItems: "center",
-      marginBottom: 16,
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      alignItems: "flex-end",
     },
     emptyContainer: {
       flex: 1,
@@ -594,7 +617,6 @@ export default function PublicProfileScreen() {
         <View style={styles.headerInfo}>
           <View style={styles.usernameRow}>
             <Text style={styles.username}>{user.username}</Text>
-            <RankBadge rank={currentRank} size="small" showName />
           </View>
         </View>
       </View>

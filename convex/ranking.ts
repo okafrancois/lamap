@@ -216,6 +216,7 @@ export const updatePlayerPRInternal = internalMutation({
     playerPR: v.number(),
     opponentPR: v.number(),
     playerWon: v.boolean(),
+    gameId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const player = await ctx.db.get(args.playerId);
@@ -286,6 +287,7 @@ export const updatePlayerPRInternal = internalMutation({
         opponentId: args.opponentId as Id<"users">,
         opponentPR,
         won: args.playerWon,
+        gameId: args.gameId,
         timestamp: Date.now(),
       });
     }
@@ -356,6 +358,29 @@ export const getPRHistory = query({
 /**
  * Récupère les statistiques de PR d'un joueur
  */
+export const getPRChangeForGame = query({
+  args: {
+    gameId: v.string(),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const prHistory = await ctx.db
+      .query("prHistory")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .filter((q) => q.eq(q.field("gameId"), args.gameId))
+      .first();
+
+    return prHistory ?
+        {
+          change: prHistory.change,
+          oldPR: prHistory.oldPR,
+          newPR: prHistory.newPR,
+          won: prHistory.won,
+        }
+      : null;
+  },
+});
+
 export const getPRStats = query({
   args: {
     userId: v.id("users"),

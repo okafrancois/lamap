@@ -115,11 +115,24 @@ export const completeTutorial = mutation({
       throw new Error("Utilisateur non trouvé");
     }
     
+    const TUTORIAL_REWARD = 500;
+    const currentKora = user.kora || 0;
+    
     await ctx.db.patch(args.userId, {
       tutorialCompleted: true,
+      kora: currentKora + TUTORIAL_REWARD,
     });
     
-    return { success: true };
+    await ctx.db.insert("transactions", {
+      userId: args.userId,
+      type: "tutorial_reward",
+      amount: TUTORIAL_REWARD,
+      currency: user.currency || "XAF",
+      description: "Récompense tutoriel",
+      createdAt: Date.now(),
+    });
+    
+    return { success: true, koraReward: TUTORIAL_REWARD };
   },
 });
 

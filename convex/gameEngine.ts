@@ -231,8 +231,8 @@ export function countConsecutiveThrees(cardRanks: string[]): number {
 }
 
 export function calculateKoraMultiplier(consecutiveThrees: number): number {
-  if (consecutiveThrees >= 3) return 8;
-  if (consecutiveThrees >= 2) return 4;
+  if (consecutiveThrees >= 3) return 4;
+  if (consecutiveThrees >= 2) return 3;
   if (consecutiveThrees >= 1) return 2;
   return 1;
 }

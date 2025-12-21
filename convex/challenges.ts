@@ -234,7 +234,7 @@ export const acceptChallenge = mutation({
       victoryType: null as string | null,
       rematchGameId: undefined,
       timerEnabled: true,
-      timerDuration: 60,
+      timerDuration: 300,
       playerTimers: [
         {
           playerId: challenge.challengerId,

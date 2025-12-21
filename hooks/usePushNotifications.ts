@@ -5,29 +5,58 @@ import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
 import { useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+import { AppState, Platform } from "react-native";
 
 export function usePushNotifications() {
   const { convexUser } = useAuth();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] =
     useState<Notifications.Notification | null>(null);
+  const [appState, setAppState] = useState(AppState.currentState);
   const notificationListener = useRef<Notifications.Subscription | null>(null);
   const responseListener = useRef<Notifications.Subscription | null>(null);
+  const appStateSubscription = useRef<ReturnType<
+    typeof AppState.addEventListener
+  > | null>(null);
 
   const recordToken = useMutation(
     api.notifications.recordPushNotificationToken
   );
+
+  useEffect(() => {
+    Notifications.setNotificationHandler({
+      handleNotification: async (notification) => {
+        const isAppActive = appState === "active";
+        const notificationType = notification.request.content.data?.type;
+        const isMatchFoundNotification = notificationType === "match_found";
+
+        const shouldSuppress = isMatchFoundNotification && isAppActive;
+
+        return {
+          shouldShowAlert: !shouldSuppress,
+          shouldPlaySound: !shouldSuppress,
+          shouldSetBadge: true,
+          shouldShowBanner: !shouldSuppress,
+          shouldShowList: !shouldSuppress,
+        };
+      },
+    });
+  }, [appState]);
+
+  useEffect(() => {
+    appStateSubscription.current = AppState.addEventListener(
+      "change",
+      (nextAppState) => {
+        setAppState(nextAppState);
+      }
+    );
+
+    return () => {
+      if (appStateSubscription.current) {
+        appStateSubscription.current.remove();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!convexUser?._id) {

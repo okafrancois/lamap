@@ -8,6 +8,7 @@ import {
   mutation,
   query,
 } from "./_generated/server";
+import { getMinimumBalance } from "./currencies";
 import {
   addHistoryEntry,
   calculateKoraMultiplier,
@@ -415,6 +416,7 @@ export const startGame = mutation({
                 playerPR: winnerPR,
                 opponentPR: loserPR,
                 playerWon: true,
+                gameId: game.gameId,
               }
             );
 
@@ -427,6 +429,7 @@ export const startGame = mutation({
                 playerPR: loserPR,
                 opponentPR: winnerPR,
                 playerWon: false,
+                gameId: game.gameId,
               }
             );
           } catch (error) {
@@ -1708,6 +1711,7 @@ export const concedeGame = mutation({
             playerPR: opponentPR,
             opponentPR: forfeitPR,
             playerWon: true,
+            gameId: game.gameId,
           }
         );
         await ctx.scheduler.runAfter(
@@ -1719,6 +1723,7 @@ export const concedeGame = mutation({
             playerPR: forfeitPR,
             opponentPR: opponentPR,
             playerWon: false,
+            gameId: game.gameId,
           }
         );
       } catch (error) {
@@ -1748,5 +1753,312 @@ export const concedeGame = mutation({
     }
 
     return { success: true, winnerId };
+  },
+});
+
+export const sendRevengeRequest = mutation({
+  args: {
+    originalGameId: v.string(),
+    senderId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const originalGame = await ctx.db
+      .query("games")
+      .withIndex("by_game_id", (q) => q.eq("gameId", args.originalGameId))
+      .first();
+
+    if (!originalGame) {
+      throw new Error("Partie originale non trouvée");
+    }
+
+    if (originalGame.status !== "ENDED") {
+      throw new Error(
+        "La partie doit être terminée pour demander une revanche"
+      );
+    }
+
+    const sender = await ctx.db.get(args.senderId);
+    if (!sender) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    const opponent = originalGame.players.find(
+      (p) => getPlayerId(p) !== args.senderId
+    );
+    if (!opponent) {
+      throw new Error("Adversaire non trouvé");
+    }
+
+    const opponentUserId = opponent.userId;
+    if (!opponentUserId || typeof opponentUserId === "string") {
+      throw new Error("Impossible de demander une revanche contre un bot");
+    }
+
+    if (opponentUserId === args.senderId) {
+      throw new Error("Vous ne pouvez pas demander une revanche à vous-même");
+    }
+
+    const existingRequest = await ctx.db
+      .query("challenges")
+      .withIndex("by_challenger", (q) => q.eq("challengerId", args.senderId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("challengedId"), opponentUserId),
+          q.eq(q.field("status"), "pending")
+        )
+      )
+      .first();
+
+    if (existingRequest && existingRequest.gameId === args.originalGameId) {
+      return { challengeId: existingRequest._id, success: true };
+    }
+
+    const gameMode = originalGame.mode === "RANKED" ? "RANKED" : "CASH";
+    const now = Date.now();
+    const expiresAt = now + 24 * 60 * 60 * 1000;
+
+    const challengeId = await ctx.db.insert("challenges", {
+      challengerId: args.senderId,
+      challengedId: opponentUserId,
+      mode: gameMode,
+      betAmount: originalGame.bet.amount,
+      currency: originalGame.bet.currency,
+      competitive: originalGame.competitive,
+      status: "pending",
+      createdAt: now,
+      expiresAt,
+      gameId: args.originalGameId,
+    });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.notifications.sendRevengeRequestNotification,
+      {
+        receiverUserId: opponentUserId,
+        senderUsername: sender.username,
+        mode: gameMode,
+      }
+    );
+
+    return { challengeId, success: true };
+  },
+});
+
+export const acceptRevengeRequest = mutation({
+  args: {
+    challengeId: v.id("challenges"),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+
+    if (!challenge) {
+      throw new Error("Proposition de revanche non trouvée");
+    }
+
+    if (challenge.challengedId !== args.userId) {
+      throw new Error("Vous n'êtes pas autorisé à accepter cette proposition");
+    }
+
+    if (challenge.status !== "pending") {
+      throw new Error("Cette proposition n'est plus valide");
+    }
+
+    const now = Date.now();
+    if (now > challenge.expiresAt) {
+      await ctx.db.patch(challenge._id, { status: "expired" });
+      throw new Error("Cette proposition a expiré");
+    }
+
+    const challenger = await ctx.db.get(challenge.challengerId);
+    const challenged = await ctx.db.get(challenge.challengedId);
+
+    if (!challenger || !challenged) {
+      throw new Error("Utilisateur non trouvé");
+    }
+
+    if (challenge.mode === "CASH" && challenge.betAmount) {
+      const challengerBalance = challenger.balance || 0;
+      const challengedBalance = challenged.balance || 0;
+      const minimumRequired = getMinimumBalance(challenge.betAmount);
+
+      if (
+        challengerBalance < minimumRequired ||
+        challengedBalance < minimumRequired
+      ) {
+        throw new Error(
+          `Solde insuffisant. Les deux joueurs doivent avoir au moins ${minimumRequired} ${challenge.currency || "XAF"}.`
+        );
+      }
+    }
+
+    await ctx.db.patch(challenge._id, { status: "accepted" });
+
+    const betAmount = challenge.betAmount || 0;
+    const currency = challenge.currency || challenged.currency || "XAF";
+
+    const seed = crypto.randomUUID();
+    const gameId = `game-${seed}`;
+
+    const players: any[] = [
+      {
+        userId: challenge.challengerId,
+        username: challenger.username,
+        type: "user",
+        isConnected: true,
+        avatar: challenger.avatarUrl,
+        balance: 0,
+      },
+      {
+        userId: challenge.challengedId,
+        username: challenged.username,
+        type: "user",
+        isConnected: true,
+        avatar: challenged.avatarUrl,
+        balance: 0,
+      },
+    ];
+
+    if (betAmount > 0) {
+      await ctx.db.patch(challenge.challengerId, {
+        balance: (challenger.balance || 0) - betAmount,
+      });
+      await ctx.db.patch(challenge.challengedId, {
+        balance: (challenged.balance || 0) - betAmount,
+      });
+
+      await ctx.db.insert("transactions", {
+        userId: challenge.challengerId,
+        type: "bet",
+        amount: -betAmount,
+        currency,
+        gameId,
+        description: `Mise de ${betAmount} ${currency} pour la revanche`,
+        createdAt: now,
+      });
+
+      await ctx.db.insert("transactions", {
+        userId: challenge.challengedId,
+        type: "bet",
+        amount: -betAmount,
+        currency,
+        gameId,
+        description: `Mise de ${betAmount} ${currency} pour la revanche`,
+        createdAt: now,
+      });
+    }
+
+    const gameData = {
+      gameId,
+      seed,
+      version: 1,
+      status: "WAITING" as const,
+      currentRound: 1,
+      maxRounds: 5,
+      hasHandPlayerId: null as any,
+      currentTurnPlayerId: null as any,
+      players,
+      playedCards: [],
+      bet: {
+        amount: betAmount,
+        currency,
+      },
+      winnerId: null as any,
+      endReason: null as string | null,
+      history: [
+        {
+          action: "game_created" as const,
+          timestamp: now,
+          playerId: challenge.challengerId,
+          data: {
+            message: `Revanche acceptée entre ${challenger.username} et ${challenged.username}`,
+          },
+        },
+      ],
+      mode:
+        challenge.mode === "RANKED" ? ("RANKED" as const) : ("CASH" as const),
+      competitive:
+        challenge.competitive !== undefined ? challenge.competitive : true,
+      maxPlayers: 2,
+      aiDifficulty: null as string | null,
+      roomName: undefined,
+      isPrivate: true,
+      hostId: challenge.challengerId,
+      joinCode: undefined,
+      startedAt: now,
+      endedAt: null as number | null,
+      lastUpdatedAt: now,
+      victoryType: null as string | null,
+      rematchGameId: null as string | null,
+    };
+
+    await ctx.db.insert("games", gameData as any);
+
+    await ctx.scheduler.runAfter(0, internal.games.autoStartGame, {
+      gameId,
+    });
+
+    return { gameId, success: true };
+  },
+});
+
+export const getRevengeRequestStatus = query({
+  args: {
+    gameId: v.string(),
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const game = await ctx.db
+      .query("games")
+      .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
+      .first();
+
+    if (!game) {
+      return { status: "none" };
+    }
+
+    const opponent = game.players.find((p) => getPlayerId(p) !== args.userId);
+    if (!opponent) {
+      return { status: "none" };
+    }
+
+    const opponentUserId = opponent.userId;
+    if (!opponentUserId || typeof opponentUserId === "string") {
+      return { status: "none" };
+    }
+
+    const sentRequest = await ctx.db
+      .query("challenges")
+      .withIndex("by_challenger", (q) => q.eq("challengerId", args.userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("challengedId"), opponentUserId),
+          q.eq(q.field("status"), "pending"),
+          q.eq(q.field("gameId"), args.gameId)
+        )
+      )
+      .first();
+
+    if (sentRequest) {
+      return { status: "sent", challengeId: sentRequest._id };
+    }
+
+    const receivedRequest = await ctx.db
+      .query("challenges")
+      .withIndex("by_challenged", (q) => q.eq("challengedId", args.userId))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("challengerId"), opponentUserId),
+          q.eq(q.field("status"), "pending"),
+          q.eq(q.field("gameId"), args.gameId)
+        )
+      )
+      .first();
+
+    if (receivedRequest) {
+      return { status: "received", challengeId: receivedRequest._id };
+    }
+
+    return { status: "none" };
   },
 });

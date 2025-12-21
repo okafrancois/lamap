@@ -36,16 +36,6 @@ export default function NotificationsScreen() {
       flex: 1,
       backgroundColor: colors.background,
     },
-    header: {
-      padding: 16,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    headerTitle: {
-      fontSize: 28,
-      fontWeight: "700",
-      color: colors.text,
-    },
     scrollView: {
       flex: 1,
     },
@@ -169,9 +159,6 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Notifications</Text>
-      </View>
       <ScrollView style={styles.scrollView}>
         {notifications === undefined ?
           <View style={styles.loadingContainer}>

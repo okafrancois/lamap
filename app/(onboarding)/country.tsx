@@ -49,6 +49,29 @@ export default function CountryScreen() {
     }
   };
 
+  const handleStartTutorial = async () => {
+    if (!convexUser?._id || !selectedCountry) return;
+
+    try {
+      setIsSubmitting(true);
+
+      await setCountryMutation({
+        userId: convexUser._id,
+        countryCode: selectedCountry,
+      });
+
+      await completeOnboardingMutation({
+        userId: convexUser._id,
+      });
+
+      router.push("/(onboarding)/tutorial");
+    } catch (error) {
+      console.error("Erreur lors de la sauvegarde du pays:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -129,12 +152,30 @@ export default function CountryScreen() {
         entering={FadeInUp.duration(600).delay(300)}
         style={styles.footer}
       >
+        <Text
+          style={{
+            fontSize: 16,
+            fontWeight: "600",
+            color: colors.text,
+            marginBottom: 12,
+            textAlign: "center",
+          }}
+        >
+          Apprendre à jouer ?
+        </Text>
         <Button
-          title="Commencer à jouer"
-          onPress={handleContinue}
+          title="Commencer le tutoriel"
+          onPress={handleStartTutorial}
           disabled={!selectedCountry || isSubmitting}
           loading={isSubmitting}
           variant="primary"
+          style={{ marginBottom: 12 }}
+        />
+        <Button
+          title="Passer, je connais déjà"
+          onPress={handleContinue}
+          disabled={!selectedCountry || isSubmitting}
+          variant="outline"
         />
       </Animated.View>
     </SafeAreaView>

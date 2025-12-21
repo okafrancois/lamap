@@ -216,10 +216,6 @@ export default function ProfileScreen() {
       gap: 12,
       marginTop: 8,
     },
-    actions: {
-      gap: 12,
-      marginBottom: 24,
-    },
     filterContainer: {
       paddingHorizontal: 16,
       paddingVertical: 8,
@@ -428,21 +424,6 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
-          </View>
-
-          <View style={styles.actions}>
-            <Button
-              title="Paramètres"
-              onPress={() => router.push("/settings")}
-              variant="secondary"
-              icon={
-                <IconSymbol
-                  name="gearshape.fill"
-                  size={20}
-                  color={colors.secondaryForeground}
-                />
-              }
-            />
           </View>
         </View>
       </ScrollView>

@@ -13,6 +13,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from "react-native-reanimated";
+import { IconSymbol } from "../ui/icon-symbol";
 
 const PANEL_HEIGHT = 280;
 
@@ -23,18 +24,31 @@ interface ResultPanelProps {
     victoryType: string | null;
     bet: { amount: number; currency: string };
     players: { userId: string | null; balance: number }[];
+    aiDifficulty?: string | null;
+    mode?: string;
+    competitive?: boolean;
   };
   myUserId: string | null;
-  onPlayAgain: () => void;
+  onRevenge: () => void;
+  onNewGame: () => void;
   onGoHome: () => void;
+  revengeStatus?: "none" | "sent" | "received" | "accepted";
+  onAcceptRevenge?: () => void;
+  onRejectRevenge?: () => void;
+  prChange?: number | null;
 }
 
 export function ResultPanel({
   visible,
   game,
   myUserId,
-  onPlayAgain,
+  onRevenge,
+  onNewGame,
   onGoHome,
+  revengeStatus = "none",
+  onAcceptRevenge,
+  onRejectRevenge,
+  prChange,
 }: ResultPanelProps) {
   const colors = useColors();
   const { playSound } = useSound();
@@ -302,21 +316,78 @@ export function ResultPanel({
             </Text>
           </View>
 
+          {/* PR Change */}
+          {prChange !== null &&
+            prChange !== undefined &&
+            (game.mode === "RANKED" || game.competitive) && (
+              <View
+                style={[
+                  styles.gainsContainer,
+                  { backgroundColor: colors.muted, marginTop: 12 },
+                ]}
+              >
+                <Text
+                  style={[styles.gainsLabel, { color: colors.mutedForeground }]}
+                >
+                  Points de classement
+                </Text>
+                <Text
+                  style={[
+                    styles.gainsValue,
+                    { color: prChange > 0 ? "#7CB342" : "#E63946" },
+                  ]}
+                >
+                  {prChange > 0 ? "+" : ""}
+                  {prChange} PR
+                </Text>
+              </View>
+            )}
+
           {/* Boutons */}
-          <View style={styles.actions}>
-            <Button
-              title="Accueil"
-              onPress={onGoHome}
-              variant="secondary"
-              style={styles.button}
-            />
-            <Button
-              title="Rejouer"
-              onPress={onPlayAgain}
-              variant="primary"
-              style={styles.button}
-            />
-          </View>
+          {revengeStatus === "received" && onAcceptRevenge && onRejectRevenge ?
+            <View style={styles.actions}>
+              <Button
+                title="Refuser"
+                onPress={onRejectRevenge}
+                variant="secondary"
+                style={styles.button}
+              />
+              <Button
+                title="Accepter la revanche"
+                onPress={onAcceptRevenge}
+                variant="primary"
+                style={styles.button}
+              />
+            </View>
+          : <>
+              <View style={styles.actions}>
+                <Button
+                  title="Nouvelle partie"
+                  onPress={onNewGame}
+                  variant="primary"
+                  style={styles.button}
+                />
+                <Button
+                  title={
+                    revengeStatus === "sent" ? "Revanche envoyée" : "Revanche"
+                  }
+                  onPress={onRevenge}
+                  variant="outline"
+                  style={styles.button}
+                  disabled={revengeStatus === "sent"}
+                />
+              </View>
+              <Button
+                title="Retour à l'accueil"
+                onPress={onGoHome}
+                variant="ghost"
+                style={styles.button}
+                icon={
+                  <IconSymbol name="arrow.left" size={24} color={colors.text} />
+                }
+              />
+            </>
+          }
         </View>
       </LinearGradient>
     </Animated.View>
@@ -468,6 +539,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: 12,
+    marginBottom: 20,
   },
   button: {
     flex: 1,

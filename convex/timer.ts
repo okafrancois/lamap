@@ -167,7 +167,7 @@ export const getGameTimers = query({
 
     return {
       enabled: true,
-      timerDuration: game.timerDuration || 60,
+      timerDuration: game.timerDuration || 300,
       timers,
       currentTurnPlayerId: game.currentTurnPlayerId,
     };

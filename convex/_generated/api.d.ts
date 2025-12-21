@@ -19,6 +19,7 @@ import type * as gameChat from "../gameChat.js";
 import type * as gameEngine from "../gameEngine.js";
 import type * as games from "../games.js";
 import type * as http from "../http.js";
+import type * as leaderboard from "../leaderboard.js";
 import type * as matchmaking from "../matchmaking.js";
 import type * as messaging from "../messaging.js";
 import type * as notifications from "../notifications.js";
@@ -47,6 +48,7 @@ declare const fullApi: ApiFromModules<{
   gameEngine: typeof gameEngine;
   games: typeof games;
   http: typeof http;
+  leaderboard: typeof leaderboard;
   matchmaking: typeof matchmaking;
   messaging: typeof messaging;
   notifications: typeof notifications;

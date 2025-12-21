@@ -86,6 +86,41 @@ export const sendChallengeNotification = internalMutation({
   },
 });
 
+export const sendRevengeRequestNotification = internalMutation({
+  args: {
+    receiverUserId: v.id("users"),
+    senderUsername: v.string(),
+    mode: v.union(v.literal("RANKED"), v.literal("CASH")),
+  },
+  handler: async (ctx, args) => {
+    const pn = getPushNotifications();
+
+    const title = "Proposition de revanche !";
+    const body =
+      args.mode === "RANKED" ?
+        `${args.senderUsername} veut une revanche en partie classée`
+      : `${args.senderUsername} veut une revanche en partie cash`;
+
+    try {
+      const pushId = await pn.sendPushNotification(ctx, {
+        userId: args.receiverUserId,
+        notification: {
+          title,
+          body,
+          data: {
+            type: "revenge_request",
+            mode: args.mode,
+          },
+        },
+      });
+      return { pushId, success: true };
+    } catch (error) {
+      console.error("Error sending revenge request notification:", error);
+      return { success: false };
+    }
+  },
+});
+
 export const sendMessageNotification = internalMutation({
   args: {
     receiverUserId: v.id("users"),

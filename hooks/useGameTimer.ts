@@ -40,7 +40,7 @@ export function useGameTimer(
   return {
     enabled: timers?.enabled || false,
     timeRemaining: localTimeRemaining,
-    totalTime: timers?.timerDuration || 60,
+    totalTime: timers?.timerDuration || 300,
     currentTurnPlayerId: timers?.currentTurnPlayerId,
     timers: timers?.timers || [],
   };

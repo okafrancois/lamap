@@ -233,12 +233,12 @@ export const joinQueue = mutation({
             [
               {
                 playerId: args.userId,
-                timeRemaining: args.timerDuration || 60,
+                timeRemaining: args.timerDuration || 300,
                 lastUpdated: now,
               },
               {
                 playerId: potentialMatch.userId,
-                timeRemaining: args.timerDuration || 60,
+                timeRemaining: args.timerDuration || 300,
                 lastUpdated: now,
               },
             ]

@@ -83,7 +83,7 @@ function RootLayoutNav() {
             options={{
               title: "Notifications",
               headerBackTitle: "Retour",
-              headerShown: true,
+              presentation: "modal",
               ...modalHeaderOptions,
             }}
           />

@@ -1,5 +1,6 @@
 import { RankBadge } from "@/components/ranking/RankBadge";
 import { Button } from "@/components/ui/Button";
+import { IconSymbol } from "@/components/ui/icon-symbol";
 import { api } from "@/convex/_generated/api";
 import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
@@ -151,9 +152,6 @@ export default function SelectModeScreen() {
     friendlyButton: {
       minHeight: 56,
     },
-    backButton: {
-      marginTop: 24,
-    },
   });
 
   return (
@@ -190,6 +188,38 @@ export default function SelectModeScreen() {
           </View>
 
           <View style={styles.modesContainer}>
+            {/* Mode Cash */}
+            <View style={styles.modeCard}>
+              <View style={styles.modeHeader}>
+                <View
+                  style={[
+                    styles.modeIconContainer,
+                    { backgroundColor: "#7A9D54" },
+                  ]}
+                >
+                  <Ionicons name="cash" size={28} color="#FFF" />
+                </View>
+                <View style={styles.modeInfo}>
+                  <Text style={styles.modeTitle}>Mode Cash</Text>
+                  <Text style={styles.modeDescription}>
+                    Avec mise • Option compétitif
+                  </Text>
+                </View>
+              </View>
+              <Text
+                style={[styles.modeFeatures, { color: colors.mutedForeground }]}
+              >
+                ✓ Mise d&apos;argent {"\n"}✓ Choix compétitif/non-compétitif
+                {"\n"}✓ Gains
+              </Text>
+              <Button
+                title="Jouer en Cash"
+                onPress={() => router.push("/(lobby)/select-bet?mode=cash")}
+                variant="primary"
+                style={[styles.modeButton, { backgroundColor: "#7A9D54" }]}
+              />
+            </View>
+
             {/* Mode Classé */}
             <View
               style={[
@@ -236,38 +266,6 @@ export default function SelectModeScreen() {
               />
             </View>
 
-            {/* Mode Cash */}
-            <View style={styles.modeCard}>
-              <View style={styles.modeHeader}>
-                <View
-                  style={[
-                    styles.modeIconContainer,
-                    { backgroundColor: "#7A9D54" },
-                  ]}
-                >
-                  <Ionicons name="cash" size={28} color="#FFF" />
-                </View>
-                <View style={styles.modeInfo}>
-                  <Text style={styles.modeTitle}>Mode Cash</Text>
-                  <Text style={styles.modeDescription}>
-                    Avec mise • Option compétitif
-                  </Text>
-                </View>
-              </View>
-              <Text
-                style={[styles.modeFeatures, { color: colors.mutedForeground }]}
-              >
-                ✓ Mise d&apos;argent réel{"\n"}✓ Choix compétitif/non-compétitif
-                {"\n"}✓ Gains réels
-              </Text>
-              <Button
-                title="Jouer en Cash"
-                onPress={() => router.push("/(lobby)/select-bet?mode=cash")}
-                variant="primary"
-                style={[styles.modeButton, { backgroundColor: "#7A9D54" }]}
-              />
-            </View>
-
             {/* Mode IA */}
             <View style={styles.modeCard}>
               <View style={styles.modeHeader}>
@@ -301,29 +299,13 @@ export default function SelectModeScreen() {
             </View>
           </View>
 
-          <View style={styles.friendlySection}>
-            <Text style={styles.sectionTitle}>Parties amicales</Text>
-            <View style={styles.friendlyOptions}>
-              <Button
-                title="Créer une partie amicale"
-                onPress={() => router.push("/(lobby)/create-friendly")}
-                variant="outline"
-                style={styles.friendlyButton}
-              />
-              <Button
-                title="Rejoindre une partie amicale"
-                onPress={() => router.push("/(lobby)/join-friendly")}
-                variant="outline"
-                style={styles.friendlyButton}
-              />
-            </View>
-          </View>
-
           <Button
             title="Retour"
             onPress={() => router.back()}
             variant="ghost"
-            style={styles.backButton}
+            icon={
+              <IconSymbol name="arrow.left" size={24} color={colors.text} />
+            }
           />
         </View>
       </ScrollView>

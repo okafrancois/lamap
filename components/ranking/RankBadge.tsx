@@ -1,6 +1,6 @@
 import { RankInfo } from "@/convex/ranking";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View, ViewStyle } from "react-native";
 
 interface RankBadgeProps {
   rank: RankInfo;
@@ -8,10 +8,12 @@ interface RankBadgeProps {
   showName?: boolean;
   showPR?: boolean;
   pr?: number;
+  style?: ViewStyle;
 }
 
 export function RankBadge({
   rank,
+  style,
   size = "medium",
   showName = false,
   showPR = false,
@@ -41,7 +43,7 @@ export function RankBadge({
   const currentSizeStyles = sizeStyles[size];
 
   return (
-    <View style={[styles.container, currentSizeStyles.container]}>
+    <View style={[styles.container, currentSizeStyles.container, style]}>
       <View
         style={[
           styles.badge,

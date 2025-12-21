@@ -290,6 +290,16 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Aide</Text>
+            <Button
+              title="Révoir le tutoriel"
+              onPress={() => router.push("/(onboarding)/tutorial")}
+              variant="outline"
+              style={{ marginBottom: 12 }}
+            />
+          </View>
+
+          <View style={styles.section}>
             <Button
               title="Se déconnecter"
               onPress={handleSignOut}

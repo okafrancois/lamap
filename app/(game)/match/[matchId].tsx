@@ -18,10 +18,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useGame } from "@/hooks/useGame";
 import { useGameTimer } from "@/hooks/useGameTimer";
+import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import {
   useLocalSearchParams,
   useRouter,
@@ -123,6 +124,29 @@ export default function MatchScreen() {
   const concedeGameMutation = useMutation(api.games.concedeGame);
   const { playSound } = useSound();
   const startGame = useMutation(api.games.startGame);
+  const { createMatchVsAI } = useMatchmaking();
+  const sendRevengeRequest = useMutation(api.games.sendRevengeRequest);
+  const acceptRevengeRequest = useMutation(api.games.acceptRevengeRequest);
+  const rejectChallenge = useMutation(api.challenges.rejectChallenge);
+
+  const revengeStatus = useQuery(
+    api.games.getRevengeRequestStatus,
+    game?.status === "ENDED" && matchId && myUserId ?
+      { gameId: matchId, userId: myUserId }
+    : "skip"
+  );
+
+  const prChange = useQuery(
+    api.ranking.getPRChangeForGame,
+    (
+      game?.status === "ENDED" &&
+        matchId &&
+        myUserId &&
+        (game.mode === "RANKED" || game.competitive)
+    ) ?
+      { gameId: matchId, userId: myUserId }
+    : "skip"
+  );
 
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -672,18 +696,118 @@ export default function MatchScreen() {
                   | "auto_sevens"
                   | "auto_lowest"
               }
+              isWinner={game.winnerId === myUserId}
             />
             <ResultPanel
               visible={resultPanelVisible}
               game={game}
               myUserId={myUserId ?? null}
-              onPlayAgain={() => {
+              prChange={prChange?.change ?? null}
+              onRevenge={async () => {
+                if (!myUserId || !matchId) return;
+
+                const isAIMatch = game.aiDifficulty !== null;
+                const isRankedMatch = game.mode === "RANKED";
+                const isCashMatch = game.mode === "CASH";
+
+                if (isAIMatch) {
+                  try {
+                    const difficulty = game.aiDifficulty as
+                      | "easy"
+                      | "medium"
+                      | "hard";
+                    const newGameId = await createMatchVsAI(
+                      game.bet.amount,
+                      difficulty,
+                      game.bet.currency as "EUR" | "XAF"
+                    );
+                    setResultPanelVisible(false);
+                    router.replace(`/(game)/match/${newGameId}`);
+                  } catch (error) {
+                    Alert.alert(
+                      "Erreur",
+                      error instanceof Error ?
+                        error.message
+                      : "Impossible de créer la revanche"
+                    );
+                  }
+                } else if (isRankedMatch || isCashMatch) {
+                  try {
+                    await sendRevengeRequest({
+                      originalGameId: matchId,
+                      senderId: myUserId,
+                    });
+                  } catch (error) {
+                    Alert.alert(
+                      "Erreur",
+                      error instanceof Error ?
+                        error.message
+                      : "Impossible d'envoyer la proposition de revanche"
+                    );
+                  }
+                }
+              }}
+              onNewGame={() => {
                 setResultPanelVisible(false);
-                router.replace("/(lobby)/select-mode");
+
+                const isAIMatch = game.aiDifficulty !== null;
+                const isRankedMatch = game.mode === "RANKED";
+                const isCashMatch = game.mode === "CASH";
+
+                if (isAIMatch) {
+                  router.push(
+                    `/(lobby)/select-difficulty?betAmount=${game.bet.amount}`
+                  );
+                } else if (isRankedMatch) {
+                  router.replace("/(lobby)/ranked-matchmaking");
+                } else if (isCashMatch) {
+                  router.replace(
+                    `/(lobby)/matchmaking?betAmount=${game.bet.amount}&competitive=${game.competitive ?? true}`
+                  );
+                } else {
+                  router.replace("/(lobby)/select-mode");
+                }
               }}
               onGoHome={() => {
                 setResultPanelVisible(false);
                 router.replace("/(tabs)");
+              }}
+              revengeStatus={
+                revengeStatus?.status === "sent" ? "sent"
+                : revengeStatus?.status === "received" ?
+                  "received"
+                : "none"
+              }
+              onAcceptRevenge={async () => {
+                if (!myUserId || !revengeStatus?.challengeId) return;
+
+                try {
+                  const result = await acceptRevengeRequest({
+                    challengeId: revengeStatus.challengeId,
+                    userId: myUserId,
+                  });
+                  setResultPanelVisible(false);
+                  router.replace(`/(game)/match/${result.gameId}`);
+                } catch (error) {
+                  Alert.alert(
+                    "Erreur",
+                    error instanceof Error ?
+                      error.message
+                    : "Impossible d'accepter la revanche"
+                  );
+                }
+              }}
+              onRejectRevenge={async () => {
+                if (!revengeStatus?.challengeId || !myUserId) return;
+
+                try {
+                  await rejectChallenge({
+                    challengeId: revengeStatus.challengeId,
+                    userId: myUserId,
+                  });
+                } catch (error) {
+                  console.error("Error rejecting revenge:", error);
+                }
               }}
             />
           </>

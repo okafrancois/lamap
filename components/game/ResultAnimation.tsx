@@ -147,11 +147,13 @@ interface ResultAnimationProps {
     | "auto_sum"
     | "auto_sevens"
     | "auto_lowest";
+  isWinner: boolean;
 }
 
 export function ResultAnimation({
   visible,
   victoryType,
+  isWinner,
 }: ResultAnimationProps) {
   const particleCount = useMemo(() => {
     if (victoryType === "triple_kora") return 60;
@@ -179,7 +181,7 @@ export function ResultAnimation({
     return ["#A3D977", "#8BC34A", "#7CB342", "#CDDC39"];
   }, [victoryType]);
 
-  if (!visible || particleCount === 0) return null;
+  if (!visible || !isWinner || particleCount === 0) return null;
 
   return (
     <View style={styles.container} pointerEvents="none">

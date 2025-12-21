@@ -1,3 +1,5 @@
+import { LeaderboardList } from "@/components/leaderboard/LeaderboardList";
+import { RankSelector } from "@/components/leaderboard/RankSelector";
 import { RankBadge } from "@/components/ranking/RankBadge";
 import { RankProgress } from "@/components/ranking/RankProgress";
 import { Avatar } from "@/components/ui/Avatar";
@@ -7,7 +9,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
-import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
+import { getRankFromPR, INITIAL_PR, RankTier } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { Ionicons } from "@expo/vector-icons";
@@ -349,12 +351,10 @@ export default function ProfileScreen() {
       alignItems: "center",
     },
     filterContainer: {
-      paddingHorizontal: 16,
-      paddingVertical: 8,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-      alignItems: "center",
-      marginBottom: 16,
+      paddingHorizontal: 20,
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      paddingVertical: 14,
     },
     emptyContainer: {
       flex: 1,
@@ -478,8 +478,6 @@ export default function ProfileScreen() {
       letterSpacing: 0.5,
     },
   });
-
-  const currentRank = getRankFromPR(user?.pr || INITIAL_PR);
 
   const ProfileScene = React.useMemo(() => {
     const ProfileSceneComponent = () => (
@@ -726,6 +724,51 @@ export default function ProfileScreen() {
     HistorySceneComponent.displayName = "HistoryScene";
     return HistorySceneComponent;
   }, [filteredGames, showAIGames, colors, router, styles]);
+
+  const LeaderboardScene = React.useMemo(() => {
+    const LeaderboardSceneComponent = () => {
+      const [selectedRank, setSelectedRank] = useState<RankTier>("BRONZE");
+      const [showRankView, setShowRankView] = useState(false);
+      const globalLeaderboard = useQuery(api.leaderboard.getGlobalLeaderboard, {
+        limit: 500,
+      });
+      const rankLeaderboard = useQuery(api.leaderboard.getRankLeaderboard, {
+        rankTier: selectedRank,
+        limit: 100,
+      });
+
+      return (
+        <View style={styles.sceneContainer}>
+          <View style={styles.filterContainer}>
+            <Button
+              title={showRankView ? "Vue globale" : "Vue par rang"}
+              onPress={() => setShowRankView(!showRankView)}
+              variant="outline"
+              size="sm"
+            />
+          </View>
+          {showRankView ?
+            <>
+              <RankSelector
+                selectedRank={selectedRank}
+                onSelectRank={setSelectedRank}
+              />
+              <LeaderboardList
+                entries={rankLeaderboard}
+                currentUserId={user?._id}
+              />
+            </>
+          : <LeaderboardList
+              entries={globalLeaderboard}
+              currentUserId={user?._id}
+            />
+          }
+        </View>
+      );
+    };
+    LeaderboardSceneComponent.displayName = "LeaderboardScene";
+    return LeaderboardSceneComponent;
+  }, [user?._id, styles]);
 
   const FriendsScene = React.useMemo(() => {
     const FriendsSceneComponent = () => (
@@ -1012,13 +1055,15 @@ export default function ProfileScreen() {
 
   const routes = [
     { key: "profile", title: "Profil" },
-    { key: "history", title: "Mes parties" },
     { key: "friends", title: "Amis" },
+    { key: "history", title: "Parties" },
+    { key: "leaderboard", title: "Classement" },
   ];
 
   const renderScene = SceneMap({
     profile: ProfileScene,
     history: HistoryScene,
+    leaderboard: LeaderboardScene,
     friends: FriendsScene,
   });
 
@@ -1114,7 +1159,6 @@ export default function ProfileScreen() {
         <View style={styles.headerInfo}>
           <View style={styles.usernameRow}>
             <Text style={styles.username}>{user.username}</Text>
-            <RankBadge rank={currentRank} size="small" showName />
           </View>
           {clerkUser?.primaryEmailAddress && (
             <Text style={styles.email}>

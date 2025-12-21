@@ -37,6 +37,7 @@ export default function OnboardingLayout() {
     >
       <Stack.Screen name="username" />
       <Stack.Screen name="country" />
+      <Stack.Screen name="tutorial" />
     </Stack>
   );
 }
