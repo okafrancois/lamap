@@ -1,7 +1,6 @@
 import { Card, Game, getCardValue, getPlayerId } from "./gameEngine";
+import { Rank, Suit } from "./validators";
 
-type Suit = "hearts" | "diamonds" | "clubs" | "spades";
-type Rank = "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
 type AIDifficulty = "easy" | "medium" | "hard";
 
 interface CardMemory {
@@ -375,12 +374,12 @@ export class AIPlayer {
 
   private createFullDeck(): Card[] {
     const suits: Suit[] = ["hearts", "diamonds", "clubs", "spades"];
-    const ranks: Rank[] = ["3", "4", "5", "6", "7", "8", "9", "10"];
+    const ranks: Rank[] = ["3", "4", "5", "6", "7", "8", "9"];
     const deck: Card[] = [];
 
     suits.forEach((suit) => {
       ranks.forEach((rank) => {
-        if (suit === "spades" && rank === "10") {
+        if (suit === "spades" && rank === "9") {
           return;
         }
 
