@@ -21,7 +21,7 @@ const defaultSettings: Settings = {
   playAreaMode: "battle",
   battleLayout: "vertical",
   timerEnabled: true,
-  timerDuration: 60,
+  timerDuration: 300,
 };
 
 export function useSettings() {

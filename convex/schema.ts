@@ -35,10 +35,6 @@ const usersTable = defineTable({
   .index("by_username", ["username"])
   .index("by_pr", ["pr"]);
 
-const numbersTable = defineTable({
-  value: v.number(),
-});
-
 const prHistoryTable = defineTable({
   userId: v.id("users"),
   oldPR: v.number(),
@@ -202,7 +198,6 @@ const challengesTable = defineTable({
   .index("by_status", ["status"]);
 
 export default defineSchema({
-  numbers: numbersTable,
   users: usersTable,
   games: gamesTable,
   gameMessages: gameMessagesTable,

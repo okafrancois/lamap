@@ -50,10 +50,7 @@ export function ConcedeButton({ onConcede, disabled }: ConcedeButtonProps) {
           onPress={handlePress}
           disabled={disabled}
         >
-          <Ionicons name="flag-outline" size={16} color="#EF4444" />
-          <Text style={[styles.buttonText, { color: "#EF4444" }]}>
-            Abandonner
-          </Text>
+          <Ionicons name="flag" size={16} color="#fff" />
         </TouchableOpacity>
       </Animated.View>
 
@@ -88,7 +85,7 @@ export function ConcedeButton({ onConcede, disabled }: ConcedeButtonProps) {
               <Button
                 title="Annuler"
                 onPress={() => setConfirmVisible(false)}
-                variant="secondary"
+                variant="outline"
                 style={styles.modalButton}
               />
               <Button

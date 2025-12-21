@@ -57,4 +57,3 @@ export function buildFullDeck(): Card[] {
 
   return deck;
 }
-

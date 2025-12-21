@@ -1,12 +1,7 @@
-import { Card, Game, getPlayerId, calculateHandSum } from "../gameEngine";
-import { BehaviourFlag, EvalContext } from "./types";
-import {
-  getCardValue,
-  isKora,
-  highestCard,
-  lowestCard,
-} from "./helpers";
+import { calculateHandSum, Card, Game, getPlayerId } from "../gameEngine";
+import { getCardValue, highestCard, isKora, lowestCard } from "./helpers";
 import { MCTS } from "./mcts";
+import { BehaviourFlag, EvalContext } from "./types";
 
 type AIDifficulty = "easy" | "medium" | "hard";
 
@@ -27,10 +22,7 @@ export class AIPlayer {
     };
   }
 
-  public async chooseAICard(
-    game: Game,
-    playableCards: Card[]
-  ): Promise<Card> {
+  public async chooseAICard(game: Game, playableCards: Card[]): Promise<Card> {
     this.updateMemory(game);
 
     const aiPlayer = game.players.find((p) => p.type === "ai");
@@ -60,7 +52,12 @@ export class AIPlayer {
       if (opponentPlayer) {
         const opponentPlayerId = getPlayerId(opponentPlayer);
         const mcts = new MCTS(200);
-        const mctsChoice = mcts.run(game, playableCards, aiPlayerId, opponentPlayerId);
+        const mctsChoice = mcts.run(
+          game,
+          playableCards,
+          aiPlayerId,
+          opponentPlayerId
+        );
 
         const ctx = this.buildEvalContext(game, playableCards);
         const mctsScore = this.evaluateCard(mctsChoice, ctx, game);
@@ -138,7 +135,10 @@ export class AIPlayer {
 
     if (isKora(card)) {
       const multiplier =
-        round === 5 ? 8 : round === 4 ? 4 : round === 3 ? 2 : 1;
+        round === 5 ? 8
+        : round === 4 ? 4
+        : round === 3 ? 2
+        : 1;
       return base * multiplier;
     }
 
@@ -196,26 +196,31 @@ export class AIPlayer {
     }
 
     const total =
-      base * (1 + followBonus + predictionBonus + handOwnerBonus + behaviourBonus) +
+      base *
+        (1 + followBonus + predictionBonus + handOwnerBonus + behaviourBonus) +
       Math.random() * 0.01;
 
     return total;
   }
 
-  private getLeadCard(game: Game | undefined, round: number, predicted?: Card): Card | null {
+  private getLeadCard(
+    game: Game | undefined,
+    round: number,
+    predicted?: Card
+  ): Card | null {
     if (predicted) {
       return predicted;
     }
     if (!game) return null;
-    
+
     const aiPlayer = game.players.find((p) => p.type === "ai");
     if (!aiPlayer) return null;
-    
+
     const aiPlayerId = getPlayerId(aiPlayer);
     const lead = game.playedCards.find(
       (pc) => pc.round === round && pc.playerId !== aiPlayerId
     );
-    
+
     return lead ? lead.card : null;
   }
 
@@ -336,4 +341,3 @@ export async function chooseAICard(
   const ai = new AIPlayer(difficulty);
   return await ai.chooseAICard(game, playableCards);
 }
-
