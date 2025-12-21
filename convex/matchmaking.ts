@@ -155,6 +155,7 @@ export const joinQueue = mutation({
         {
           userId: args.userId,
           opponentUsername: player2.username,
+          gameId: gameId,
         }
       );
       await ctx.scheduler.runAfter(
@@ -163,6 +164,7 @@ export const joinQueue = mutation({
         {
           userId: potentialMatch.userId,
           opponentUsername: player1.username,
+          gameId: gameId,
         }
       );
 

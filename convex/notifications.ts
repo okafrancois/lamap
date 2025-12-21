@@ -75,6 +75,7 @@ export const sendChallengeNotification = internalMutation({
           data: {
             type: "challenge",
             mode: args.mode,
+            route: "/(tabs)/profile",
           },
         },
       });
@@ -126,6 +127,7 @@ export const sendMessageNotification = internalMutation({
     receiverUserId: v.id("users"),
     senderUsername: v.string(),
     messagePreview: v.string(),
+    conversationId: v.id("conversations"),
   },
   handler: async (ctx, args) => {
     const pn = getPushNotifications();
@@ -144,6 +146,7 @@ export const sendMessageNotification = internalMutation({
           body,
           data: {
             type: "message",
+            route: `/(messages)/${args.conversationId}`,
           },
         },
       });
@@ -159,6 +162,7 @@ export const sendMatchFoundNotification = internalMutation({
   args: {
     userId: v.id("users"),
     opponentUsername: v.string(),
+    gameId: v.string(),
   },
   handler: async (ctx, args) => {
     const pn = getPushNotifications();
@@ -174,6 +178,7 @@ export const sendMatchFoundNotification = internalMutation({
           body,
           data: {
             type: "match_found",
+            route: "/(tabs)",
           },
         },
       });
@@ -209,6 +214,7 @@ export const sendTurnNotification = internalMutation({
           data: {
             type: "turn",
             gameId: args.gameId,
+            route: `/(game)/match/${args.gameId}`,
           },
         },
       });

@@ -1,7 +1,7 @@
-import { Avatar } from "@/components/ui/Avatar";
 import { RankBadge } from "@/components/ranking/RankBadge";
-import { useColors } from "@/hooks/useColors";
+import { Avatar } from "@/components/ui/Avatar";
 import { RankInfo } from "@/convex/ranking";
+import { useColors } from "@/hooks/useColors";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
@@ -109,11 +109,7 @@ export function PlayerRankCard({
         </Text>
       </View>
       <View style={styles.avatarContainer}>
-        <Avatar
-          imageUrl={avatarUrl}
-          name={username}
-          size={48}
-        />
+        <Avatar imageUrl={avatarUrl} name={username} size={48} />
       </View>
       <View style={styles.infoContainer}>
         <View style={styles.usernameRow}>
@@ -143,4 +139,3 @@ export function PlayerRankCard({
 
   return content;
 }
-

@@ -29,7 +29,7 @@ export default function TabLayout() {
         },
         tabBarBackground: () => (
           <BlurView
-            intensity={80}
+            intensity={100}
             tint="dark"
             style={{
               position: "absolute",

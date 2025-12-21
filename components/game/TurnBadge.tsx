@@ -50,9 +50,7 @@ export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
       paddingHorizontal: 18,
       paddingVertical: 8,
       borderRadius: 18,
-      backgroundColor: `rgba(180, 68, 62, 0.25)`,
-      borderWidth: 1,
-      borderColor: `rgba(201, 82, 75, 0.4)`,
+      backgroundColor: Colors.primary,
     },
     icon: {
       fontSize: 14,
@@ -61,7 +59,7 @@ export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
       fontSize: 12,
       fontWeight: "600",
       letterSpacing: 0.4,
-      color: Colors.gameUI.rougeVif,
+      color: Colors.primaryForeground,
     },
   });
 

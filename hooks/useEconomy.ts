@@ -1,5 +1,5 @@
-import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useMutation, useQuery } from "convex/react";
 import { useAuth } from "./useAuth";
 
 export function useEconomy() {
@@ -15,7 +15,9 @@ export function useEconomy() {
     myUserId ? { userId: myUserId } : "skip"
   );
 
-  const redeemRechargeCodeMutation = useMutation(api.recharge.redeemRechargeCode);
+  const redeemRechargeCodeMutation = useMutation(
+    api.recharge.redeemRechargeCode
+  );
 
   const redeemCode = async (code: string) => {
     if (!myUserId) {
@@ -34,4 +36,3 @@ export function useEconomy() {
     redeemCode,
   };
 }
-

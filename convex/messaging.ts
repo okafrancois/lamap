@@ -85,6 +85,7 @@ export const sendMessage = mutation({
             receiverUserId: receiverId,
             senderUsername: sender.username,
             messagePreview: args.content.trim(),
+            conversationId: args.conversationId,
           }
         );
       }

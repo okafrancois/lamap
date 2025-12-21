@@ -7,7 +7,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { api } from "@/convex/_generated/api";
 import { getCurrencyFromCountry } from "@/convex/currencies";
-import { getRankFromPR, INITIAL_PR } from "@/convex/ranking";
+import { INITIAL_PR } from "@/convex/ranking";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useMutation, useQuery } from "convex/react";
@@ -269,8 +269,6 @@ export default function PublicProfileScreen() {
       alignItems: "center",
     },
   });
-
-  const currentRank = getRankFromPR(user?.pr || INITIAL_PR);
 
   const ProfileScene = React.useMemo(() => {
     const ProfileSceneComponent = () => (

@@ -4,11 +4,13 @@ import { useMutation } from "convex/react";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 import * as Notifications from "expo-notifications";
+import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import { AppState, Platform } from "react-native";
 
 export function usePushNotifications() {
   const { convexUser } = useAuth();
+  const router = useRouter();
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
   const [notification, setNotification] =
     useState<Notifications.Notification | null>(null);
@@ -91,12 +93,8 @@ export function usePushNotifications() {
     responseListener.current =
       Notifications.addNotificationResponseReceivedListener((response) => {
         const data = response.notification.request.content.data;
-        if (data?.type === "challenge") {
-          // TODO: Navigate to challenges screen
-        } else if (data?.type === "message") {
-          // TODO: Navigate to messages screen
-        } else if (data?.type === "match_found" || data?.type === "turn") {
-          // TODO: Navigate to game screen
+        if (data?.route && typeof data.route === "string") {
+          router.push(data.route as any);
         }
       });
 
@@ -109,7 +107,7 @@ export function usePushNotifications() {
         responseListener.current.remove();
       }
     };
-  }, [convexUser?._id, recordToken]);
+  }, [convexUser?._id, recordToken, router]);
 
   return {
     expoPushToken,

@@ -8,9 +8,8 @@ import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
  * - see Material Icons in the [Icons Directory](https://icons.expo.fyi).
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
-const MAPPING: Record<
-  SymbolViewProps["name"],
-  ComponentProps<typeof MaterialIcons>["name"]
+const MAPPING: Partial<
+  Record<SymbolViewProps["name"], ComponentProps<typeof MaterialIcons>["name"]>
 > = {
   "house.fill": "home",
   "paperplane.fill": "send",
