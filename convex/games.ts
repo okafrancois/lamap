@@ -917,9 +917,9 @@ export const selectAICard = internalAction({
     const playableCards = aiPlayer.hand.filter((card) => card.playable);
     if (playableCards.length === 0) return;
 
-    const { chooseAICard } = await import("./aiPlayer");
+    const { chooseAICard } = await import("./ai/aiPlayer");
     const difficulty = aiPlayer.aiDifficulty ?? "medium";
-    const chosenCard = chooseAICard(game, difficulty);
+    const chosenCard = await chooseAICard(game, difficulty);
 
     if (!chosenCard) {
       const randomIndex = Math.floor(Math.random() * playableCards.length);

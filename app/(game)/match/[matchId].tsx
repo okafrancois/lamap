@@ -10,6 +10,7 @@ import { ResultPanel } from "@/components/game/ResultPanel";
 import { TurnBadge } from "@/components/game/TurnBadge";
 import { TurnHistory } from "@/components/game/TurnHistory";
 import { TurnPips } from "@/components/game/TurnPips";
+import { GameTutorial } from "@/components/tutorial/GameTutorial";
 import { BackgroundGradient } from "@/components/ui/BackgroundGradient";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
@@ -105,7 +106,9 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 
 export default function MatchScreen() {
   const colors = useColors();
-  const { matchId } = useLocalSearchParams<{ matchId: string }>();
+  const params = useLocalSearchParams<{ matchId: string; tutorial?: string }>();
+  const { matchId } = params;
+  const isTutorial = params.tutorial === "true";
   const router = useRouter();
   const { playAreaMode, battleLayout } = useSettings();
 
@@ -580,7 +583,7 @@ export default function MatchScreen() {
     ...(includeCurrentPlays && playerPlayedCard ? [playerPlayedCard] : []),
   ].filter(Boolean);
 
-  return (
+  const gameScreen = (
     <BackgroundGradient>
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
@@ -815,4 +818,21 @@ export default function MatchScreen() {
       </SafeAreaView>
     </BackgroundGradient>
   );
+
+  if (isTutorial) {
+    return (
+      <GameTutorial
+        gameState={game}
+        currentRound={game?.currentRound || 1}
+        isMyTurn={isMyTurn || false}
+        onTutorialComplete={() => {
+          router.replace("/(onboarding)/tutorial?step=7");
+        }}
+      >
+        {gameScreen}
+      </GameTutorial>
+    );
+  }
+
+  return gameScreen;
 }

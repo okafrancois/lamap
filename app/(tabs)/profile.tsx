@@ -31,13 +31,17 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { SceneMap, TabBar, TabView } from "react-native-tab-view";
 
 export default function ProfileScreen() {
   const colors = useColors();
   const { userId, clerkUser } = useAuth();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [index, setIndex] = useState(0);
   const [showAIGames, setShowAIGames] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -481,7 +485,10 @@ export default function ProfileScreen() {
 
   const ProfileScene = React.useMemo(() => {
     const ProfileSceneComponent = () => (
-      <ScrollView style={styles.sceneContainer}>
+      <ScrollView
+        style={styles.sceneContainer}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 50   }}
+      >
         <View style={styles.content}>
           <View style={styles.rankSection}>
             <RankProgress pr={user?.pr || INITIAL_PR} />
@@ -630,7 +637,7 @@ export default function ProfileScreen() {
     );
     ProfileSceneComponent.displayName = "ProfileScene";
     return ProfileSceneComponent;
-  }, [user, prStats, router, styles, colors]);
+  }, [user, prStats, router, styles, colors, insets]);
 
   const HistoryScene = React.useMemo(() => {
     const HistorySceneComponent = () => (
@@ -658,7 +665,10 @@ export default function ProfileScreen() {
         : <FlatList
             data={filteredGames}
             keyExtractor={(item) => item.gameId}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: insets.bottom + 50 },
+            ]}
             renderItem={({ item }) => (
               <View style={styles.gameCard}>
                 <View style={styles.gameHeader}>
@@ -723,10 +733,11 @@ export default function ProfileScreen() {
     );
     HistorySceneComponent.displayName = "HistoryScene";
     return HistorySceneComponent;
-  }, [filteredGames, showAIGames, colors, router, styles]);
+  }, [filteredGames, showAIGames, colors, router, styles, insets]);
 
   const LeaderboardScene = React.useMemo(() => {
     const LeaderboardSceneComponent = () => {
+      const sceneInsets = useSafeAreaInsets();
       const [selectedRank, setSelectedRank] = useState<RankTier>("BRONZE");
       const [showRankView, setShowRankView] = useState(false);
       const globalLeaderboard = useQuery(api.leaderboard.getGlobalLeaderboard, {
@@ -756,11 +767,15 @@ export default function ProfileScreen() {
               <LeaderboardList
                 entries={rankLeaderboard}
                 currentUserId={user?._id}
+                contentContainerStyle={{
+                  paddingBottom: sceneInsets.bottom + 50,
+                }}
               />
             </>
           : <LeaderboardList
               entries={globalLeaderboard}
               currentUserId={user?._id}
+              contentContainerStyle={{ paddingBottom: sceneInsets.bottom }}
             />
           }
         </View>
@@ -774,7 +789,7 @@ export default function ProfileScreen() {
     const FriendsSceneComponent = () => (
       <ScrollView
         style={styles.sceneContainer}
-        contentContainerStyle={{ paddingBottom: 24 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
       >
         <View style={styles.searchContainer}>
           <TextInput
@@ -1051,6 +1066,7 @@ export default function ProfileScreen() {
     colors,
     styles,
     setIndex,
+    insets,
   ]);
 
   const routes = [

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/Button";
 import type { IconSymbolName } from "@/components/ui/icon-symbol";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { api } from "@/convex/_generated/api";
+import { getCurrencyFromCountry } from "@/convex/currencies";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useMutation } from "convex/react";
@@ -56,10 +57,17 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     id: 6,
+    title: "Partie guidée",
+    content:
+      "Maintenant, vous allez jouer une partie d'entraînement contre l'IA. Je vais vous guider à chaque étape pour vous familiariser avec le jeu.",
+    icon: "star.fill",
+  },
+  {
+    id: 7,
     title: "C'est parti !",
     content:
       "Vous êtes prêt à jouer ! Complétez le tutoriel pour recevoir 500 Kora de récompense, puis lancez-vous dans votre première partie.",
-    icon: "star.fill",
+    icon: "trophy.fill",
   },
 ];
 
@@ -71,9 +79,29 @@ export default function TutorialScreen() {
   const [isCompleting, setIsCompleting] = useState(false);
 
   const completeTutorialMutation = useMutation(api.onboarding.completeTutorial);
+  const createAIGameMutation = useMutation(api.matchmaking.createMatchVsAI);
 
-  const handleNext = () => {
-    if (currentStep < TUTORIAL_STEPS.length - 1) {
+  const handleNext = async () => {
+    if (currentStep === 5) {
+      // Étape "Partie guidée" - créer une partie AI et lancer le jeu
+      if (!convexUser?._id) return;
+      try {
+        const currency =
+          convexUser.country ?
+            getCurrencyFromCountry(convexUser.country)
+          : "XAF";
+        const gameId = await createAIGameMutation({
+          playerId: convexUser._id,
+          difficulty: "easy",
+          betAmount: 0,
+          currency: currency as "XAF" | "EUR" | "USD",
+        });
+        router.push(`/(game)/match/${gameId}?tutorial=true`);
+      } catch (error) {
+        console.error("Erreur lors de la création de la partie:", error);
+        setCurrentStep(currentStep + 1);
+      }
+    } else if (currentStep < TUTORIAL_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       handleComplete();
@@ -224,7 +252,12 @@ export default function TutorialScreen() {
             />
           )}
           <Button
-            title={isLastStep ? "Terminer" : "Suivant"}
+            title={
+              isLastStep ? "Terminer"
+              : currentStep === 5 ?
+                "Commencer la partie"
+              : "Suivant"
+            }
             onPress={handleNext}
             variant="primary"
             style={{ flex: 1 }}

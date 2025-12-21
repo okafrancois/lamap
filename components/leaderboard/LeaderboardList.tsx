@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Text,
   View,
+  ViewStyle,
 } from "react-native";
 import { PlayerRankCard } from "./PlayerRankCard";
 
@@ -28,6 +29,7 @@ interface LeaderboardListProps {
   onRefresh?: () => void;
   refreshing?: boolean;
   onPlayerPress?: (userId: string) => void;
+  contentContainerStyle?: ViewStyle;
 }
 
 export function LeaderboardList({
@@ -36,6 +38,7 @@ export function LeaderboardList({
   onRefresh,
   refreshing = false,
   onPlayerPress,
+  contentContainerStyle,
 }: LeaderboardListProps) {
   const colors = useColors();
   const router = useRouter();
@@ -117,7 +120,7 @@ export function LeaderboardList({
       <FlatList
         data={entries}
         keyExtractor={(item) => item.userId}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, contentContainerStyle]}
         renderItem={({ item }) => (
           <PlayerRankCard
             rank={item.rank}

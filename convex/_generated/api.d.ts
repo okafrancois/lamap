@@ -8,7 +8,10 @@
  * @module
  */
 
-import type * as aiPlayer from "../aiPlayer.js";
+import type * as ai_aiPlayer from "../ai/aiPlayer.js";
+import type * as ai_helpers from "../ai/helpers.js";
+import type * as ai_mcts from "../ai/mcts.js";
+import type * as ai_types from "../ai/types.js";
 import type * as challenges from "../challenges.js";
 import type * as chat from "../chat.js";
 import type * as currencies from "../currencies.js";
@@ -37,7 +40,10 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  aiPlayer: typeof aiPlayer;
+  "ai/aiPlayer": typeof ai_aiPlayer;
+  "ai/helpers": typeof ai_helpers;
+  "ai/mcts": typeof ai_mcts;
+  "ai/types": typeof ai_types;
   challenges: typeof challenges;
   chat: typeof chat;
   currencies: typeof currencies;
