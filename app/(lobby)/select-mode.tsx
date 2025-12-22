@@ -248,7 +248,7 @@ export default function SelectModeScreen() {
                     <RankBadge rank={userRank} size="small" />
                   </View>
                   <Text style={styles.modeDescription}>
-                    Gratuit • Affecte votre PR • {userPR} PR
+                    Gratuit • Affecte votre classement • {userPR} PR
                   </Text>
                 </View>
               </View>
@@ -280,7 +280,7 @@ export default function SelectModeScreen() {
                 <View style={styles.modeInfo}>
                   <Text style={styles.modeTitle}>Mode IA</Text>
                   <Text style={styles.modeDescription}>
-                    Entraînement • Sans PR
+                    Entraînement • Sans classement
                   </Text>
                 </View>
               </View>
@@ -288,7 +288,7 @@ export default function SelectModeScreen() {
                 style={[styles.modeFeatures, { color: colors.mutedForeground }]}
               >
                 ✓ Pratiquez sans risque{"\n"}✓ 3 niveaux de difficulté{"\n"}✓
-                N&apos;affecte pas le PR
+                N&apos;affecte pas votre classement
               </Text>
               <Button
                 title="S'entraîner"

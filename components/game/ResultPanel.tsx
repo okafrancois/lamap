@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   title: {
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: "700",
     textAlign: "center",
     letterSpacing: 2,

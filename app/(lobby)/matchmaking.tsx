@@ -18,7 +18,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function MatchmakingScreen() {
   const colors = useColors();
   const router = useRouter();
-  const { betAmount, competitive } = useLocalSearchParams<{ betAmount: string; competitive?: string }>();
+  const { betAmount, competitive } = useLocalSearchParams<{
+    betAmount: string;
+    competitive?: string;
+  }>();
   const { userId } = useAuth();
   const { battleLayout, timerEnabled, timerDuration } = useSettings();
   const user = useQuery(
@@ -36,7 +39,14 @@ export default function MatchmakingScreen() {
 
   useEffect(() => {
     if (bet > 0 && status === "idle" && user) {
-      joinQueue(bet, currency, "CASH", isCompetitive, timerEnabled, timerDuration)
+      joinQueue(
+        bet,
+        currency,
+        "CASH",
+        isCompetitive,
+        timerEnabled,
+        timerDuration
+      )
         .then(() => {
           playSound("confirmation");
         })
@@ -48,7 +58,17 @@ export default function MatchmakingScreen() {
           console.error("Error joining queue:", error);
         });
     }
-  }, [bet, status, joinQueue, playSound, user, currency, isCompetitive, timerEnabled, timerDuration]);
+  }, [
+    bet,
+    status,
+    joinQueue,
+    playSound,
+    user,
+    currency,
+    isCompetitive,
+    timerEnabled,
+    timerDuration,
+  ]);
 
   useEffect(() => {
     if (previousStatus.current !== "matched" && status === "matched") {
@@ -131,10 +151,6 @@ export default function MatchmakingScreen() {
       paddingBottom: 24,
     },
     searchingIndicator: {
-      position: "absolute",
-      top: "50%",
-      left: 0,
-      right: 0,
       alignItems: "center",
       gap: 12,
       zIndex: 10,
@@ -148,7 +164,7 @@ export default function MatchmakingScreen() {
   });
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.header}>
         <View style={styles.headerContent}>
           <View style={styles.headerLeft}>
@@ -181,25 +197,25 @@ export default function MatchmakingScreen() {
           : "En attente..."
         }
         hasHand={false}
-        cardsRemaining={status === "matched" ? 8 : 0}
+        cardsRemaining={5}
       />
 
       <View style={styles.playArea}>
+        <BattleZone
+          opponentCards={[]}
+          playerCards={[]}
+          battleLayout={battleLayout}
+        />
         {status === "searching" && (
           <View style={styles.searchingIndicator}>
             <ActivityIndicator size="large" color={colors.secondary} />
             <Text style={styles.searchingText}>En recherche...</Text>
           </View>
         )}
-        <BattleZone
-          opponentCards={[]}
-          playerCards={[]}
-          battleLayout={battleLayout}
-        />
       </View>
 
       <View style={styles.handArea}>
-        <PlaceholderCardHand cardCount={4} />
+        <PlaceholderCardHand cardCount={5} />
         <View style={styles.cancelButtonContainer}>
           <Button title="Annuler" onPress={handleCancel} variant="secondary" />
         </View>

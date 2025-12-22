@@ -234,7 +234,7 @@ export default function ConversationScreen() {
       </View>
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.content}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >

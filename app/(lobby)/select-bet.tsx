@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Spacing } from "@/constants/spacing";
 import { api } from "@/convex/_generated/api";
 import { BET_AMOUNTS, Currency, getMinimumBalance } from "@/convex/currencies";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,9 +10,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -82,6 +84,9 @@ export default function SelectBetScreen() {
       flex: 1,
       backgroundColor: colors.background,
     },
+    keyboardAvoidingView: {
+      flex: 1,
+    },
     content: {
       padding: 24,
     },
@@ -106,7 +111,7 @@ export default function SelectBetScreen() {
       marginBottom: 16,
     },
     betButton: {
-      minHeight: 56,
+      minHeight: 44,
       flex: 1,
       minWidth: "47%",
     },
@@ -124,11 +129,9 @@ export default function SelectBetScreen() {
       marginBottom: 8,
     },
     customInput: {
-      backgroundColor: colors.card,
-      borderWidth: 1,
-      borderColor: colors.border,
-      borderRadius: 12,
-      padding: 16,
+      backgroundColor: colors.input,
+      borderRadius: Spacing.radius.full,
+      padding: Spacing.lg,
       fontSize: 16,
       color: colors.text,
     },
@@ -145,30 +148,6 @@ export default function SelectBetScreen() {
     },
     backButton: {
       marginTop: 8,
-    },
-    competitiveToggle: {
-      backgroundColor: colors.card,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 24,
-      borderWidth: 1,
-      borderColor: colors.border,
-    },
-    toggleHeader: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 8,
-    },
-    toggleTitle: {
-      fontSize: 16,
-      fontWeight: "600",
-      color: colors.text,
-    },
-    toggleDescription: {
-      fontSize: 13,
-      color: colors.mutedForeground,
-      lineHeight: 18,
     },
     warningCard: {
       backgroundColor: colors.destructive + "20",
@@ -188,114 +167,102 @@ export default function SelectBetScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={[]}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>
-          {isCashMode ? "Mode Cash" : "Choisir la mise"}
-        </Text>
-        <Text style={styles.subtitle}>
-          Votre solde: {user?.balance?.toLocaleString() || 0} {currency}
-        </Text>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={styles.title}>
+            {isCashMode ? "Mode Cash" : "Choisir la mise"}
+          </Text>
+          <Text style={styles.subtitle}>
+            Votre solde: {user?.balance?.toLocaleString() || 0} {currency}
+          </Text>
 
-        {isCashMode && (
-          <View style={styles.competitiveToggle}>
-            <View style={styles.toggleHeader}>
-              <Text style={styles.toggleTitle}>Mode Compétitif</Text>
-              <Switch
-                value={isCompetitive}
-                onValueChange={setIsCompetitive}
-                trackColor={{ false: colors.muted, true: colors.secondary }}
-                thumbColor={colors.card}
-              />
-            </View>
-            <Text style={styles.toggleDescription}>
-              {isCompetitive ?
-                "✓ Affecte votre classement PR\n✓ Matchmaking par rang\n✓ Gains d'argent réel"
-              : "• N'affecte pas votre PR\n• Matchmaking libre\n• Gains d'argent réel uniquement"
-              }
-            </Text>
+          <View style={styles.betOptions}>
+            {availableBets.map((amount) => {
+              const minimumRequired =
+                isCashMode ? getMinimumBalance(amount) : amount;
+              const canAfford =
+                user ? (user.balance || 0) >= minimumRequired : false;
+              return (
+                <Button
+                  key={amount}
+                  title={`${amount} ${currency}`}
+                  onPress={() => {
+                    setSelectedBet(amount);
+                    setCustomAmount("");
+                  }}
+                  variant={selectedBet === amount ? "primary" : "secondary"}
+                  disabled={!canAfford}
+                  style={
+                    selectedBet === amount ?
+                      [styles.betButton, styles.selectedBet]
+                    : styles.betButton
+                  }
+                />
+              );
+            })}
           </View>
-        )}
 
-        <View style={styles.betOptions}>
-          {availableBets.map((amount) => {
-            const minimumRequired =
-              isCashMode ? getMinimumBalance(amount) : amount;
-            const canAfford =
-              user ? (user.balance || 0) >= minimumRequired : false;
-            return (
-              <Button
-                key={amount}
-                title={`${amount} ${currency}`}
-                onPress={() => {
+          <View style={styles.customInputContainer}>
+            <TextInput
+              style={styles.customInput}
+              placeholder={`Entrez un montant en ${currency}`}
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="numeric"
+              value={customAmount}
+              onChangeText={(text) => {
+                setCustomAmount(text);
+                const amount = parseInt(text);
+                if (!isNaN(amount) && amount > 0) {
                   setSelectedBet(amount);
-                  setCustomAmount("");
-                }}
-                variant={selectedBet === amount ? "primary" : "secondary"}
-                disabled={!canAfford}
-                style={
-                  selectedBet === amount ?
-                    [styles.betButton, styles.selectedBet]
-                  : styles.betButton
+                } else if (text === "") {
+                  setSelectedBet(null);
                 }
-              />
-            );
-          })}
-        </View>
-
-        <View style={styles.customInputContainer}>
-          <Text style={styles.customInputLabel}>Montant personnalisé</Text>
-          <TextInput
-            style={styles.customInput}
-            placeholder={`Entrez un montant en ${currency}`}
-            placeholderTextColor={colors.mutedForeground}
-            keyboardType="numeric"
-            value={customAmount}
-            onChangeText={(text) => {
-              setCustomAmount(text);
-              const amount = parseInt(text);
-              if (!isNaN(amount) && amount > 0) {
-                setSelectedBet(amount);
-              } else if (text === "") {
-                setSelectedBet(null);
-              }
-            }}
-          />
-        </View>
-
-        {selectedBet && (
-          <View style={styles.selectedInfo}>
-            <Badge
-              label={`Mise sélectionnée: ${selectedBet} ${currency}`}
-              variant="default"
+              }}
             />
           </View>
-        )}
 
-        {isCashMode && selectedBet && (
-          <View style={styles.warningCard}>
-            <Text style={styles.warningText}>
-              Solde minimum requis: {getMinimumBalance(selectedBet)} {currency}{" "}
-              (3× la mise)
-            </Text>
+          {selectedBet && (
+            <View style={styles.selectedInfo}>
+              <Badge
+                label={`Mise sélectionnée: ${selectedBet} ${currency}`}
+                variant="default"
+              />
+            </View>
+          )}
+
+          {isCashMode && selectedBet && (
+            <View style={styles.warningCard}>
+              <Text style={styles.warningText}>
+                Solde minimum requis: {getMinimumBalance(selectedBet)}{" "}
+                {currency} (3× la mise)
+              </Text>
+            </View>
+          )}
+
+          <View style={styles.actions}>
+            <Button
+              title="Continuer"
+              onPress={handleContinue}
+              disabled={!selectedBet || loading}
+              loading={loading}
+              style={styles.continueButton}
+            />
+            <Button
+              title="Retour"
+              onPress={() => router.back()}
+              variant="ghost"
+              style={styles.backButton}
+            />
           </View>
-        )}
-
-        <View style={styles.actions}>
-          <Button
-            title="Continuer"
-            onPress={handleContinue}
-            disabled={!selectedBet || loading}
-            loading={loading}
-            style={styles.continueButton}
-          />
-          <Button
-            title="Retour"
-            onPress={() => router.back()}
-            variant="ghost"
-            style={styles.backButton}
-          />
-        </View>
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
