@@ -1,4 +1,4 @@
-import { Card } from "../gameEngine";
+import { Card } from "../validators";
 
 export interface ProbabilityCard {
   card: Card;

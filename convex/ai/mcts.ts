@@ -1,11 +1,11 @@
 import {
   calculateHandSum,
-  Card,
   checkAutomaticVictory,
   determineRoundWinner,
   Game,
   getPlayerId,
 } from "../gameEngine";
+import { Card } from "../validators";
 import { SimulatedGame, SimulatedPlayer } from "./types";
 
 export class GameAdapter {

@@ -1,5 +1,5 @@
-import { Card, getCardValue as engineGetCardValue } from "../gameEngine";
-import { Rank, Suit } from "../validators";
+import { getCardValue as engineGetCardValue } from "../gameEngine";
+import { Card, Rank, Suit } from "../validators";
 
 export function shuffle<T>(array: T[]): T[] {
   const a = array.slice();

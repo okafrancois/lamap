@@ -1,4 +1,5 @@
-import { calculateHandSum, Card, Game, getPlayerId } from "../gameEngine";
+import { calculateHandSum, Game, getPlayerId } from "../gameEngine";
+import { Card } from "../validators";
 import { getCardValue, highestCard, isKora, lowestCard } from "./helpers";
 import { MCTS } from "./mcts";
 import { BehaviourFlag, EvalContext } from "./types";
