@@ -1831,13 +1831,30 @@ export const concedeGame = mutation({
 
     const opponentIndex = playerIndex === 0 ? 1 : 0;
     const opponent = game.players[opponentIndex];
-    const winnerId = opponent.userId;
+    const winnerId = opponent.userId || opponent.botId;
+    const now = Date.now();
 
     await ctx.db.patch(game._id, {
       status: "ENDED",
       winnerId: winnerId,
-      endedAt: Date.now(),
-    });
+      endReason: "Adversaire a abandonné",
+      victoryType: "forfeit",
+      endedAt: now,
+      lastUpdatedAt: now,
+      version: game.version + 1,
+      history: [
+        ...game.history,
+        {
+          action: "game_ended" as const,
+          timestamp: now,
+          playerId: user._id,
+          data: {
+            message: `${user.username} a abandonné la partie`,
+            winnerId,
+          },
+        },
+      ],
+    } as any);
 
     await ctx.scheduler.runAfter(0, internal.matchmaking.cleanupQueueForGame, {
       gameId: game.gameId,
@@ -1885,17 +1902,17 @@ export const concedeGame = mutation({
       }
     }
 
-    if (game.bet.amount > 0 && winnerId) {
+    if (game.bet.amount > 0 && winnerId && opponentPlayer.userId) {
       const winnings = game.bet.amount * 2;
-      const winner = await ctx.db.get(winnerId);
+      const winner = await ctx.db.get(opponentPlayer.userId);
 
       if (winner) {
-        await ctx.db.patch(winnerId, {
+        await ctx.db.patch(opponentPlayer.userId, {
           balance: (winner.balance || 0) + winnings,
         });
 
         await ctx.db.insert("transactions", {
-          userId: winnerId,
+          userId: opponentPlayer.userId,
           type: "win",
           amount: winnings,
           currency: game.bet.currency,

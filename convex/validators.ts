@@ -53,7 +53,8 @@ export const victoryTypeValidator = v.union(
   v.literal("simple_kora"),
   v.literal("double_kora"),
   v.literal("triple_kora"),
-  v.literal("on_time")
+  v.literal("on_time"),
+  v.literal("forfeit")
 );
 
 export const gameHistoryActionValidator = v.union(

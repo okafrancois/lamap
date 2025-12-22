@@ -136,9 +136,9 @@ export class AIPlayer {
 
     if (isKora(card)) {
       const multiplier =
-        round === 5 ? 8
-        : round === 4 ? 4
-        : round === 3 ? 2
+        round === 5 ? 3
+        : round === 4 ? 2
+        : round === 3 ? 1.5
         : 1;
       return base * multiplier;
     }

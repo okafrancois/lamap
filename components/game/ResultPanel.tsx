@@ -71,14 +71,16 @@ export function ResultPanel({
 
   if (isWinner) {
     if (game.victoryType === "triple_kora") {
-      multiplier = 8;
+      multiplier = 3;
       winnings = opponentBet * multiplier - platformFee;
     } else if (game.victoryType === "double_kora") {
-      multiplier = 4;
-      winnings = opponentBet * multiplier - platformFee;
-    } else if (game.victoryType === "simple_kora") {
       multiplier = 2;
       winnings = opponentBet * multiplier - platformFee;
+    } else if (game.victoryType === "simple_kora") {
+      multiplier = 1.5;
+      winnings = opponentBet * multiplier - platformFee;
+    } else if (game.victoryType === "forfeit") {
+      winnings = opponentBet * 2 - platformFee;
     } else {
       winnings = opponentBet - platformFee;
     }
@@ -90,6 +92,7 @@ export function ResultPanel({
     if (game.victoryType === "simple_kora") return "Victoire par KORA !";
     if (game.victoryType === "auto_sum") return "Victoire par main faible !";
     if (game.victoryType === "auto_sevens") return "Victoire par triple 7 !";
+    if (game.victoryType === "forfeit") return "Victoire par abandon !";
     return "Victoire 🎉 !";
   };
 
