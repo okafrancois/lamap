@@ -98,9 +98,9 @@ function TurnPip({
 
   const styles = StyleSheet.create({
     pip: {
-      width: 24,
-      height: 6,
-      borderRadius: 3,
+      width: 10,
+      height: 10,
+      borderRadius: 10,
       overflow: "hidden",
       backgroundColor:
         state === "opponent" ?
@@ -122,6 +122,7 @@ function TurnPip({
         state === "player" ? Colors.gameUI.orClair
         : state === "opponent" ? Colors.gameUI.rougeVif
         : "transparent",
+      borderRadius: 10,
     },
   });
 

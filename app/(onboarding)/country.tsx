@@ -60,10 +60,6 @@ export default function CountryScreen() {
         countryCode: selectedCountry,
       });
 
-      await completeOnboardingMutation({
-        userId: convexUser._id,
-      });
-
       router.push("/(onboarding)/tutorial");
     } catch (error) {
       console.error("Erreur lors de la sauvegarde du pays:", error);

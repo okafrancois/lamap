@@ -13,6 +13,8 @@ export function useGameTimer(
 
   const [localTimeRemaining, setLocalTimeRemaining] = useState<number>(0);
 
+  const isMyTurn = currentPlayerId === timers?.currentTurnPlayerId;
+
   useEffect(() => {
     if (!timers?.enabled || !currentPlayerId) {
       setLocalTimeRemaining(0);
@@ -30,12 +32,29 @@ export function useGameTimer(
   useEffect(() => {
     if (!timers?.enabled || !currentPlayerId) return;
 
+    if (!isMyTurn) {
+      const playerTimer = timers.timers.find(
+        (t) => t.playerId === currentPlayerId
+      );
+      if (playerTimer) {
+        setLocalTimeRemaining(playerTimer.timeRemaining);
+      }
+      return;
+    }
+
+    const playerTimer = timers.timers.find(
+      (t) => t.playerId === currentPlayerId
+    );
+    if (playerTimer) {
+      setLocalTimeRemaining(playerTimer.timeRemaining);
+    }
+
     const interval = setInterval(() => {
       setLocalTimeRemaining((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timers?.enabled, currentPlayerId]);
+  }, [timers?.enabled, currentPlayerId, isMyTurn, timers?.timers]);
 
   return {
     enabled: timers?.enabled || false,

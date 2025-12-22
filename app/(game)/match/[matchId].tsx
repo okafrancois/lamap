@@ -168,7 +168,8 @@ export default function MatchScreen() {
     enabled: isTimerActive,
     timeRemaining,
     totalTime,
-  } = useGameTimer(game?.gameId, game?.currentTurnPlayerId);
+    timers: allTimers,
+  } = useGameTimer(game?.gameId, myUserId || null);
 
   useEffect(() => {
     if (game?.gameId && game.gameId !== currentGameIdRef.current) {
@@ -342,8 +343,9 @@ export default function MatchScreen() {
       alignItems: "center",
       gap: 4,
       backgroundColor: colors.secondary,
-      paddingHorizontal: 10,
-      paddingVertical: 4,
+      borderWidth: 1,
+      padding: 4,
+      paddingHorizontal: 8,
       borderRadius: 12,
     },
     betText: {
@@ -354,10 +356,10 @@ export default function MatchScreen() {
     headerRight: {
       flexDirection: "row",
       alignItems: "center",
-      gap: 8,
+      gap: 14,
     },
     chatButton: {
-      padding: 6,
+      padding: 4,
     },
     playArea: {
       flex: 1,
@@ -541,6 +543,12 @@ export default function MatchScreen() {
 
   const opponentCardsRemaining = opponent?.hand?.length || 0;
 
+  const opponentId = opponent?.userId || opponent?.botId;
+  const opponentTimer =
+    opponentId ? allTimers.find((t) => t.playerId === opponentId) : null;
+  const opponentTimeRemaining = opponentTimer?.timeRemaining || 0;
+  const isOpponentTurn = opponentId === game?.currentTurnPlayerId;
+
   const roundsWonByPlayer =
     turnResults?.filter((r) => r.winnerId === myUserId).length || 0;
   const roundsWonByOpponent = (turnResults?.length || 0) - roundsWonByPlayer;
@@ -615,19 +623,20 @@ export default function MatchScreen() {
                   totalTime={totalTime}
                   isMyTurn={isMyTurn}
                   isActive={true}
+                  isOpponentTimer={false}
                 />
               )}
               {game.status === "PLAYING" && (
                 <ConcedeButton onConcede={handleConcede} disabled={isPlaying} />
               )}
-              {game.mode === "ONLINE" && (
+              {game.mode !== "AI" && (
                 <TouchableOpacity
                   onPress={() => router.push(`/(game)/chat/${matchId}`)}
                   style={styles.chatButton}
                 >
                   <Ionicons
                     name="chatbubble"
-                    size={20}
+                    size={24}
                     color={colors.secondary}
                   />
                 </TouchableOpacity>
@@ -641,6 +650,13 @@ export default function MatchScreen() {
             name={opponent.username}
             hasHand={opponentHasHand}
             cardsRemaining={opponentCardsRemaining}
+            timerRemaining={
+              isTimerActive && game.status === "PLAYING" ?
+                opponentTimeRemaining
+              : undefined
+            }
+            totalTime={totalTime}
+            isOpponentTurn={isOpponentTurn}
           />
         )}
 
@@ -685,20 +701,11 @@ export default function MatchScreen() {
           />
         </View>
 
-        {game.status === "ENDED" && (
+        {game.status === "ENDED" && game.victoryType && (
           <>
             <ResultAnimation
               visible={resultPanelVisible}
-              victoryType={
-                game.victoryType as
-                  | "normal"
-                  | "simple_kora"
-                  | "double_kora"
-                  | "triple_kora"
-                  | "auto_sum"
-                  | "auto_sevens"
-                  | "auto_lowest"
-              }
+              victoryType={game.victoryType}
               isWinner={game.winnerId === myUserId}
             />
             <ResultPanel
@@ -826,7 +833,7 @@ export default function MatchScreen() {
         currentRound={game?.currentRound || 1}
         isMyTurn={isMyTurn || false}
         onTutorialComplete={() => {
-          router.replace("/(onboarding)/tutorial?step=7");
+          router.push("/(onboarding)/tutorial");
         }}
       >
         {gameScreen}

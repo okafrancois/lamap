@@ -1,3 +1,4 @@
+import { VictoryType } from "@/convex/validators";
 import React, { useEffect, useMemo } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
 import Animated, {
@@ -16,14 +17,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 interface ParticleProps {
   index: number;
   color: string;
-  victoryType:
-    | "normal"
-    | "simple_kora"
-    | "double_kora"
-    | "triple_kora"
-    | "auto_sum"
-    | "auto_sevens"
-    | "auto_lowest";
+  victoryType: VictoryType;
 }
 
 function Particle({ index, color, victoryType }: ParticleProps) {
@@ -36,6 +30,10 @@ function Particle({ index, color, victoryType }: ParticleProps) {
   const particleSize = useMemo(() => {
     if (victoryType === "triple_kora") return 16 + Math.random() * 12;
     if (victoryType === "double_kora") return 12 + Math.random() * 8;
+    if (victoryType === "simple_kora") return 8 + Math.random() * 6;
+    if (victoryType === "auto_sum") return 4 + Math.random() * 3;
+    if (victoryType === "auto_sevens") return 4 + Math.random() * 3;
+    if (victoryType === "auto_lowest") return 4 + Math.random() * 3;
     return 8 + Math.random() * 6;
   }, [victoryType]);
 
@@ -139,14 +137,7 @@ function Particle({ index, color, victoryType }: ParticleProps) {
 
 interface ResultAnimationProps {
   visible: boolean;
-  victoryType:
-    | "normal"
-    | "simple_kora"
-    | "double_kora"
-    | "triple_kora"
-    | "auto_sum"
-    | "auto_sevens"
-    | "auto_lowest";
+  victoryType: VictoryType;
   isWinner: boolean;
 }
 

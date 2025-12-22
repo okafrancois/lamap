@@ -487,7 +487,7 @@ export default function ProfileScreen() {
     const ProfileSceneComponent = () => (
       <ScrollView
         style={styles.sceneContainer}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 50   }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
       >
         <View style={styles.content}>
           <View style={styles.rankSection}>

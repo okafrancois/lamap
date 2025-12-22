@@ -1,7 +1,7 @@
 import { useColors } from "@/hooks/useColors";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -14,6 +14,7 @@ interface GameTimerProps {
   totalTime: number;
   isMyTurn: boolean;
   isActive: boolean;
+  isOpponentTimer: boolean;
 }
 
 export function GameTimer({
@@ -21,6 +22,7 @@ export function GameTimer({
   totalTime,
   isMyTurn,
   isActive,
+  isOpponentTimer,
 }: GameTimerProps) {
   const colors = useColors();
   const [localTime, setLocalTime] = useState(timeRemaining);
@@ -37,14 +39,14 @@ export function GameTimer({
   }, [timeRemaining]);
 
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive || !isMyTurn) return;
 
     const interval = setInterval(() => {
       setLocalTime((prev) => Math.max(0, prev - 1));
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [isActive, isMyTurn]);
 
   useEffect(() => {
     if (isCriticalTime && isMyTurn && isActive) {
@@ -81,65 +83,31 @@ export function GameTimer({
     return isMyTurn ? colors.primary : colors.mutedForeground;
   };
 
-  const getBackgroundColor = () => {
-    if (isCriticalTime) return "rgba(239, 68, 68, 0.1)";
-    if (isLowTime) return "rgba(245, 158, 11, 0.1)";
-    return isMyTurn ? "rgba(166, 130, 88, 0.15)" : "rgba(255, 255, 255, 0.05)";
-  };
-
   if (!isActive) {
     return null;
   }
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: isOpponentTimer ? 2 : 6,
+    },
+    time: {
+      fontSize: isOpponentTimer ? 12 : 14,
+      color: getTimerColor(),
+      fontWeight: "700",
+      fontVariant: ["tabular-nums"],
+    },
+  });
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        animatedStyle,
-        { backgroundColor: getBackgroundColor() },
-      ]}
-    >
+    <Animated.View style={[styles.container, animatedStyle]}>
       <Ionicons
         name={isCriticalTime ? "warning" : "time-outline"}
-        size={16}
+        size={isOpponentTimer ? 12 : 16}
         color={getTimerColor()}
       />
-      <Text style={[styles.time, { color: getTimerColor() }]}>
-        {formatTime(localTime)}
-      </Text>
-      {isMyTurn && (
-        <View
-          style={[
-            styles.indicator,
-            {
-              backgroundColor: getTimerColor(),
-            },
-          ]}
-        />
-      )}
+      <Text style={styles.time}>{formatTime(localTime)}</Text>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-  },
-  time: {
-    fontSize: 14,
-    fontWeight: "700",
-    fontVariant: ["tabular-nums"],
-  },
-  indicator: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-});

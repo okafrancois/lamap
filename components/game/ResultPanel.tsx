@@ -296,11 +296,9 @@ export function ResultPanel({
           </View>
 
           {/* Gains */}
-          <View
-            style={[styles.gainsContainer, { backgroundColor: colors.muted }]}
-          >
+          <View style={styles.gainsContainer}>
             <Text
-              style={[styles.gainsLabel, { color: colors.mutedForeground }]}
+              style={[styles.gainsLabel, { color: colors.accentForeground }]}
             >
               {isWinner ? "Gains" : "Perte"}
             </Text>
@@ -521,10 +519,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 16,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginBottom: 24,
+    paddingHorizontal: 10,
+    marginBottom: 20,
   },
   gainsLabel: {
     fontSize: 12,
@@ -539,7 +535,7 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   button: {
     flex: 1,

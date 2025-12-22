@@ -133,6 +133,7 @@ export const completeTutorial = mutation({
 
     await ctx.db.patch(args.userId, {
       tutorialCompleted: true,
+      onboardingCompleted: true,
       kora: currentKora + TUTORIAL_REWARD,
     });
 

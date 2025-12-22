@@ -53,7 +53,8 @@ export const victoryTypeValidator = v.union(
   v.literal("auto_sevens"),
   v.literal("simple_kora"),
   v.literal("double_kora"),
-  v.literal("triple_kora")
+  v.literal("triple_kora"),
+  v.literal("on_time")
 );
 
 export const gameHistoryActionValidator = v.union(
@@ -127,3 +128,11 @@ export const gameChatMessageValidator = v.object({
 
 export type Rank = Infer<typeof rankValidator>;
 export type Suit = Infer<typeof suitValidator>;
+export type VictoryType = Infer<typeof victoryTypeValidator>;
+export type GameHistoryAction = Infer<typeof gameHistoryActionValidator>;
+export type Card = Infer<typeof cardValidator>;
+export type Bet = Infer<typeof betValidator>;
+export type Player = Infer<typeof playerValidator>;
+export type PlayedCard = Infer<typeof playedCardValidator>;
+export type GameHistory = Infer<typeof gameHistoryValidator>;
+export type GameChatMessage = Infer<typeof gameChatMessageValidator>;

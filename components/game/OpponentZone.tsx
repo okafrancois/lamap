@@ -3,17 +3,24 @@ import { useColors } from "@/hooks/useColors";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { CardBack } from "./CardBack";
+import { GameTimer } from "./GameTimer";
 
 interface OpponentZoneProps {
   name: string;
   hasHand?: boolean;
   cardsRemaining: number;
+  timerRemaining?: number;
+  totalTime?: number;
+  isOpponentTurn?: boolean;
 }
 
 export function OpponentZone({
   name,
   hasHand = false,
   cardsRemaining,
+  timerRemaining,
+  totalTime,
+  isOpponentTurn = false,
 }: OpponentZoneProps) {
   const colors = useColors();
 
@@ -25,16 +32,21 @@ export function OpponentZone({
     .slice(0, 2);
 
   const styles = StyleSheet.create({
+    avatarContainer: {
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 2,
+    },
     container: {
       flexDirection: "row",
       alignItems: "center",
       paddingHorizontal: 20,
       paddingVertical: 12,
-      gap: 12,
+      gap: 10,
     },
     avatar: {
-      width: 48,
-      height: 48,
+      width: 35,
+      height: 35,
       borderRadius: 24,
       backgroundColor: Colors.gameUI.rougeTerre,
       borderWidth: 2,
@@ -86,8 +98,13 @@ export function OpponentZone({
       fontWeight: "600",
       color: Colors.gameUI.orClair,
     },
+    cardsZone: {
+      alignItems: "flex-end",
+      gap: 10,
+    },
     cardsContainer: {
       flexDirection: "row",
+      alignItems: "center",
       gap: 0,
     },
     cardWrapper: {
@@ -118,15 +135,29 @@ export function OpponentZone({
           )}
         </View>
       </View>
-      <View style={styles.cardsContainer}>
-        {cards.map((i) => (
-          <View
-            key={i}
-            style={[styles.cardWrapper, i === 0 && styles.cardWrapperFirst]}
-          >
-            <CardBack size="small" />
-          </View>
-        ))}
+      <View style={styles.cardsZone}>
+        <View style={styles.cardsContainer}>
+          {cards.map((i) => (
+            <View
+              key={i}
+              style={[styles.cardWrapper, i === 0 && styles.cardWrapperFirst]}
+            >
+              <CardBack size="small" />
+            </View>
+          ))}
+        </View>
+
+        {timerRemaining !== undefined &&
+          totalTime !== undefined &&
+          timerRemaining >= 0 && (
+            <GameTimer
+              timeRemaining={timerRemaining}
+              totalTime={totalTime}
+              isMyTurn={isOpponentTurn}
+              isActive={true}
+              isOpponentTimer={true}
+            />
+          )}
       </View>
     </View>
   );

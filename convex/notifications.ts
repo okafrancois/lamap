@@ -24,7 +24,6 @@ export const recordPushNotificationToken = mutation({
       userId: args.userId,
       pushToken: args.token,
     });
-
     return { success: true };
   },
 });
@@ -185,42 +184,6 @@ export const sendMatchFoundNotification = internalMutation({
       return { pushId, success: true };
     } catch (error) {
       console.error("Error sending match found notification:", error);
-      return { success: false };
-    }
-  },
-});
-
-export const sendTurnNotification = internalMutation({
-  args: {
-    userId: v.id("users"),
-    gameId: v.string(),
-    timeRemaining: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    const pn = getPushNotifications();
-
-    const title = "C'est votre tour !";
-    const body =
-      args.timeRemaining && args.timeRemaining < 60 ?
-        `Il vous reste ${args.timeRemaining} secondes`
-      : "C'est votre tour de jouer";
-
-    try {
-      const pushId = await pn.sendPushNotification(ctx, {
-        userId: args.userId,
-        notification: {
-          title,
-          body,
-          data: {
-            type: "turn",
-            gameId: args.gameId,
-            route: `/(game)/match/${args.gameId}`,
-          },
-        },
-      });
-      return { pushId, success: true };
-    } catch (error) {
-      console.error("Error sending turn notification:", error);
       return { success: false };
     }
   },

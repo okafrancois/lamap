@@ -509,6 +509,17 @@ export const startGame = mutation({
 
     gameState = updatePlayableCards(gameState);
 
+    if (game.timerEnabled && game.playerTimers && startingPlayerId) {
+      await updateTimersOnTurnChange(ctx, game, null, startingPlayerId);
+      const updatedGame = await ctx.db
+        .query("games")
+        .withIndex("by_game_id", (q) => q.eq("gameId", game.gameId))
+        .first();
+      if (updatedGame) {
+        gameState.playerTimers = updatedGame.playerTimers;
+      }
+    }
+
     await ctx.db.patch(game._id, gameState as any);
 
     if (game.mode === "AI") {
@@ -523,6 +534,166 @@ export const startGame = mutation({
     return { gameId, startingPlayerId };
   },
 });
+
+async function endGameByTimeExpiration(
+  ctx: any,
+  game: any,
+  expiredPlayerId: string | Id<"users">
+): Promise<Game> {
+  const winnerPlayer = game.players.find(
+    (p: any) => getPlayerId(p) !== expiredPlayerId
+  );
+  const winnerId = winnerPlayer ? getPlayerId(winnerPlayer) : null;
+
+  if (!winnerId) {
+    throw new Error("Could not determine winner");
+  }
+
+  const betAmount = game.bet.amount;
+  const totalBet = betAmount * 2;
+  const platformFee = totalBet * 0.02;
+  const winnings = totalBet - platformFee;
+
+  let gameState: Game = {
+    ...game,
+    status: "ENDED" as const,
+    winnerId: winnerId,
+    endedAt: Date.now(),
+    victoryType: "on_time" as const,
+    endReason: "Time expired",
+    players: game.players.map((p: any) => ({
+      ...p,
+      balance:
+        getPlayerId(p) === winnerId ?
+          p.balance + winnings
+        : p.balance - betAmount,
+    })),
+    version: game.version + 1,
+    lastUpdatedAt: Date.now(),
+  };
+
+  await ctx.scheduler.runAfter(0, internal.matchmaking.cleanupQueueForGame, {
+    gameId: game.gameId,
+  });
+
+  if (winnerPlayer?.userId && game.bet.amount > 0) {
+    const winner = await ctx.db.get(winnerPlayer.userId);
+    if (winner) {
+      await ctx.db.patch(winnerPlayer.userId, {
+        balance: (winner.balance || 0) + winnings,
+      });
+      await ctx.db.insert("transactions", {
+        userId: winnerPlayer.userId,
+        type: "win",
+        amount: winnings,
+        currency: game.bet.currency,
+        gameId: game.gameId,
+        description: `Gain de ${winnings} ${game.bet.currency} (temps expiré)`,
+        createdAt: Date.now(),
+      });
+    }
+  }
+
+  const expiredPlayer = game.players.find(
+    (p: any) => getPlayerId(p) === expiredPlayerId
+  );
+  const expiredPlayerName = expiredPlayer?.username || "Joueur";
+  const winnerName = winnerPlayer?.username || "Joueur";
+
+  gameState = addHistoryEntry(gameState, "game_ended", winnerId, {
+    message: `⏱️ ${expiredPlayerName} a manqué de temps. ${winnerName} remporte la partie !`,
+    winnerId,
+  });
+
+  const shouldUpdatePR =
+    game.mode !== "AI" && (game.mode === "RANKED" || game.competitive === true);
+  if (shouldUpdatePR && winnerPlayer?.userId) {
+    const loserPlayer = gameState.players.find(
+      (p: any) => getPlayerId(p) !== winnerId && p.userId
+    );
+
+    if (loserPlayer?.userId) {
+      const winnerUser = await ctx.db.get(winnerPlayer.userId);
+      const loserUser = await ctx.db.get(loserPlayer.userId);
+      const winnerPR = winnerUser?.pr || INITIAL_PR;
+      const loserPR = loserUser?.pr || INITIAL_PR;
+
+      try {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.ranking.updatePlayerPRInternal,
+          {
+            playerId: winnerPlayer.userId,
+            opponentId: loserPlayer.userId,
+            playerPR: winnerPR,
+            opponentPR: loserPR,
+            playerWon: true,
+          }
+        );
+
+        await ctx.scheduler.runAfter(
+          0,
+          internal.ranking.updatePlayerPRInternal,
+          {
+            playerId: loserPlayer.userId,
+            opponentId: winnerPlayer.userId,
+            playerPR: loserPR,
+            opponentPR: winnerPR,
+            playerWon: false,
+          }
+        );
+      } catch (error) {
+        console.error("Erreur mise à jour PR:", error);
+      }
+    }
+  }
+
+  return gameState;
+}
+
+async function updateTimersOnTurnChange(
+  ctx: any,
+  game: any,
+  previousPlayerId: string | Id<"users"> | null,
+  newPlayerId: string | Id<"users"> | null
+) {
+  if (!game.timerEnabled || !game.playerTimers) {
+    return;
+  }
+
+  const freshGame = await ctx.db.get(game._id);
+
+  if (!freshGame || !freshGame.playerTimers) {
+    return;
+  }
+
+  const now = Date.now();
+  const updatedTimers = freshGame.playerTimers.map((timer: any) => {
+    if (timer.playerId === previousPlayerId && previousPlayerId) {
+      const elapsedSeconds = Math.floor((now - timer.lastUpdated) / 1000);
+      const newTimeRemaining = Math.max(
+        0,
+        timer.timeRemaining - elapsedSeconds
+      );
+      return {
+        ...timer,
+        timeRemaining: newTimeRemaining,
+        lastUpdated: now,
+      };
+    } else if (timer.playerId === newPlayerId && newPlayerId) {
+      return {
+        ...timer,
+        lastUpdated: now,
+      };
+    }
+    return timer;
+  });
+
+  await ctx.db.patch(freshGame._id, {
+    playerTimers: updatedTimers,
+    lastUpdatedAt: now,
+  });
+}
 
 export const playCard = mutation({
   args: {
@@ -556,22 +727,10 @@ export const playCard = mutation({
         );
 
         if (actualTimeRemaining === 0) {
-          throw new Error("Time expired - you have run out of time");
+          const gameState = await endGameByTimeExpiration(ctx, game, playerId);
+          await ctx.db.patch(game._id, gameState as any);
+          return { success: true, gameState };
         }
-
-        const updatedTimers = game.playerTimers.map((t) =>
-          t.playerId === playerId ?
-            {
-              ...t,
-              timeRemaining: actualTimeRemaining,
-              lastUpdated: now,
-            }
-          : t
-        );
-
-        await ctx.db.patch(game._id, {
-          playerTimers: updatedTimers,
-        });
       }
     }
 
@@ -839,12 +998,28 @@ export const playCard = mutation({
       }
     }
 
+    const previousTurnPlayerId = gameState.currentTurnPlayerId;
     gameState.currentTurnPlayerId = updatePlayerTurn(gameState);
     gameState = updatePlayableCards(gameState);
 
+    if (game.timerEnabled && game.playerTimers) {
+      await updateTimersOnTurnChange(
+        ctx,
+        game,
+        previousTurnPlayerId,
+        gameState.currentTurnPlayerId
+      );
+      const updatedGame = await ctx.db
+        .query("games")
+        .withIndex("by_game_id", (q) => q.eq("gameId", game.gameId))
+        .first();
+      if (updatedGame) {
+        gameState.playerTimers = updatedGame.playerTimers;
+      }
+    }
+
     await ctx.db.patch(game._id, gameState as any);
 
-    // Envoyer une notification au nouveau joueur si timer actif et temps restant < 1 minute
     if (
       game.timerEnabled &&
       game.playerTimers &&
@@ -852,20 +1027,6 @@ export const playCard = mutation({
       typeof gameState.currentTurnPlayerId === "string" &&
       !gameState.currentTurnPlayerId.startsWith("ai-")
     ) {
-      const nextPlayerTimer = game.playerTimers.find(
-        (t) => t.playerId === gameState.currentTurnPlayerId
-      );
-      if (nextPlayerTimer && nextPlayerTimer.timeRemaining < 60) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.notifications.sendTurnNotification,
-          {
-            userId: gameState.currentTurnPlayerId as any,
-            gameId,
-            timeRemaining: nextPlayerTimer.timeRemaining,
-          }
-        );
-      }
     }
 
     if (game.mode === "AI" && gameState.status === "PLAYING") {
@@ -1121,6 +1282,9 @@ export const playCardInternal = internalMutation({
         gameState.status = "ENDED" as const;
         gameState.winnerId = winnerId;
         gameState.endedAt = Date.now();
+        if (!gameState.victoryType) {
+          gameState.victoryType = "normal";
+        }
 
         await ctx.scheduler.runAfter(
           0,
@@ -1218,35 +1382,27 @@ export const playCardInternal = internalMutation({
       }
     }
 
+    const previousTurnPlayerId = gameState.currentTurnPlayerId;
     gameState.currentTurnPlayerId = updatePlayerTurn(gameState);
     gameState = updatePlayableCards(gameState);
 
-    await ctx.db.patch(game._id, gameState as any);
-
-    // Envoyer une notification au nouveau joueur si timer actif et temps restant < 1 minute
-    if (
-      game.timerEnabled &&
-      game.playerTimers &&
-      gameState.status === "PLAYING" &&
-      typeof gameState.currentTurnPlayerId === "string" &&
-      !gameState.currentTurnPlayerId.startsWith("ai-")
-    ) {
-      const nextPlayerTimer = game.playerTimers.find(
-        (t) => t.playerId === gameState.currentTurnPlayerId
+    if (game.timerEnabled && game.playerTimers) {
+      await updateTimersOnTurnChange(
+        ctx,
+        game,
+        previousTurnPlayerId,
+        gameState.currentTurnPlayerId
       );
-      if (nextPlayerTimer && nextPlayerTimer.timeRemaining < 60) {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.notifications.sendTurnNotification,
-          {
-            userId: gameState.currentTurnPlayerId as any,
-            gameId,
-            timeRemaining: nextPlayerTimer.timeRemaining,
-          }
-        );
+      const updatedGame = await ctx.db
+        .query("games")
+        .withIndex("by_game_id", (q) => q.eq("gameId", game.gameId))
+        .first();
+      if (updatedGame) {
+        gameState.playerTimers = updatedGame.playerTimers;
       }
     }
 
+    await ctx.db.patch(game._id, gameState as any);
     if (game.mode === "AI" && gameState.status === "PLAYING") {
       const aiPlayer = gameState.players.find((p) => p.type === "ai");
       if (aiPlayer && gameState.currentTurnPlayerId === getPlayerId(aiPlayer)) {
@@ -1790,7 +1946,7 @@ export const sendRevengeRequest = mutation({
     }
 
     const opponentUserId = opponent.userId;
-    if (!opponentUserId || typeof opponentUserId === "string") {
+    if (!opponentUserId) {
       throw new Error("Impossible de demander une revanche contre un bot");
     }
 

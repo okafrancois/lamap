@@ -1,11 +1,8 @@
 import { Doc, Id } from "./_generated/dataModel";
+import { Card, GameHistory, PlayedCard, Player } from "./validators";
 
 export type Game = Doc<"games">;
 export type User = Doc<"users">;
-export type Player = Game["players"][number];
-export type PlayedCard = Game["playedCards"][number];
-export type Card = NonNullable<Player["hand"]>[number];
-export type GameHistory = Game["history"][number];
 
 export function createDeck(seed: string): Card[] {
   const suits: Card["suit"][] = ["hearts", "diamonds", "clubs", "spades"];

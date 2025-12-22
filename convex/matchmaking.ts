@@ -1,8 +1,7 @@
 import { v } from "convex/values";
-import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
 import { INITIAL_PR } from "./ranking";
-import { aiDifficultyValidator, currencyValidator } from "./validators";
+import { aiDifficultyValidator, currencyValidator, Player } from "./validators";
 
 function getPRRange(waitTimeMs: number): number {
   if (waitTimeMs < 30000) return 100;
@@ -148,28 +147,8 @@ export const joinQueue = mutation({
         gameId,
       });
 
-      // Envoyer des notifications push aux deux joueurs
-      await ctx.scheduler.runAfter(
-        0,
-        internal.notifications.sendMatchFoundNotification,
-        {
-          userId: args.userId,
-          opponentUsername: player2.username,
-          gameId: gameId,
-        }
-      );
-      await ctx.scheduler.runAfter(
-        0,
-        internal.notifications.sendMatchFoundNotification,
-        {
-          userId: potentialMatch.userId,
-          opponentUsername: player1.username,
-          gameId: gameId,
-        }
-      );
-
       const now = Date.now();
-      const players: any[] = [
+      const players: Player[] = [
         {
           userId: args.userId,
           username: player1.username,
@@ -195,15 +174,15 @@ export const joinQueue = mutation({
         status: "WAITING" as const,
         currentRound: 1,
         maxRounds: 5,
-        hasHandPlayerId: null as any,
-        currentTurnPlayerId: null as any,
+        hasHandPlayerId: null,
+        currentTurnPlayerId: null,
         players,
         playedCards: [],
         bet: {
           amount: args.betAmount,
           currency: args.currency,
         },
-        winnerId: null as any,
+        winnerId: null,
         endReason: null as string | null,
         history: [
           {
@@ -218,15 +197,15 @@ export const joinQueue = mutation({
         mode: gameMode === "RANKED" ? ("RANKED" as const) : ("CASH" as const),
         competitive: isCompetitive,
         maxPlayers: 2,
-        aiDifficulty: null as string | null,
+        aiDifficulty: null,
         roomName: undefined,
         isPrivate: false,
         hostId: args.userId,
         joinCode: undefined,
         startedAt: now,
-        endedAt: null as number | null,
+        endedAt: null,
         lastUpdatedAt: now,
-        victoryType: null as string | null,
+        victoryType: null,
         rematchGameId: undefined,
         timerEnabled: args.timerEnabled || false,
         timerDuration: args.timerDuration,
@@ -247,7 +226,7 @@ export const joinQueue = mutation({
           : undefined,
       };
 
-      await ctx.db.insert("games", gameData as any);
+      await ctx.db.insert("games", gameData);
 
       return { matched: true, gameId, queueId: queueEntry };
     }

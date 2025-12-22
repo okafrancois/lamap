@@ -6,7 +6,7 @@ import { getCurrencyFromCountry } from "@/convex/currencies";
 import { useAuth } from "@/hooks/useAuth";
 import { useColors } from "@/hooks/useColors";
 import { useMutation } from "convex/react";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
@@ -75,10 +75,15 @@ export default function TutorialScreen() {
   const colors = useColors();
   const router = useRouter();
   const { convexUser } = useAuth();
-  const [currentStep, setCurrentStep] = useState(0);
+  const params = useLocalSearchParams<{ step?: string }>();
+  const initialStep = params.step ? parseInt(params.step, 10) - 1 : 0;
+  const [currentStep, setCurrentStep] = useState(initialStep);
   const [isCompleting, setIsCompleting] = useState(false);
 
   const completeTutorialMutation = useMutation(api.onboarding.completeTutorial);
+  const completeOnboardingMutation = useMutation(
+    api.onboarding.completeOnboarding
+  );
   const createAIGameMutation = useMutation(api.matchmaking.createMatchVsAI);
 
   const handleNext = async () => {
@@ -116,7 +121,13 @@ export default function TutorialScreen() {
 
   const handleSkip = async () => {
     if (!convexUser?._id) return;
-    router.replace("/(tabs)");
+    try {
+      await completeOnboardingMutation({ userId: convexUser._id });
+      router.replace("/(tabs)");
+    } catch (error) {
+      console.error("Erreur lors du saut du tutoriel:", error);
+      router.replace("/(tabs)");
+    }
   };
 
   const handleComplete = async () => {

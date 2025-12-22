@@ -150,19 +150,28 @@ export const getGameTimers = query({
     }
 
     const now = Date.now();
+    const currentTurnPlayerId = game.currentTurnPlayerId;
 
     const timers = game.playerTimers.map((timer) => {
-      const elapsedSeconds = Math.floor((now - timer.lastUpdated) / 1000);
-      const actualTimeRemaining = Math.max(
-        0,
-        timer.timeRemaining - elapsedSeconds
-      );
+      if (timer.playerId === currentTurnPlayerId) {
+        const elapsedSeconds = Math.floor((now - timer.lastUpdated) / 1000);
+        const actualTimeRemaining = Math.max(
+          0,
+          timer.timeRemaining - elapsedSeconds
+        );
 
-      return {
-        playerId: timer.playerId,
-        timeRemaining: actualTimeRemaining,
-        lastUpdated: timer.lastUpdated,
-      };
+        return {
+          playerId: timer.playerId,
+          timeRemaining: actualTimeRemaining,
+          lastUpdated: timer.lastUpdated,
+        };
+      } else {
+        return {
+          playerId: timer.playerId,
+          timeRemaining: timer.timeRemaining,
+          lastUpdated: timer.lastUpdated,
+        };
+      }
     });
 
     return {
@@ -209,5 +218,148 @@ export const pauseTimer = mutation({
     });
 
     return { success: true };
+  },
+});
+
+export const freezePlayerTimer = internalMutation({
+  args: {
+    gameId: v.string(),
+    playerId: v.union(v.id("users"), v.string()),
+  },
+  handler: async (ctx, args) => {
+    const game = await ctx.db
+      .query("games")
+      .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
+      .first();
+
+    if (!game || !game.timerEnabled || !game.playerTimers) {
+      return { success: false };
+    }
+
+    const now = Date.now();
+    const playerTimer = game.playerTimers.find(
+      (t) => t.playerId === args.playerId
+    );
+
+    if (!playerTimer) {
+      return { success: false };
+    }
+
+    const elapsedSeconds = Math.floor((now - playerTimer.lastUpdated) / 1000);
+    const newTimeRemaining = Math.max(
+      0,
+      playerTimer.timeRemaining - elapsedSeconds
+    );
+
+    const updatedTimers = game.playerTimers.map((t) =>
+      t.playerId === args.playerId ?
+        {
+          ...t,
+          timeRemaining: newTimeRemaining,
+          lastUpdated: now,
+        }
+      : t
+    );
+
+    await ctx.db.patch(game._id, {
+      playerTimers: updatedTimers,
+      lastUpdatedAt: now,
+    });
+
+    return { success: true, timeRemaining: newTimeRemaining };
+  },
+});
+
+export const startPlayerTimer = internalMutation({
+  args: {
+    gameId: v.string(),
+    playerId: v.union(v.id("users"), v.string()),
+  },
+  handler: async (ctx, args) => {
+    const game = await ctx.db
+      .query("games")
+      .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
+      .first();
+
+    if (!game || !game.timerEnabled || !game.playerTimers) {
+      return { success: false };
+    }
+
+    const now = Date.now();
+    const playerTimer = game.playerTimers.find(
+      (t) => t.playerId === args.playerId
+    );
+
+    if (!playerTimer) {
+      return { success: false };
+    }
+
+    const updatedTimers = game.playerTimers.map((t) =>
+      t.playerId === args.playerId ?
+        {
+          ...t,
+          lastUpdated: now,
+        }
+      : t
+    );
+
+    await ctx.db.patch(game._id, {
+      playerTimers: updatedTimers,
+      lastUpdatedAt: now,
+    });
+
+    return { success: true };
+  },
+});
+
+export const updateAndCheckTimer = internalMutation({
+  args: {
+    gameId: v.string(),
+    playerId: v.union(v.id("users"), v.string()),
+  },
+  handler: async (ctx, args) => {
+    const game = await ctx.db
+      .query("games")
+      .withIndex("by_game_id", (q) => q.eq("gameId", args.gameId))
+      .first();
+
+    if (!game || !game.timerEnabled || !game.playerTimers) {
+      return { expired: false, timeRemaining: 0 };
+    }
+
+    const now = Date.now();
+    const playerTimer = game.playerTimers.find(
+      (t) => t.playerId === args.playerId
+    );
+
+    if (!playerTimer) {
+      return { expired: false, timeRemaining: 0 };
+    }
+
+    const elapsedSeconds = Math.floor((now - playerTimer.lastUpdated) / 1000);
+    const actualTimeRemaining = Math.max(
+      0,
+      playerTimer.timeRemaining - elapsedSeconds
+    );
+
+    const updatedTimers = game.playerTimers.map((t) =>
+      t.playerId === args.playerId ?
+        {
+          ...t,
+          timeRemaining: actualTimeRemaining,
+          lastUpdated: now,
+        }
+      : t
+    );
+
+    await ctx.db.patch(game._id, {
+      playerTimers: updatedTimers,
+      lastUpdatedAt: now,
+    });
+
+    return {
+      expired: actualTimeRemaining === 0,
+      timeRemaining: actualTimeRemaining,
+    };
   },
 });
