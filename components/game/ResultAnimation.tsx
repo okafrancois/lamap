@@ -33,7 +33,6 @@ function Particle({ index, color, victoryType }: ParticleProps) {
     if (victoryType === "simple_kora") return 8 + Math.random() * 6;
     if (victoryType === "auto_sum") return 4 + Math.random() * 3;
     if (victoryType === "auto_sevens") return 4 + Math.random() * 3;
-    if (victoryType === "auto_lowest") return 4 + Math.random() * 3;
     return 8 + Math.random() * 6;
   }, [victoryType]);
 
@@ -150,12 +149,7 @@ export function ResultAnimation({
     if (victoryType === "triple_kora") return 60;
     if (victoryType === "double_kora") return 40;
     if (victoryType === "simple_kora") return 25;
-    if (
-      victoryType === "auto_sum" ||
-      victoryType === "auto_sevens" ||
-      victoryType === "auto_lowest"
-    )
-      return 0;
+    if (victoryType === "auto_sum" || victoryType === "auto_sevens") return 25;
     return 0;
   }, [victoryType]);
 

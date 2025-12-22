@@ -360,15 +360,13 @@ export const startGame = mutation({
           : p.balance - betAmount,
       }));
 
-      let victoryType: "auto_sevens" | "auto_sum" | "auto_lowest" | null = null;
+      let victoryType: "auto_sevens" | "auto_sum" | null = null;
       if (autoVictory.reason) {
         if (
           autoVictory.reason.includes("cartes de 7") ||
           autoVictory.reason.includes("7")
         ) {
           victoryType = "auto_sevens";
-        } else if (autoVictory.reason.includes("Somme la plus faible")) {
-          victoryType = "auto_lowest";
         } else if (autoVictory.reason.includes("Somme < 21")) {
           victoryType = "auto_sum";
         }

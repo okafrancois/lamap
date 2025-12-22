@@ -85,12 +85,11 @@ export function ResultPanel({
   }
 
   const getVictoryTitle = () => {
-    if (game.victoryType === "triple_kora") return "333 EXPORT !";
-    if (game.victoryType === "double_kora") return "33 EXPORT !";
-    if (game.victoryType === "simple_kora") return "KORA !";
-    if (game.victoryType === "auto_sum") return "Auto-victoire (Somme)";
-    if (game.victoryType === "auto_sevens") return "Auto-victoire (7)";
-    if (game.victoryType === "auto_lowest") return "Auto-victoire";
+    if (game.victoryType === "triple_kora") return "Victoire par 333 EXPORT !";
+    if (game.victoryType === "double_kora") return "Victoire par 33 EXPORT !";
+    if (game.victoryType === "simple_kora") return "Victoire par KORA !";
+    if (game.victoryType === "auto_sum") return "Victoire par main faible !";
+    if (game.victoryType === "auto_sevens") return "Victoire par triple 7 !";
     return "Victoire 🎉 !";
   };
 
@@ -194,8 +193,7 @@ export function ResultPanel({
           playSound("kora");
         } else if (
           game.victoryType === "auto_sum" ||
-          game.victoryType === "auto_sevens" ||
-          game.victoryType === "auto_lowest"
+          game.victoryType === "auto_sevens"
         ) {
           playSound("autoVictory");
         } else {
@@ -280,7 +278,7 @@ export function ResultPanel({
               },
             ]}
           >
-            {isWinner ? getVictoryTitle() : "Défaite 💀"}
+            {isWinner ? getVictoryTitle() : "Vous avez perdu 💀"}
           </Text>
 
           {/* Multiplicateur Kora */}
@@ -531,6 +529,17 @@ const styles = StyleSheet.create({
   gainsValue: {
     fontSize: 24,
     fontWeight: "700",
+  },
+  onTimeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginBottom: 16,
+  },
+  onTimeLabel: {
+    fontSize: 14,
+    fontWeight: "600",
   },
   actions: {
     flexDirection: "row",

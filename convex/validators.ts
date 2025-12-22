@@ -49,7 +49,6 @@ export const rankValidator = v.union(
 export const victoryTypeValidator = v.union(
   v.literal("normal"),
   v.literal("auto_sum"),
-  v.literal("auto_lowest"),
   v.literal("auto_sevens"),
   v.literal("simple_kora"),
   v.literal("double_kora"),
