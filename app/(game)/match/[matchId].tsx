@@ -1,7 +1,6 @@
 import { BattleZone } from "@/components/game/BattleZone";
 import { CardHand, type Card } from "@/components/game/CardHand";
 import { ConcedeButton } from "@/components/game/ConcedeButton";
-import { DemandedSuitIndicator } from "@/components/game/DemandedSuitIndicator";
 import { GameTimer } from "@/components/game/GameTimer";
 import { OpponentZone } from "@/components/game/OpponentZone";
 import { PlaceholderCardHand } from "@/components/game/PlaceholderCardHand";
@@ -572,10 +571,14 @@ export default function MatchScreen() {
     (pc) => pc.playerId === myUserId
   )?.card;
 
-  const leadSuit =
-    iHaveHand && opponentPlayedCard ? opponentPlayedCard.suit
-    : opponentHasHand && playerPlayedCard ? playerPlayedCard.suit
-    : undefined;
+  const firstPlayedCard =
+    currentPlays && currentPlays.length > 0 ?
+      currentPlays.reduce((earliest, current) =>
+        current.timestamp < earliest.timestamp ? current : earliest
+      )
+    : null;
+
+  const leadSuit = firstPlayedCard?.card?.suit;
 
   const includeCurrentPlays = game.status !== "ENDED";
 
@@ -673,9 +676,6 @@ export default function MatchScreen() {
         )}
 
         <View style={styles.playArea}>
-          {leadSuit && game.status === "PLAYING" && (
-            <DemandedSuitIndicator suit={leadSuit as Suit} visible={true} />
-          )}
           {playAreaMode === "battle" ?
             <BattleZone
               opponentCards={allOpponentCards.map((card: any) => ({
@@ -755,17 +755,10 @@ export default function MatchScreen() {
                   }
                 } else if (isRankedMatch || isCashMatch) {
                   try {
-                    const result = await sendRevengeRequest({
+                    await sendRevengeRequest({
                       originalGameId: matchId,
                       senderId: myUserId,
                     });
-
-                    if (result?.success) {
-                      Alert.alert(
-                        "Revanche envoyée",
-                        "Votre proposition de revanche a été envoyée à votre adversaire."
-                      );
-                    }
                   } catch (error) {
                     console.error("Erreur sendRevengeRequest:", error);
                     Alert.alert(

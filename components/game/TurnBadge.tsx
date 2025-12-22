@@ -47,13 +47,16 @@ export function TurnBadge({ visible, hasHand }: TurnBadgeProps) {
       flexDirection: "row",
       alignItems: "center",
       gap: 8,
-      paddingHorizontal: 18,
-      paddingVertical: 8,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
       borderRadius: 18,
       backgroundColor: Colors.primary,
     },
     icon: {
       fontSize: 14,
+      backgroundColor: Colors.primaryForeground,
+      borderRadius: 100,
+      padding: 2,
     },
     text: {
       fontSize: 12,

@@ -56,6 +56,9 @@ export function BattleZone({
     suitIcon: {
       width: 20,
       height: 20,
+      borderRadius: 100,
+      padding: 2,
+      backgroundColor: Colors.gameUI.bleuSurface,
     },
     battleRow: {
       flexDirection: "row",
@@ -109,7 +112,7 @@ export function BattleZone({
     <View style={styles.container}>
       {leadSuit && (
         <View style={styles.suitIndicator}>
-          <Text style={styles.suitLabel}>Couleur demandée</Text>
+          <Text style={styles.suitLabel}>Carte demandée</Text>
           <Image
             source={SUIT_IMAGES[leadSuit]}
             style={styles.suitIcon}
