@@ -117,7 +117,11 @@ export default function NotificationsScreen() {
   const handleNotificationPress = (notification: any) => {
     const data = notification.data || {};
     if (data.type === "challenge") {
-      router.push("/(tabs)/profile");
+      if (data.challengeId) {
+        router.push(`/challenges/${data.challengeId}`);
+      } else {
+        router.push("/challenges");
+      }
     } else if (data.type === "message") {
       router.push("/(tabs)/messages");
     } else if (data.type === "match_found" || data.type === "turn") {

@@ -628,6 +628,13 @@ export default function PublicProfileScreen() {
       <ChallengeModal
         visible={showChallengeModal}
         onClose={() => setShowChallengeModal(false)}
+        onSuccess={(challengeId) => {
+          if (challengeId) {
+            router.push(`/challenges/${challengeId}`);
+          } else {
+            router.push("/challenges");
+          }
+        }}
         challengedUserId={profileUserId}
         challengedUsername={user?.username || ""}
         currency={user?.country ? getCurrencyFromCountry(user.country) : "XAF"}

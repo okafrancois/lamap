@@ -10,7 +10,6 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
@@ -19,6 +18,7 @@ import {
 interface ChallengeModalProps {
   visible: boolean;
   onClose: () => void;
+  onSuccess?: (challengeId?: string) => void;
   challengedUserId: string;
   challengedUsername: string;
   currency: Currency;
@@ -27,6 +27,7 @@ interface ChallengeModalProps {
 export function ChallengeModal({
   visible,
   onClose,
+  onSuccess,
   challengedUserId,
   challengedUsername,
   currency,
@@ -53,7 +54,7 @@ export function ChallengeModal({
 
     setLoading(true);
     try {
-      await sendChallenge({
+      const result = await sendChallenge({
         challengerId: convexUser._id,
         challengedId: challengedUserId as any,
         mode,
@@ -62,14 +63,19 @@ export function ChallengeModal({
         competitive: mode === "CASH" ? isCompetitive : undefined,
       });
 
-      Alert.alert(
-        "Défi envoyé",
-        `Votre défi a été envoyé à ${challengedUsername}.`
-      );
       onClose();
       setMode("RANKED");
       setBetAmount("");
       setIsCompetitive(true);
+
+      if (onSuccess && result?.challengeId) {
+        onSuccess(result.challengeId);
+      } else if (result?.challengeId) {
+        Alert.alert(
+          "Défi envoyé",
+          `Votre défi a été envoyé à ${challengedUsername}.`
+        );
+      }
     } catch (error: any) {
       Alert.alert("Erreur", error.message || "Impossible d'envoyer le défi.");
     } finally {
@@ -196,8 +202,7 @@ export function ChallengeModal({
                 <Text
                   style={{ color: colors.mutedForeground, marginBottom: 12 }}
                 >
-                  • Gratuite (0 mise){"\n"}• Affecte votre classement PR{"\n"}•
-                  Matchmaking par rang
+                  • Pas de mise{"\n"}• Affecte votre classement PR{"\n"}
                 </Text>
               </View>
             )}
@@ -215,35 +220,12 @@ export function ChallengeModal({
                     onChangeText={setBetAmount}
                   />
                 </View>
-
-                <View style={styles.section}>
-                  <View style={styles.competitiveToggle}>
-                    <View style={styles.toggleLabel}>
-                      <Text style={styles.toggleTitle}>Mode Compétitif</Text>
-                      <Text style={styles.toggleDescription}>
-                        {isCompetitive ?
-                          "✓ Affecte votre classement PR\n✓ Matchmaking par rang\n✓ Gains d'argent réel"
-                        : "• N'affecte pas votre PR\n• Matchmaking libre\n• Gains d'argent réel uniquement"
-                        }
-                      </Text>
-                    </View>
-                    <Switch
-                      value={isCompetitive}
-                      onValueChange={setIsCompetitive}
-                      trackColor={{
-                        false: colors.muted,
-                        true: colors.secondary,
-                      }}
-                      thumbColor={colors.card}
-                    />
-                  </View>
-                </View>
               </>
             )}
 
             <View style={styles.actions}>
               <Button
-                title="Envoyer le défi"
+                title="Défier"
                 onPress={handleSendChallenge}
                 variant="primary"
                 loading={loading}

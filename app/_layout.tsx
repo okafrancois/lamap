@@ -87,6 +87,14 @@ function RootLayoutNav() {
               ...modalHeaderOptions,
             }}
           />
+          <Stack.Screen
+            name="challenges/[challengeId]"
+            options={{
+              title: "Défis",
+              headerBackTitle: "Retour",
+              ...modalHeaderOptions,
+            }}
+          />
           <Stack.Screen name="user" options={{ headerShown: false }} />
         </Stack.Protected>
       </Stack>

@@ -55,6 +55,7 @@ export const sendChallengeNotification = internalMutation({
     challengedUserId: v.id("users"),
     challengerUsername: v.string(),
     mode: v.union(v.literal("RANKED"), v.literal("CASH")),
+    challengeId: v.id("challenges"),
   },
   handler: async (ctx, args) => {
     const pn = getPushNotifications();
@@ -74,7 +75,8 @@ export const sendChallengeNotification = internalMutation({
           data: {
             type: "challenge",
             mode: args.mode,
-            route: "/(tabs)/profile",
+            challengeId: args.challengeId,
+            route: `/challenges/${args.challengeId}`,
           },
         },
       });

@@ -82,6 +82,7 @@ export const sendChallenge = mutation({
         challengedUserId: args.challengedId,
         challengerUsername: challenger.username,
         mode: args.mode,
+        challengeId: challengeId,
       }
     );
 
@@ -238,12 +239,12 @@ export const acceptChallenge = mutation({
       playerTimers: [
         {
           playerId: challenge.challengerId,
-          timeRemaining: 60,
+          timeRemaining: 300,
           lastUpdated: now,
         },
         {
           playerId: challenge.challengedId,
-          timeRemaining: 60,
+          timeRemaining: 300,
           lastUpdated: now,
         },
       ],
@@ -265,6 +266,7 @@ export const acceptChallenge = mutation({
         challengedUserId: challenge.challengerId,
         challengerUsername: challenged.username,
         mode: challenge.mode,
+        challengeId: challenge._id,
       }
     );
 
@@ -380,5 +382,52 @@ export const getSentChallenges = query({
     );
 
     return challengesWithChallenged;
+  },
+});
+
+export const getChallenge = query({
+  args: {
+    challengeId: v.id("challenges"),
+  },
+  handler: async (ctx, args) => {
+    const challenge = await ctx.db.get(args.challengeId);
+
+    if (!challenge) {
+      return null;
+    }
+
+    const challenger = await ctx.db.get(challenge.challengerId);
+    const challenged = await ctx.db.get(challenge.challengedId);
+
+    return {
+      _id: challenge._id,
+      challenger:
+        challenger ?
+          {
+            _id: challenger._id,
+            username: challenger.username,
+            avatarUrl: challenger.avatarUrl,
+            pr: challenger.pr,
+          }
+        : null,
+      challenged:
+        challenged ?
+          {
+            _id: challenged._id,
+            username: challenged.username,
+            avatarUrl: challenged.avatarUrl,
+            pr: challenged.pr,
+          }
+        : null,
+      mode: challenge.mode,
+      betAmount: challenge.betAmount,
+      currency: challenge.currency,
+      competitive: challenge.competitive,
+      status: challenge.status,
+      createdAt: challenge.createdAt,
+      expiresAt: challenge.expiresAt,
+      respondedAt: challenge.respondedAt,
+      gameId: challenge.gameId,
+    };
   },
 });
