@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { api } from "@/convex/_generated/api";
@@ -47,6 +48,20 @@ export default function GameChatScreen() {
       }, 100);
     }
   }, [messages]);
+
+  useEffect(() => {
+    const updateLastSeenTimestamp = async () => {
+      if (!gameId) return;
+      try {
+        const key = `gameChatLastSeen_${gameId}`;
+        const now = Date.now();
+        await AsyncStorage.setItem(key, now.toString());
+      } catch (error) {
+        console.error("Error updating last seen timestamp:", error);
+      }
+    };
+    updateLastSeenTimestamp();
+  }, [gameId]);
 
   const handleSend = async () => {
     if (

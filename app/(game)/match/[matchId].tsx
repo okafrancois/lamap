@@ -22,6 +22,7 @@ import { useMatchmaking } from "@/hooks/useMatchmaking";
 import { useSettings } from "@/hooks/useSettings";
 import { useSound } from "@/hooks/useSound";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useMutation, useQuery } from "convex/react";
 import {
   useLocalSearchParams,
@@ -131,6 +132,15 @@ export default function MatchScreen() {
   const acceptRevengeRequest = useMutation(api.games.acceptRevengeRequest);
   const rejectChallenge = useMutation(api.challenges.rejectChallenge);
 
+  const gameMessages = useQuery(
+    api.chat.getGameMessages,
+    matchId ? { gameId: matchId } : "skip"
+  );
+  const [lastSeenTimestamp, setLastSeenTimestamp] = useState<number | null>(
+    null
+  );
+  const [unreadCount, setUnreadCount] = useState(0);
+
   const revengeStatus = useQuery(
     api.games.getRevengeRequestStatus,
     game?.status === "ENDED" && matchId && myUserId ?
@@ -232,6 +242,51 @@ export default function MatchScreen() {
       setResultPanelVisible(true);
     }
   }, [game?.status]);
+
+  useEffect(() => {
+    const loadLastSeenTimestamp = async () => {
+      if (!matchId) return;
+      try {
+        const key = `gameChatLastSeen_${matchId}`;
+        const stored = await AsyncStorage.getItem(key);
+        if (stored) {
+          setLastSeenTimestamp(parseInt(stored, 10));
+        } else {
+          setLastSeenTimestamp(Date.now());
+        }
+      } catch (error) {
+        console.error("Error loading last seen timestamp:", error);
+      }
+    };
+    loadLastSeenTimestamp();
+  }, [matchId]);
+
+  useEffect(() => {
+    if (!gameMessages || !myUserId || lastSeenTimestamp === null) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const unread = gameMessages.filter(
+      (msg: any) =>
+        msg.timestamp > lastSeenTimestamp && msg.playerId !== myUserId
+    ).length;
+    setUnreadCount(unread);
+  }, [gameMessages, myUserId, lastSeenTimestamp]);
+
+  const handleChatPress = useCallback(async () => {
+    if (!matchId) return;
+    try {
+      const key = `gameChatLastSeen_${matchId}`;
+      const now = Date.now();
+      await AsyncStorage.setItem(key, now.toString());
+      setLastSeenTimestamp(now);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Error saving last seen timestamp:", error);
+    }
+    router.push(`/(game)/chat/${matchId}`);
+  }, [matchId, router]);
 
   useEffect(() => {
     if (
@@ -371,6 +426,26 @@ export default function MatchScreen() {
     },
     chatButton: {
       padding: 4,
+      position: "relative",
+    },
+    chatBadge: {
+      position: "absolute",
+      top: -2,
+      right: -2,
+      minWidth: 18,
+      height: 18,
+      borderRadius: 9,
+      backgroundColor: colors.destructive,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 4,
+      borderWidth: 2,
+      borderColor: colors.background,
+    },
+    chatBadgeText: {
+      fontSize: 10,
+      fontWeight: "700",
+      color: colors.destructiveForeground,
     },
     playArea: {
       flex: 1,
@@ -646,7 +721,7 @@ export default function MatchScreen() {
               )}
               {game.mode !== "AI" && (
                 <TouchableOpacity
-                  onPress={() => router.push(`/(game)/chat/${matchId}`)}
+                  onPress={handleChatPress}
                   style={styles.chatButton}
                 >
                   <Ionicons
@@ -654,6 +729,13 @@ export default function MatchScreen() {
                     size={24}
                     color={colors.secondary}
                   />
+                  {unreadCount > 0 && (
+                    <View style={styles.chatBadge}>
+                      <Text style={styles.chatBadgeText}>
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               )}
             </View>

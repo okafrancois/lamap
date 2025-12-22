@@ -83,11 +83,22 @@ export default function ProfileScreen() {
     : "skip"
   );
 
+  const pendingChallenges = useQuery(
+    api.challenges.getPendingChallenges,
+    user?._id ? { userId: user._id } : "skip"
+  );
+  const sentChallenges = useQuery(
+    api.challenges.getSentChallenges,
+    user?._id ? { userId: user._id } : "skip"
+  );
+
   const sendRequest = useMutation(api.friends.sendFriendRequest);
   const acceptRequest = useMutation(api.friends.acceptFriendRequest);
   const rejectRequest = useMutation(api.friends.rejectFriendRequest);
   const cancelRequest = useMutation(api.friends.cancelFriendRequest);
   const removeFriend = useMutation(api.friends.removeFriend);
+  const acceptChallenge = useMutation(api.challenges.acceptChallenge);
+  const rejectChallenge = useMutation(api.challenges.rejectChallenge);
 
   const filteredGames = useMemo(() => {
     if (!gameHistory) return [];
@@ -188,6 +199,41 @@ export default function ProfileScreen() {
       );
     },
     [user?._id, removeFriend]
+  );
+
+  const handleAcceptChallenge = useCallback(
+    async (challengeId: Id<"challenges">) => {
+      if (!user?._id) return;
+
+      try {
+        const result = await acceptChallenge({ challengeId, userId: user._id });
+        if (result?.gameId) {
+          router.replace(`/(game)/match/${result.gameId}`);
+        }
+      } catch (error: any) {
+        Alert.alert(
+          "Erreur",
+          error.message || "Impossible d'accepter le défi"
+        );
+      }
+    },
+    [user?._id, acceptChallenge, router]
+  );
+
+  const handleRejectChallenge = useCallback(
+    async (challengeId: Id<"challenges">) => {
+      if (!user?._id) return;
+
+      try {
+        await rejectChallenge({ challengeId, userId: user._id });
+      } catch (error: any) {
+        Alert.alert(
+          "Erreur",
+          error.message || "Impossible de refuser le défi"
+        );
+      }
+    },
+    [user?._id, rejectChallenge]
   );
 
   const styles = StyleSheet.create({
@@ -785,6 +831,145 @@ export default function ProfileScreen() {
     return LeaderboardSceneComponent;
   }, [user?._id, styles]);
 
+  const ChallengesScene = React.useMemo(() => {
+    const ChallengesSceneComponent = () => (
+      <ScrollView
+        style={styles.sceneContainer}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 50 }}
+      >
+        {(
+          (pendingChallenges && pendingChallenges.length > 0) ||
+          (sentChallenges && sentChallenges.length > 0)
+        ) ?
+          <>
+            {pendingChallenges && pendingChallenges.length > 0 && (
+              <>
+                <Text style={styles.sectionHeader}>Défis reçus</Text>
+                {pendingChallenges.map((challenge) => (
+                  <View key={challenge._id} style={styles.userCard}>
+                    {challenge.challenger.avatarUrl ?
+                      <Image
+                        source={{ uri: challenge.challenger.avatarUrl }}
+                        style={styles.avatar}
+                      />
+                    : <View style={styles.avatar}>
+                        <Ionicons
+                          name="person"
+                          size={24}
+                          color={colors.mutedForeground}
+                          style={{ alignSelf: "center", marginTop: 12 }}
+                        />
+                      </View>
+                    }
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userCardUsername}>
+                        {challenge.challenger.username}
+                      </Text>
+                      <View style={styles.badge}>
+                        <Badge
+                          label={
+                            challenge.mode === "RANKED" ?
+                              "Classé"
+                            : challenge.betAmount ?
+                              `${challenge.betAmount} ${challenge.currency || "XAF"}`
+                            : "Cash"
+                          }
+                          variant={
+                            challenge.mode === "RANKED" ? "default" : "warning"
+                          }
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.actions}>
+                      <Button
+                        title="Accepter"
+                        onPress={() => handleAcceptChallenge(challenge._id)}
+                        variant="primary"
+                        size="sm"
+                      />
+                      <Button
+                        title="Refuser"
+                        onPress={() => handleRejectChallenge(challenge._id)}
+                        variant="secondary"
+                        size="sm"
+                      />
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {sentChallenges && sentChallenges.length > 0 && (
+              <>
+                <Text style={styles.sectionHeader}>Défis envoyés</Text>
+                {sentChallenges.map((challenge) => (
+                  <View key={challenge._id} style={styles.userCard}>
+                    {challenge.challenged.avatarUrl ?
+                      <Image
+                        source={{ uri: challenge.challenged.avatarUrl }}
+                        style={styles.avatar}
+                      />
+                    : <View style={styles.avatar}>
+                        <Ionicons
+                          name="person"
+                          size={24}
+                          color={colors.mutedForeground}
+                          style={{ alignSelf: "center", marginTop: 12 }}
+                        />
+                      </View>
+                    }
+                    <View style={styles.userInfo}>
+                      <Text style={styles.userCardUsername}>
+                        {challenge.challenged.username}
+                      </Text>
+                      <View style={styles.badge}>
+                        <Badge
+                          label={
+                            challenge.mode === "RANKED" ?
+                              "Classé"
+                            : challenge.betAmount ?
+                              `${challenge.betAmount} ${challenge.currency || "XAF"}`
+                            : "Cash"
+                          }
+                          variant={
+                            challenge.mode === "RANKED" ? "default" : "warning"
+                          }
+                        />
+                      </View>
+                    </View>
+                    <View style={styles.actions}>
+                      <Badge label="En attente" variant="secondary" />
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+          </>
+        : <View style={styles.emptyContainer}>
+            <Ionicons
+              name="trophy-outline"
+              size={64}
+              color={colors.mutedForeground}
+            />
+            <Text style={styles.emptyText}>
+              Aucun défi en cours.{"\n"}Défiez vos amis pour jouer !
+            </Text>
+          </View>
+        }
+      </ScrollView>
+    );
+    ChallengesSceneComponent.displayName = "ChallengesScene";
+    return ChallengesSceneComponent;
+  }, [
+    pendingChallenges,
+    sentChallenges,
+    handleAcceptChallenge,
+    handleRejectChallenge,
+    colors,
+    styles,
+    insets,
+  ]);
+
   const FriendsScene = React.useMemo(() => {
     const FriendsSceneComponent = () => (
       <ScrollView
@@ -1071,6 +1256,7 @@ export default function ProfileScreen() {
 
   const routes = [
     { key: "profile", title: "Profil" },
+    { key: "challenges", title: "Défis" },
     { key: "friends", title: "Amis" },
     { key: "history", title: "Parties" },
     { key: "leaderboard", title: "Classement" },
@@ -1078,6 +1264,7 @@ export default function ProfileScreen() {
 
   const renderScene = SceneMap({
     profile: ProfileScene,
+    challenges: ChallengesScene,
     history: HistoryScene,
     leaderboard: LeaderboardScene,
     friends: FriendsScene,
