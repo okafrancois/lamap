@@ -1984,16 +1984,6 @@ export const sendRevengeRequest = mutation({
       gameId: args.originalGameId,
     });
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.notifications.sendRevengeRequestNotification,
-      {
-        receiverUserId: opponentUserId,
-        senderUsername: sender.username,
-        mode: gameMode,
-      }
-    );
-
     return { challengeId, success: true };
   },
 });
@@ -2046,7 +2036,10 @@ export const acceptRevengeRequest = mutation({
       }
     }
 
-    await ctx.db.patch(challenge._id, { status: "accepted" });
+    await ctx.db.patch(challenge._id, {
+      status: "accepted",
+      respondedAt: now,
+    });
 
     const betAmount = challenge.betAmount || 0;
     const currency = challenge.currency || challenged.currency || "XAF";
@@ -2177,7 +2170,7 @@ export const getRevengeRequestStatus = query({
     }
 
     const opponentUserId = opponent.userId;
-    if (!opponentUserId || typeof opponentUserId === "string") {
+    if (!opponentUserId) {
       return { status: "none" };
     }
 
@@ -2187,13 +2180,44 @@ export const getRevengeRequestStatus = query({
       .filter((q) =>
         q.and(
           q.eq(q.field("challengedId"), opponentUserId),
-          q.eq(q.field("status"), "pending"),
+          q.or(
+            q.eq(q.field("status"), "pending"),
+            q.eq(q.field("status"), "accepted")
+          ),
           q.eq(q.field("gameId"), args.gameId)
         )
       )
       .first();
 
     if (sentRequest) {
+      if (sentRequest.status === "accepted") {
+        // Find the new game created between these two players
+        const newGame = await ctx.db
+          .query("games")
+          .filter((q) =>
+            q.and(
+              q.neq(q.field("gameId"), args.gameId),
+              q.gte(
+                q.field("startedAt"),
+                sentRequest.respondedAt ?? sentRequest.createdAt
+              )
+            )
+          )
+          .order("desc")
+          .first();
+
+        if (
+          newGame &&
+          newGame.players.some((p) => getPlayerId(p) === args.userId) &&
+          newGame.players.some((p) => getPlayerId(p) === opponentUserId)
+        ) {
+          return {
+            status: "accepted",
+            challengeId: sentRequest._id,
+            newGameId: newGame.gameId,
+          };
+        }
+      }
       return { status: "sent", challengeId: sentRequest._id };
     }
 

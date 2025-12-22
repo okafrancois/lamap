@@ -250,6 +250,8 @@ export const leaveQueue = mutation({
       await ctx.db.patch(queueEntry._id, {
         status: "cancelled",
       });
+
+      await ctx.db.delete(queueEntry._id);
     }
 
     return { success: true };

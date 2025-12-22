@@ -171,6 +171,18 @@ export default function MatchScreen() {
     timers: allTimers,
   } = useGameTimer(game?.gameId, myUserId || null);
 
+  // Redirect to new game when revenge is accepted
+  useEffect(() => {
+    if (
+      revengeStatus?.status === "accepted" &&
+      "newGameId" in revengeStatus &&
+      revengeStatus.newGameId
+    ) {
+      setResultPanelVisible(false);
+      router.replace(`/(game)/match/${revengeStatus.newGameId}`);
+    }
+  }, [revengeStatus, router]);
+
   useEffect(() => {
     if (game?.gameId && game.gameId !== currentGameIdRef.current) {
       currentGameIdRef.current = game.gameId;
@@ -674,7 +686,7 @@ export default function MatchScreen() {
                 suit: card?.suit as Suit,
                 rank: card?.rank as Rank,
               }))}
-              leadSuit={leadSuit as Suit | undefined}
+              leadSuit={leadSuit}
               battleLayout={battleLayout}
             />
           : <TurnHistory
@@ -743,11 +755,19 @@ export default function MatchScreen() {
                   }
                 } else if (isRankedMatch || isCashMatch) {
                   try {
-                    await sendRevengeRequest({
+                    const result = await sendRevengeRequest({
                       originalGameId: matchId,
                       senderId: myUserId,
                     });
+
+                    if (result?.success) {
+                      Alert.alert(
+                        "Revanche envoyée",
+                        "Votre proposition de revanche a été envoyée à votre adversaire."
+                      );
+                    }
                   } catch (error) {
+                    console.error("Erreur sendRevengeRequest:", error);
                     Alert.alert(
                       "Erreur",
                       error instanceof Error ?
@@ -784,6 +804,8 @@ export default function MatchScreen() {
               }}
               revengeStatus={
                 revengeStatus?.status === "sent" ? "sent"
+                : revengeStatus?.status === "accepted" ?
+                  "sent"
                 : revengeStatus?.status === "received" ?
                   "received"
                 : "none"

@@ -32,6 +32,27 @@ interface ButtonProps {
   accessibilityHint?: string;
 }
 
+const BUTTON_SIZES = {
+  sm: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minHeight: 32,
+    fontSize: 12,
+  },
+  default: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    minHeight: 36,
+    fontSize: 14,
+  },
+  lg: {
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    minHeight: 44,
+    fontSize: 16,
+  },
+};
+
 export function Button({
   title,
   onPress,
@@ -52,21 +73,13 @@ export function Button({
     const shouldHaveShadow = variant !== "outline" && variant !== "ghost";
 
     const baseStyle: ViewStyle = {
-      paddingVertical:
-        size === "sm" ? 8
-        : size === "lg" ? 14
-        : 12,
-      paddingHorizontal:
-        size === "sm" ? 16
-        : size === "lg" ? 32
-        : 24,
+      paddingVertical: BUTTON_SIZES[size].paddingVertical,
+      paddingHorizontal: BUTTON_SIZES[size].paddingHorizontal,
       borderRadius: Spacing.radius.full,
       alignItems: "center",
       justifyContent: "center",
-      minHeight:
-        size === "sm" ? 32
-        : size === "lg" ? 40
-        : 36,
+      minHeight: BUTTON_SIZES[size].minHeight,
+      ...Typography.gameBase,
       ...(shouldHaveShadow ? getButtonShadow() : {}),
     };
 

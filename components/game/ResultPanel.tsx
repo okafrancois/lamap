@@ -313,77 +313,94 @@ export function ResultPanel({
           </View>
 
           {/* PR Change */}
-          {prChange !== null &&
-            prChange !== undefined &&
-            (game.mode === "RANKED" || game.competitive) && (
-              <View
+          {prChange && (
+            <View
+              style={[
+                styles.gainsContainer,
+                { backgroundColor: colors.muted, marginTop: 12 },
+              ]}
+            >
+              <Text
+                style={[styles.gainsLabel, { color: colors.mutedForeground }]}
+              >
+                Points de classement
+              </Text>
+              <Text
                 style={[
-                  styles.gainsContainer,
-                  { backgroundColor: colors.muted, marginTop: 12 },
+                  styles.gainsValue,
+                  { color: prChange > 0 ? "#7CB342" : "#E63946" },
                 ]}
               >
-                <Text
-                  style={[styles.gainsLabel, { color: colors.mutedForeground }]}
-                >
-                  Points de classement
-                </Text>
-                <Text
-                  style={[
-                    styles.gainsValue,
-                    { color: prChange > 0 ? "#7CB342" : "#E63946" },
-                  ]}
-                >
-                  {prChange > 0 ? "+" : ""}
-                  {prChange} PR
-                </Text>
-              </View>
-            )}
+                {prChange > 0 ? "+" : ""}
+                {prChange} PR
+              </Text>
+            </View>
+          )}
 
-          {/* Boutons */}
-          {revengeStatus === "received" && onAcceptRevenge && onRejectRevenge ?
+          <View style={styles.actionsContainer}>
             <View style={styles.actions}>
               <Button
-                title="Refuser"
-                onPress={onRejectRevenge}
-                variant="secondary"
-                style={styles.button}
-              />
-              <Button
-                title="Accepter la revanche"
-                onPress={onAcceptRevenge}
+                title="Nouvelle partie"
+                onPress={onNewGame}
                 variant="primary"
                 style={styles.button}
               />
-            </View>
-          : <>
-              <View style={styles.actions}>
-                <Button
-                  title="Nouvelle partie"
-                  onPress={onNewGame}
-                  variant="primary"
-                  style={styles.button}
-                />
-                <Button
-                  title={
-                    revengeStatus === "sent" ? "Revanche envoyée" : "Revanche"
-                  }
-                  onPress={onRevenge}
-                  variant="outline"
-                  style={styles.button}
-                  disabled={revengeStatus === "sent"}
-                />
-              </View>
               <Button
-                title="Retour à l'accueil"
-                onPress={onGoHome}
-                variant="ghost"
+                title={revengeStatus === "sent" ? "Envoyée" : "Revanche"}
+                onPress={onRevenge}
+                variant="outline"
                 style={styles.button}
-                icon={
-                  <IconSymbol name="arrow.left" size={24} color={colors.text} />
-                }
+                disabled={revengeStatus === "sent"}
               />
-            </>
-          }
+            </View>
+
+            {/* Boutons */}
+            {revengeStatus === "received" &&
+              onAcceptRevenge &&
+              onRejectRevenge && (
+                <View
+                  style={{
+                    gap: 12,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: colors.text,
+                      textAlign: "center",
+                    }}
+                  >
+                    Votre adversaire veut une revanche !
+                  </Text>
+                  <View style={styles.actions}>
+                    <Button
+                      title="Refuser"
+                      onPress={onRejectRevenge}
+                      variant="secondary"
+                      style={styles.button}
+                      size="sm"
+                    />
+                    <Button
+                      title="Accepter"
+                      onPress={onAcceptRevenge}
+                      variant="primary"
+                      style={styles.button}
+                      size="sm"
+                    />
+                  </View>
+                </View>
+              )}
+          </View>
+          <Button
+            title="Retour à l'accueil"
+            onPress={onGoHome}
+            variant="ghost"
+            style={styles.button}
+            icon={
+              <IconSymbol name="arrow.left" size={24} color={colors.text} />
+            }
+          />
         </View>
       </LinearGradient>
     </Animated.View>
@@ -540,6 +557,9 @@ const styles = StyleSheet.create({
   onTimeLabel: {
     fontSize: 14,
     fontWeight: "600",
+  },
+  actionsContainer: {
+    gap: 12,
   },
   actions: {
     flexDirection: "row",
