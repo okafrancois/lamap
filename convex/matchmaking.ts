@@ -315,6 +315,37 @@ export const getMyStatus = query({
         }
       }
 
+      const waitingGames = await ctx.db
+        .query("games")
+        .withIndex("by_status", (q) => q.eq("status", "WAITING"))
+        .collect();
+
+      const userGame = waitingGames.find((game) =>
+        game.players.some((p) => p.userId === args.userId)
+      );
+
+      if (userGame && userGame.mode !== "AI") {
+        const opponent = userGame.players.find((p) => p.userId !== args.userId);
+        const opponentUser =
+          opponent?.userId ? await ctx.db.get(opponent.userId) : null;
+
+        return {
+          status: "matched",
+          gameId: userGame.gameId,
+          opponent:
+            opponentUser ?
+              {
+                _id: opponentUser._id,
+                username: opponentUser.username,
+                avatarUrl: opponentUser.avatarUrl,
+                pr: opponentUser.pr,
+              }
+            : null,
+          game: userGame,
+          betAmount: userGame.bet.amount,
+        };
+      }
+
       return { status: "idle" };
     }
 
